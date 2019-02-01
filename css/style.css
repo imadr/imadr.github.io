@@ -1,0 +1,38 @@
+@font-face {
+	font-family: 'IBM Plex Mono';
+	src: url('plex.woff2') format('woff2');
+}
+body{
+	font-family: 'IBM Plex Mono', monospace;
+	overflow: hidden;
+	font-weight: normal;
+	margin: 2em auto;
+	max-width: 50em;
+	padding: 1em;
+}
+h2{
+	font-weight: normal;
+}
+#light{
+	font-size: 30px;
+	margin: 5px;
+	position: absolute;
+	top: 5px;
+	right: 5px;
+	cursor: pointer;
+	user-select: none;
+	-moz-user-select: none;
+	-webkit-user-select: none;
+	-ms-user-select: none;
+}
+p{
+	line-height: 1.7;
+}
+.muted{
+	font-size: 15px;
+}
+#index{
+	position: absolute;
+	top: 5px;
+	left: 5px;
+}
