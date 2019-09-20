@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>Cryptography Tools</title>
+    <link rel="stylesheet" href="css/style.css">
+    <link id="css" rel="stylesheet" href="css/light.css">
+    <style>
+        ul{
+            list-style-type: none;
+            padding: 0;
+        }
+    </style>
+</head>
+<body>
+    <div id="index"><a href="index.html">Index</a></div>
+    <h1>Cryptography Tools</h1>
+    <h2>Monoalphabetic substitution</h2>
+    <h3>Affine cipher <span class="collapse_arrow" id="collapse_affine">▼</span></h3>
+    <div id="affine" class="invisible">
+        <textarea id="affine_in"></textarea>
+        <br class="tenpx">
+        Alphabet: <input id="affine_alphabet" type="text" value="ABCDEFGHIJKLMNOPQRSTUVWXYZ" style="min-width: 210px;">
+        <br class="tenpx">
+        Case Sensitive: <input checked="" type="checkbox" id="affine_casesensitive">
+        <br class="tenpx">
+        Key A: <input id="affine_a" type="number" style="width: 50px;">
+        Key B: <input id="affine_b" type="number" style="width: 50px;">
+        <br class="tenpx">
+        <button id="cipher_button_affine">Cipher</button>
+        <button id="decipher_button_affine">Decipher</button>
+        <br class="tenpx">
+        <span id="affine_error"></span>
+        <textarea id="affine_out"></textarea>
+    </div>
+    <!-- ---------------------------------------------------------------- -->
+    <h3>Caesar cipher <span class="collapse_arrow" id="collapse_caesar">▼</span></h3>
+    <div id="caesar" class="invisible">
+        <textarea id="caesar_in"></textarea>
+        <br class="tenpx">
+        Case Sensitive: <input checked="" type="checkbox" id="caesar_casesensitive">
+        Shift: <input id="caesar_shift" type="number" value="6">
+        <br class="tenpx">
+        <button id="cipher_button_caesar">Cipher</button>
+        <button id="decipher_button_caesar">Decipher</button>
+        <br class="tenpx">
+        <textarea id="caesar_out"></textarea>
+    </div>
+    <!-- ---------------------------------------------------------------- -->
+    <h3>Monoalphabetic substitution <span class="collapse_arrow" id="collapse_alphabetsub">▼</span></h3>
+    <div id="alphabetsub" class="invisible">
+        <textarea id="alphabetsub_in"></textarea>
+        <br class="tenpx">
+        Alphabet: <input id="alphabetsub_alphabet" type="text" value="ABCDEFGHIJKLMNOPQRSTUVWXYZ" style="min-width: 210px;">
+        <br class="tenpx">
+        <button id="generate_alphabetsub">Generate alphabet</button>
+        <br class="tenpx">
+        Case Sensitive: <input checked="" type="checkbox" id="alphabetsub_casesensitive">
+        <br class="tenpx">
+        <button id="cipher_button_alphabetsub">Cipher</button>
+        <button id="decipher_button_alphabetsub">Decipher</button>
+        <br class="tenpx">
+        <textarea id="alphabetsub_out"></textarea>
+    </div>
+    <script src="js/light.js"></script>
+    <script src="js/ciphers.js"></script>
+</body>
+</html>

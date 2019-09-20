@@ -1,10 +1,20 @@
 body{
-	background-color: #1a1a1a;
-	color: #d7d7d7;
+    background-color: #1a1a1a;
+    color: #d7d7d7;
 }
 a{
-	color: white;
+    color: white;
 }
 .muted{
-	color: #adadad;
+    color: #adadad;
+}
+button, textarea, input{
+    border: 1px solid white;
+    color: white;
+}
+input[type="checkbox"]{
+    border: 1px solid white;
+}
+input[type="checkbox"]:checked:after{
+    color: white;
 }
