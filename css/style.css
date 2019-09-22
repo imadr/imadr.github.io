@@ -85,3 +85,8 @@ input[type="checkbox"]:checked:after{
     color: #fda900;
     font-size: small;
 }
+.n_title{
+    display: inline-block;
+    margin: initial;
+    margin-top: 20px;
+}

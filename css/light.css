@@ -14,3 +14,7 @@ input[type="checkbox"]{
 input[type="checkbox"]:checked:after{
     color: black;
 }
+.n_title{
+    background-color: black;
+    color: white;
+}

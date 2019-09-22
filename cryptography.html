@@ -15,7 +15,7 @@
 <body>
     <div id="index"><a href="index.html">Index</a></div>
     <h1>Cryptography Tools</h1>
-    <h2>Monoalphabetic substitution</h2>
+    <h2 class="n_title">Monoalphabetic substitution</h2>
     <h3>Affine cipher <span class="collapse_arrow" id="collapse_affine">▼</span></h3>
     <div id="affine" class="invisible">
         <textarea id="affine_in"></textarea>
@@ -33,7 +33,6 @@
         <span id="affine_error"></span>
         <textarea id="affine_out"></textarea>
     </div>
-    <!-- ---------------------------------------------------------------- -->
     <h3>Caesar cipher <span class="collapse_arrow" id="collapse_caesar">▼</span></h3>
     <div id="caesar" class="invisible">
         <textarea id="caesar_in"></textarea>
@@ -46,7 +45,6 @@
         <br class="tenpx">
         <textarea id="caesar_out"></textarea>
     </div>
-    <!-- ---------------------------------------------------------------- -->
     <h3>Monoalphabetic substitution <span class="collapse_arrow" id="collapse_alphabetsub">▼</span></h3>
     <div id="alphabetsub" class="invisible">
         <textarea id="alphabetsub_in"></textarea>
@@ -61,6 +59,26 @@
         <button id="decipher_button_alphabetsub">Decipher</button>
         <br class="tenpx">
         <textarea id="alphabetsub_out"></textarea>
+    </div>
+    <h2 class="n_title">Polyalphabetic substitution</h2>
+    <h3>Vigenère cipher <span class="collapse_arrow" id="collapse_vigenere">▼</span></h3>
+    <div id="vigenere" class="invisible">
+    </div>
+    <h2 class="n_title">Character encoding</h2>
+    <h3>Morse code <span class="collapse_arrow" id="collapse_morse">▼</span></h3>
+    <div id="morse" class="invisible">
+        <textarea id="morse_in"></textarea>
+        <br class="tenpx">
+        Dash character: <input id="morse_dash" type="text" value="−">
+        <br class="tenpx">
+        Dot character: <input id="morse_dot" type="text" value="·">
+        <br class="tenpx">
+        Space character: <input id="morse_space" type="text" value="/">
+        <br class="tenpx">
+        <button id="cipher_button_morse">Encode</button>
+        <button id="decipher_button_morse">Decode</button>
+        <br class="tenpx">
+        <textarea id="morse_out"></textarea>
     </div>
     <script src="js/light.js"></script>
     <script src="js/ciphers.js"></script>

@@ -190,6 +190,43 @@ function alphabetsub(string, alphabet_sub, casesensitive, cipher){
     return new_string;
 }
 
+function morse(string, dash, dot, space, cipher){
+    var alphabet = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+    var morse_table = ["01", "1000", "1010", "100", "0", "0010", "110", "0000", "00", "0111", "101", "0100", "11", "10", "111", "0110", "1101", "010", "000", "1", "001", "0001", "011", "1001", "1011", "1100"];
+    if(cipher){
+        var output = "";
+        string = string.toUpperCase();
+        for(var i = 0; i < string.length; i++){
+            if(string[i] == " "){
+                output += space+" ";
+            }
+            else if(alphabet.indexOf(string[i]) > -1){
+                var m = morse_table[alphabet.indexOf(string[i])];
+                m = m.replace(new RegExp(/1/, "g"), dash).replace(new RegExp(/0/, "g"), dot);
+                output += m+" ";
+            }
+        }
+        output = output.substring(0, output.length-1);
+        return output;
+    }
+    else{
+        var output = "";
+        var words = string.split(space);
+        for(var i = 0; i < words.length; i++){
+            var chars = words[i].split(" ");
+            for(var j = 0; j < chars.length; j++){
+                var char = chars[j];
+                console.log(char);
+                char = char.replace(new RegExp(dash, "g"), "1").replace(new RegExp("\\"+dot, "g"), "0");
+                console.log(char);
+                if(morse_table.indexOf(char) > -1) output += alphabet[morse_table.indexOf(char)];
+            }
+            if(i < words.length-1) output += " ";
+        }
+        return output;
+    }
+}
+
 function cipher_button_click(e, i){
     var args = [];
     for(var j = 0; j < ciphers[i][1].length; j++){
@@ -210,7 +247,8 @@ function cipher_button_click(e, i){
 var ciphers = [
     ["caesar", ["id:caesar_in:value", "id:caesar_shift:value", "id:caesar_casesensitive:checked", "cipher"]],
     ["alphabetsub", ["id:alphabetsub_in:value", "id:alphabetsub_alphabet:value", "id:alphabetsub_casesensitive:checked", "cipher"]],
-    ["affine", ["id:affine_in:value", "id:affine_alphabet:value", "id:affine_a:value", "id:affine_b:value", "id:affine_casesensitive:checked", "cipher"]]
+    ["affine", ["id:affine_in:value", "id:affine_alphabet:value", "id:affine_a:value", "id:affine_b:value", "id:affine_casesensitive:checked", "cipher"]],
+    ["morse", ["id:morse_in:value", "id:morse_dash:value", "id:morse_dot:value", "id:morse_space:value", "cipher"]]
 ];
 for(var i = 0; i < ciphers.length; i++){
     (function(i){
