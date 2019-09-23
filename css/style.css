@@ -9,7 +9,7 @@ body{
     max-width: 50em;
     padding: 1em;
 }
-h2{
+h2, h1{
     font-weight: normal;
 }
 #light{
