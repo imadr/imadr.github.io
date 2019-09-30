@@ -63,6 +63,10 @@ var pixel_size;
 
 var pixel_ratio = 5/1366;
 var ms = 1;
+var min_width = 900;
+
+window.addEventListener("resize", pre_init);
+pre_init();
 
 function init(){
     cancelAnimationFrame(anim_request);
@@ -165,11 +169,7 @@ function draw(){
     ctx.putImageData(imgData, 0, 0);
 }
 
-init();
-window.addEventListener("resize", function(){
-    init();
-});
-document.body.addEventListener("mousemove", function(e){
+function mousemove_event(e){
     var x = Math.floor(e.clientX/pixel_size);
     var y = Math.floor(e.clientY/pixel_size);
     array[x][y] = 1;
@@ -197,7 +197,19 @@ document.body.addEventListener("mousemove", function(e){
             array[x-1][y-1] = 1;
         }
     }
-});
+}
+
+function pre_init(){
+    if(document.documentElement.clientWidth >= min_width){
+        init();
+        document.body.addEventListener("mousemove", mousemove_event);
+    }
+    else{
+        cancelAnimationFrame(anim_request);
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        document.body.removeEventListener("mousemove", mousemove_event);
+    }
+}
 </script>
 </body>
 </html>
