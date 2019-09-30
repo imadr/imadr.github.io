@@ -32,20 +32,23 @@
             left: 0px;
             z-index: -1;
             opacity: 0.2;
-            image-rendering: optimizeSpeed;
-            image-rendering: -moz-crisp-edges;
-            image-rendering: -webkit-optimize-contrast;
-            image-rendering: -o-crisp-edges;
-            image-rendering: pixelated;
-            -ms-interpolation-mode: nearest-neighbor;
-            width: 100%;
-            height: 100%;
+        }
+                #perf{
+            position: absolute;
+            top: 0px;
+            left: 0px;
+            font-size: x-small;
+            color: red;
         }
     </style>
 </head>
 <body>
 <main>
+    <span id="perf"></span>
     <h1>Stuff</h1>
+    <h2><a href="cryptography.html">Cryptography Tools</h2>
+    <h2><a href="websites.html">Cool websites</h2>
+    <h2><a href="hello.html">Hello world!</h2>
     <h2><a href="cryptography.html">Cryptography Tools</a></h2>
     <h2><a href="websites.html">Cool websites</a></h2>
     <h2><a href="hello.html">Hello world!</a></h2>
@@ -57,17 +60,16 @@ var canvas = document.getElementById("canvas");
 var ctx = canvas.getContext("2d");
 var array_size;
 var array;
-var anim_request;
-var time;
+var pixel_size;
 
-var pixel_size = 5;
-var ms = 50;
+var pixel_scaling = 180;
+var speed = 1;
 
 function init(){
-    cancelAnimationFrame(anim_request);
-    array_size = [Math.ceil(document.documentElement.clientWidth/pixel_size), Math.ceil(document.documentElement.clientHeight/pixel_size)];
-    canvas.width = array_size[0];
-    canvas.height = array_size[1];
+    canvas.width = document.documentElement.clientWidth;
+    canvas.height = document.documentElement.clientHeight;
+    pixel_size = canvas.width/pixel_scaling;
+    array_size = [Math.ceil(canvas.width/pixel_size), Math.ceil(canvas.height/pixel_size)];
     array = [];
     for(var i = 0; i < array_size[0]; i++){
         array[i] = [];
@@ -75,20 +77,18 @@ function init(){
             array[i][j] = Math.random() > 0.1 ? 0 : 1;
         }
     }
-    time = Date.now();
-    update(true);
 }
 
-function update(first){
-    anim_request = window.requestAnimationFrame(update);
-    if(first !== true && Date.now()-time < ms) return;
+function update(){
+        var t0 = performance.now();
 
+    var copy_array = JSON.parse(JSON.stringify(array));
     var new_gen = [];
     for(var i = 0; i < array_size[0]; i++){
         new_gen[i] = [];
         for(var j = 0; j < array_size[1]; j++){
             var neighbours = 0;
-            var alive = array[i][j];
+            var alive = copy_array[i][j];
 
             var i2 = i+1;
             var i3 = i-1;
@@ -108,14 +108,14 @@ function update(first){
                 j3 = array_size[1]-1;
             }
 
-            neighbours += array[i2][j];
-            neighbours += array[i2][j2];
-            neighbours += array[i2][j3];
-            neighbours += array[i3][j];
-            neighbours += array[i3][j2];
-            neighbours += array[i3][j3];
-            neighbours += array[i][j3];
-            neighbours += array[i][j2];
+            neighbours += copy_array[i2][j];
+            neighbours += copy_array[i2][j2];
+            neighbours += copy_array[i2][j3];
+            neighbours += copy_array[i3][j];
+            neighbours += copy_array[i3][j2];
+            neighbours += copy_array[i3][j3];
+            neighbours += copy_array[i][j3];
+            neighbours += copy_array[i][j2];
 
 
             if(alive){
@@ -136,34 +136,42 @@ function update(first){
             }
         }
     }
-    array = new_gen;
+    array = JSON.parse(JSON.stringify(new_gen));
+    var t1 = performance.now();
     draw();
-
-    time = Date.now();
+    var t2 = performance.now();
+    document.getElementById("perf").innerHTML = "logic: "+(t1-t0)+"ms - draw: "+(t2-t1)+"ms - total: "+(t2-t0)+"ms";
 }
 
 function draw(){
-    var imgData = ctx.getImageData(0, 0, canvas.width, canvas.height);
-    var d = imgData.data;
-
-    for(var i = 0; i < d.length; i += 4){
-        if(array[(i >> 2)%array_size[0]][Math.floor((i >> 2)/array_size[0])]){
+    for(var i = 0; i < array_size[0]; i++){
+        for(var j = 0; j < array_size[1]; j++){
+            var p = array[i][j];
             if(theme == "dark"){
-                d[i] = d[i+1] = d[i+2] = 255;
+                if(p){
+                    ctx.fillStyle = "white";
+                }
+                else{
+                    ctx.fillStyle = "black";
+                }
             }
             else{
-                d[i] = d[i+1] = d[i+2] = 0;
+                if(p){
+                    ctx.fillStyle = "black";
+                }
+                else{
+                    ctx.fillStyle = "white";
+                }
             }
-            d[i+3] = 255;
-        }
-        else{
-            d[i+3] = 0;
+
+            ctx.fillRect(i*pixel_size, j*pixel_size, pixel_size, pixel_size);
         }
     }
-    ctx.putImageData(imgData, 0, 0);
 }
 
 init();
+update();
+setInterval(update, speed);
 window.addEventListener("resize", function(){
     init();
 });
