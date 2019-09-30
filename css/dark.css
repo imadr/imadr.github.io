@@ -22,3 +22,20 @@ input[type="checkbox"]:checked:after{
     background-color: #eaeaea;
     color: #1a1a1a;
 }
+.select_option .option:hover{
+    background-color: #444;
+}
+.select_option .option{
+    border: 1px solid white;
+    background-color: #1a1a1a;
+    border-top: none;
+}
+.select_option{
+    border-top: 1px solid white;
+}
+.select_view{
+    border: 1px solid white;
+}
+main{
+    background-color: #1a1a1a;
+}

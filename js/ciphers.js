@@ -5,11 +5,12 @@ function getc(c){
     return document.getElementsByClassName(c);
 }
 
-var collapse_arrows = getc("collapse_arrow");
-for(var i = 0; i < collapse_arrows.length; i++){
+var collapse = getc("collapse");
+for(var i = 0; i < collapse.length; i++){
     (function(){
-        collapse_arrows[i].addEventListener("click", function(){
-            this.innerHTML = this.innerHTML == "▲" ? "▼" : "▲";
+        collapse[i].addEventListener("click", function(){
+            var arrow = this.querySelector("span");
+            arrow.innerHTML = arrow.innerHTML == "▲" ? "▼" : "▲";
             var div = get(this.id.split("_")[1]);
             div.classList.toggle("invisible");
         });
@@ -51,7 +52,7 @@ function egcd(a, b){
     return [a, x1, y1];
 }
 
-function affine(string, alphabet, a, b, casesensitive, cipher){
+function affine(input, alphabet, a, b, casesensitive, cipher){
     clear_error("affine");
     var errors = [], fatal_error = false;
     var g = egcd(a, 26);
@@ -80,13 +81,13 @@ function affine(string, alphabet, a, b, casesensitive, cipher){
     set_error("affine", errors);
 
     if(!fatal_error){
-        var new_string = "";
+        var output = "";
         a = parseInt(a);
         b = parseInt(b);
 
-        for(var i = 0; i < string.length; i++){
-            var current_char = string[i];
-            var current_char_i = alphabet.indexOf(string[i].toUpperCase());
+        for(var i = 0; i < input.length; i++){
+            var current_char = input[i];
+            var current_char_i = alphabet.indexOf(input[i].toUpperCase());
 
             if(cipher){
                 var sub_char = alphabet[(current_char_i*a+b)%s];
@@ -100,24 +101,24 @@ function affine(string, alphabet, a, b, casesensitive, cipher){
 
             if(current_char_i > -1){
                 if(casesensitive && current_char != current_char.toUpperCase()){
-                    new_string += sub_char.toLowerCase();
+                    output += sub_char.toLowerCase();
                 }
                 else{
-                    new_string += sub_char;
+                    output += sub_char;
                 }
             }
             else{
-                new_string += string[i];
+                output += input[i];
             }
         }
-        return new_string;
+        return output;
     }
     else{
         return "";
     }
 }
 
-function caesar(string, shift, casesensitive, cipher){
+function caesar(input, shift, casesensitive, cipher){
     if(typeof shift != "undefined"){
         var alphabet = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
         shift = parseInt(shift);
@@ -127,26 +128,26 @@ function caesar(string, shift, casesensitive, cipher){
         if(shift < 0){
             shift = 26-Math.abs(shift)%26;
         }
-        var new_string = "";
+        var output = "";
 
-        for(var i = 0; i < string.length; i++){
-            var current_char = string[i];
-            var current_char_i = alphabet.indexOf(string[i].toUpperCase());
+        for(var i = 0; i < input.length; i++){
+            var current_char = input[i];
+            var current_char_i = alphabet.indexOf(input[i].toUpperCase());
             var sub_char = alphabet[(current_char_i+shift)%26];
 
             if(current_char_i > -1){
                 if(casesensitive && current_char != current_char.toUpperCase()){
-                    new_string += sub_char.toLowerCase();
+                    output += sub_char.toLowerCase();
                 }
                 else{
-                    new_string += sub_char;
+                    output += sub_char;
                 }
             }
             else{
-                new_string += string[i];
+                output += input[i];
             }
         }
-        return new_string;
+        return output;
     }
 }
 
@@ -160,8 +161,8 @@ function shuffle(input){
     return output.join("");
 }
 
-function alphabetsub(string, alphabet_sub, casesensitive, cipher){
-    var new_string = "";
+function alphabetsub(input, alphabet_sub, casesensitive, cipher){
+    var output = "";
     var alphabet = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
 
     if(!cipher){
@@ -170,48 +171,48 @@ function alphabetsub(string, alphabet_sub, casesensitive, cipher){
         alphabet_sub = tmp;
     }
 
-    for(var i = 0; i < string.length; i++){
-        var current_char = string[i];
-        var current_char_i = alphabet.indexOf(string[i].toUpperCase());
+    for(var i = 0; i < input.length; i++){
+        var current_char = input[i];
+        var current_char_i = alphabet.indexOf(input[i].toUpperCase());
         var sub_char = alphabet_sub[current_char_i];
 
         if(current_char_i > -1){
             if(casesensitive && current_char != current_char.toUpperCase()){
-                new_string += sub_char.toLowerCase();
+                output += sub_char.toLowerCase();
             }
             else{
-                new_string += sub_char;
+                output += sub_char;
             }
         }
         else{
-            new_string += current_char;
+            output += current_char;
         }
     }
-    return new_string;
+    return output;
 }
 
-function morse(string, dash, dot, space, cipher){
+function morse(input, dash, dot, space, cipher){
     var alphabet = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
     var morse_table = ["01", "1000", "1010", "100", "0", "0010", "110", "0000", "00", "0111", "101", "0100", "11", "10", "111", "0110", "1101", "010", "000", "1", "001", "0001", "011", "1001", "1011", "1100"];
     if(cipher){
         var output = "";
-        string = string.toUpperCase();
-        for(var i = 0; i < string.length; i++){
-            if(string[i] == " "){
+        input = input.toUpperCase();
+        for(var i = 0; i < input.length; i++){
+            if(input[i] == " "){
                 output += space+" ";
             }
-            else if(alphabet.indexOf(string[i]) > -1){
-                var m = morse_table[alphabet.indexOf(string[i])];
+            else if(alphabet.indexOf(input[i]) > -1){
+                var m = morse_table[alphabet.indexOf(input[i])];
                 m = m.replace(new RegExp(/1/, "g"), dash).replace(new RegExp(/0/, "g"), dot);
                 output += m+" ";
             }
         }
-        output = output.substring(0, output.length-1);
+        output = output.subinput(0, output.length-1);
         return output;
     }
     else{
         var output = "";
-        var words = string.split(space);
+        var words = input.split(space);
         for(var i = 0; i < words.length; i++){
             var chars = words[i].split(" ");
             for(var j = 0; j < chars.length; j++){
@@ -244,11 +245,99 @@ function cipher_button_click(e, i){
     get(ciphers[i][0]+"_out").value = window[ciphers[i][0]].apply(null, args);
 }
 
+function base64(input, encode){
+    // rework this
+    if(encode){
+        return btoa(input);
+    }
+    else{
+        return atob(input);
+    }
+}
+
+function ascii(input, encode){
+    switch(get("ascii_base").innerHTML){
+        case "Binary":
+            var base = 2;
+            break;
+        case "Octal":
+            var base = 8;
+            break;
+        case "Decimal":
+            var base = 10;
+            break;
+        case "Hexadecimal":
+            var base = 16;
+            break;
+    }
+    if(encode){
+        var output = "";
+        for(var i = 0; i < input.length; i++){
+            output += input.charCodeAt(i).toString(base);
+            if(i < input.length-1) output += " ";
+        }
+        return output;
+    }
+    else{
+        var output = "";
+        var words = input.split(" ");
+        for(var i = 0; i < words.length; i++){
+            output += String.fromCharCode(parseInt(words[i], base));
+        }
+        return output;
+    }
+}
+
+function vigenere(input, key, alphabet, casesensitive, cipher){
+    if(key.length > 0){
+        var output = "";
+        var key_index = 0;
+        var key = key.repeat(Math.ceil(input.length/key.length)).substring(0, input.length);
+
+        for(var i = 0; i < input.length; i++){
+            var current_char = input[i];
+            var current_char_i = alphabet.indexOf(input[i].toUpperCase());
+            var shift = alphabet.indexOf(key[key_index].toUpperCase());
+
+            if(shift > -1){
+                if(!cipher){
+                    shift = -shift;
+                }
+                if(shift < 0){
+                    shift = 26-Math.abs(shift)%26;
+                }
+                var sub_char = alphabet[(current_char_i+shift)%26];
+
+                if(current_char_i > -1){
+                    if(casesensitive && current_char != current_char.toUpperCase()){
+                        output += sub_char.toLowerCase();
+                    }
+                    else{
+                        output += sub_char;
+                    }
+                    key_index++;
+                }
+                else{
+                    output += input[i];
+                }
+            }
+        }
+        return output;
+    }
+}
+
+function random_alphabet(){
+    return shuffle("ABCDEFGHIJKLMNOPQRSTUVWXYZ");
+}
+
 var ciphers = [
     ["caesar", ["id:caesar_in:value", "id:caesar_shift:value", "id:caesar_casesensitive:checked", "cipher"]],
     ["alphabetsub", ["id:alphabetsub_in:value", "id:alphabetsub_alphabet:value", "id:alphabetsub_casesensitive:checked", "cipher"]],
     ["affine", ["id:affine_in:value", "id:affine_alphabet:value", "id:affine_a:value", "id:affine_b:value", "id:affine_casesensitive:checked", "cipher"]],
-    ["morse", ["id:morse_in:value", "id:morse_dash:value", "id:morse_dot:value", "id:morse_space:value", "cipher"]]
+    ["morse", ["id:morse_in:value", "id:morse_dash:value", "id:morse_dot:value", "id:morse_space:value", "cipher"]],
+    ["base64", ["id:base64_in:value", "cipher"]],
+    ["ascii", ["id:ascii_in:value", "cipher"]],
+    ["vigenere", ["id:vigenere_in:value", "id:vigenere_key:value", "id:vigenere_alphabet:value", "id:vigenere_casesensitive:checked", "cipher"]],
 ];
 for(var i = 0; i < ciphers.length; i++){
     (function(i){
@@ -261,7 +350,10 @@ for(var i = 0; i < ciphers.length; i++){
     }(i));
 }
 
-get("alphabetsub_alphabet").value = shuffle("ABCDEFGHIJKLMNOPQRSTUVWXYZ");
+get("alphabetsub_alphabet").value = random_alphabet();
 get("generate_alphabetsub").addEventListener("click", function(){
-    get("alphabetsub_alphabet").value = shuffle("ABCDEFGHIJKLMNOPQRSTUVWXYZ");
+    get("alphabetsub_alphabet").value = random_alphabet();
+});
+get("generate_vigenere").addEventListener("click", function(){
+    get("vigenere_alphabet").value = random_alphabet();
 });

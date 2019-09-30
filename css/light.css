@@ -18,3 +18,20 @@ input[type="checkbox"]:checked:after{
     background-color: black;
     color: white;
 }
+.select_option .option:hover{
+    background-color: #dfdfdf;
+}
+.select_option .option{
+    border: 1px solid black;
+    background-color: white;
+    border-top: none;
+}
+.select_option{
+    border-top: 1px solid black;
+}
+.select_view{
+    border: 1px solid black;
+}
+main{
+	background-color: white;
+}

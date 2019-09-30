@@ -15,10 +15,9 @@ h2, h1{
 #light{
     font-size: 30px;
     margin: 5px;
-    position: absolute;
+    position: fixed;
     top: 5px;
     right: 5px;
-    cursor: pointer;
     user-select: none;
     -moz-user-select: none;
     -webkit-user-select: none;
@@ -31,7 +30,7 @@ p{
     font-size: 15px;
 }
 #index{
-    position: absolute;
+    position: fixed;
     top: 5px;
     left: 5px;
 }
@@ -49,9 +48,7 @@ textarea{
 .tenpx{
     margin-bottom: 10px;
 }
-.collapse_arrow{
-    font-size: 20px;
-    cursor: pointer;
+.collapse span{
     -webkit-user-select: none;
     -moz-user-select: none;
     -ms-user-select: none;
@@ -89,4 +86,42 @@ input[type="checkbox"]:checked:after{
     display: inline-block;
     margin: initial;
     margin-top: 20px;
+}
+input[type="number"]{
+    -webkit-appearance: textfield;
+    -moz-appearance: textfield;
+    appearance: textfield;
+}
+input[type=number]::-webkit-inner-spin-button, input[type=number]::-webkit-outer-spin-button{
+    -webkit-appearance: none;
+}
+.select{
+    height: 20px;
+    font-size: 14px;
+    display: inline-block;
+    position: relative;
+    user-select: none;
+    -moz-user-select: none;
+    -webkit-user-select: none;
+    -ms-user-select: none;
+}
+.select_view{
+    height: 100%;
+    box-sizing: border-box;
+    padding-left: 6px;
+    padding-right: 6px;
+    cursor: default;
+}
+.select_arrow{
+    padding-left: 10px;
+}
+.select_option{
+    z-index: 999;
+    position: absolute;
+    margin-top: -1px;
+    min-width: 100%;
+}
+.select_option .option{
+    padding-left: 6px;
+    padding-right: 6px;
 }
