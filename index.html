@@ -59,12 +59,14 @@ var array_size;
 var array;
 var anim_request;
 var time;
+var pixel_size;
 
-var pixel_size = 5;
-var ms = 50;
+var pixel_ratio = 5/1366;
+var ms = 1;
 
 function init(){
     cancelAnimationFrame(anim_request);
+    pixel_size = document.documentElement.clientWidth*pixel_ratio;
     array_size = [Math.ceil(document.documentElement.clientWidth/pixel_size), Math.ceil(document.documentElement.clientHeight/pixel_size)];
     canvas.width = array_size[0];
     canvas.height = array_size[1];
