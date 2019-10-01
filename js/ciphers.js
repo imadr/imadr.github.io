@@ -331,13 +331,14 @@ function random_alphabet(){
 }
 
 var ciphers = [
-    ["caesar", ["id:caesar_in:value", "id:caesar_shift:value", "id:caesar_casesensitive:checked", "cipher"]],
-    ["alphabetsub", ["id:alphabetsub_in:value", "id:alphabetsub_alphabet:value", "id:alphabetsub_casesensitive:checked", "cipher"]],
-    ["affine", ["id:affine_in:value", "id:affine_alphabet:value", "id:affine_a:value", "id:affine_b:value", "id:affine_casesensitive:checked", "cipher"]],
-    ["morse", ["id:morse_in:value", "id:morse_dash:value", "id:morse_dot:value", "id:morse_space:value", "cipher"]],
-    ["base64", ["id:base64_in:value", "cipher"]],
-    ["ascii", ["id:ascii_in:value", "cipher"]],
-    ["vigenere", ["id:vigenere_in:value", "id:vigenere_key:value", "id:vigenere_alphabet:value", "id:vigenere_casesensitive:checked", "cipher"]],
+    ["caesar", ["id:caesar_in:value", "id:caesar_shift:value", "id:caesar_casesensitive:checked", "cipher"], 0],
+    ["alphabetsub", ["id:alphabetsub_in:value", "id:alphabetsub_alphabet:value", "id:alphabetsub_casesensitive:checked", "cipher"], 1],
+    ["affine", ["id:affine_in:value", "id:affine_alphabet:value", "id:affine_a:value", "id:affine_b:value", "id:affine_casesensitive:checked", "cipher"], 0],
+    ["morse", ["id:morse_in:value", "id:morse_dash:value", "id:morse_dot:value", "id:morse_space:value", "cipher"], 0],
+    ["base64", ["id:base64_in:value", "cipher"], 0],
+    ["ascii", ["id:ascii_in:value", "cipher"], 0],
+    ["vigenere", ["id:vigenere_in:value", "id:vigenere_key:value", "id:vigenere_alphabet:value", "id:vigenere_casesensitive:checked", "cipher"], 1],
+    ["autokey", ["id:autokey_in:value", "id:autokey_key:value", "id:autokey_alphabet:value", "id:vigenere_casesensitive:checked", "cipher"], 1],
 ];
 for(var i = 0; i < ciphers.length; i++){
     (function(i){
@@ -347,13 +348,12 @@ for(var i = 0; i < ciphers.length; i++){
         get("decipher_button_"+ciphers[i][0]).addEventListener("click", function(){
             cipher_button_click(this, i);
         });
+        if(ciphers[i][2]){
+            get("generate_"+ciphers[i][0]).addEventListener("click", function(){
+                get(ciphers[i][0]+"_alphabet").value = random_alphabet();
+            });
+        }
     }(i));
 }
 
 get("alphabetsub_alphabet").value = random_alphabet();
-get("generate_alphabetsub").addEventListener("click", function(){
-    get("alphabetsub_alphabet").value = random_alphabet();
-});
-get("generate_vigenere").addEventListener("click", function(){
-    get("vigenere_alphabet").value = random_alphabet();
-});

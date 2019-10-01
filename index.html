@@ -60,13 +60,26 @@ var array;
 var anim_request;
 var time;
 var pixel_size;
+var born, survive;
 
-var pixel_ratio = 5/1366;
+var rules = ["B3/S23", "B3/S12345", "B36/S125", "B1357/S1357", "B3/S012345678"]
+var random = [1, 1, 1, 0, 0];
+
+var random_rule = pick(rules);
+var rule = random_rule[1];
+var rule_index = random_rule[0];
+
+var pixel_ratio = 4/1366;
 var ms = 1;
 var min_width = 900;
 
 window.addEventListener("resize", pre_init);
 pre_init();
+
+function pick(array){
+    var index = Math.floor(Math.random()*array.length);
+    return [index, array[index]];
+}
 
 function init(){
     cancelAnimationFrame(anim_request);
@@ -78,9 +91,18 @@ function init(){
     for(var i = 0; i < array_size[0]; i++){
         array[i] = [];
         for(var j = 0; j < array_size[1]; j++){
-            array[i][j] = Math.random() > 0.1 ? 0 : 1;
+            if(random[rule_index]){
+                array[i][j] = Math.random() > 0.1 ? 0 : 1;
+            }
+            else{
+                array[i][j] = 0;
+            }
         }
     }
+
+    born = rule.split("/")[0].replace("B", "").split("").map(function(x){ return parseInt(x); });
+    survive = rule.split("/")[1].replace("S", "").split("").map(function(x){ return parseInt(x); });
+
     time = Date.now();
     update(true);
 }
@@ -123,17 +145,17 @@ function update(first){
             neighbours += array[i][j3];
             neighbours += array[i][j2];
 
-
             if(alive){
-                if(neighbours < 2 || neighbours > 3){
-                    new_gen[i][j] = 0;
-                }
-                else{
+                if(survive.indexOf(neighbours) > -1){
                     new_gen[i][j] = 1;
+                }
+
+                else{
+                    new_gen[i][j] = 0;
                 }
             }
             else if(!alive){
-                if(neighbours == 3){
+                if(born.indexOf(neighbours) > -1){
                     new_gen[i][j] = 1;
                 }
                 else{
