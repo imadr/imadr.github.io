@@ -326,6 +326,82 @@ function vigenere(input, key, alphabet, casesensitive, cipher){
     }
 }
 
+function trithemius(input, casesensitive, cipher){
+    var output = "";
+    var key_index = 0;
+    var alphabet = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+    var key = alphabet.repeat(Math.ceil(input.length/alphabet.length)).substring(0, input.length);
+
+    for(var i = 0; i < input.length; i++){
+        var current_char = input[i];
+        var current_char_i = alphabet.indexOf(input[i].toUpperCase());
+        var shift = alphabet.indexOf(key[key_index].toUpperCase());
+
+        if(shift > -1){
+            if(!cipher){
+                shift = -shift;
+            }
+            if(shift < 0){
+                shift = 26-Math.abs(shift)%26;
+            }
+            var sub_char = alphabet[(current_char_i+shift)%26];
+
+            if(current_char_i > -1){
+                if(casesensitive && current_char != current_char.toUpperCase()){
+                    output += sub_char.toLowerCase();
+                }
+                else{
+                    output += sub_char;
+                }
+                key_index++;
+            }
+            else{
+                output += input[i];
+            }
+        }
+    }
+    return output;
+}
+
+function autokey(input, key, alphabet, casesensitive, cipher){
+    if(key.length > 0){
+        var output = "";
+        var key_index = 0;
+        var key = (key+input.replace(/\s/g, "")).substring(0, input.length);
+        console.log(key);
+
+        for(var i = 0; i < input.length; i++){
+            var current_char = input[i];
+            var current_char_i = alphabet.indexOf(input[i].toUpperCase());
+            var shift = alphabet.indexOf(key[key_index].toUpperCase());
+
+            if(shift > -1){
+                if(!cipher){
+                    shift = -shift;
+                }
+                if(shift < 0){
+                    shift = 26-Math.abs(shift)%26;
+                }
+                var sub_char = alphabet[(current_char_i+shift)%26];
+
+                if(current_char_i > -1){
+                    if(casesensitive && current_char != current_char.toUpperCase()){
+                        output += sub_char.toLowerCase();
+                    }
+                    else{
+                        output += sub_char;
+                    }
+                    key_index++;
+                }
+                else{
+                    output += input[i];
+                }
+            }
+        }
+        return output;
+    }
+}
+
 function random_alphabet(){
     return shuffle("ABCDEFGHIJKLMNOPQRSTUVWXYZ");
 }
@@ -338,7 +414,8 @@ var ciphers = [
     ["base64", ["id:base64_in:value", "cipher"], 0],
     ["ascii", ["id:ascii_in:value", "cipher"], 0],
     ["vigenere", ["id:vigenere_in:value", "id:vigenere_key:value", "id:vigenere_alphabet:value", "id:vigenere_casesensitive:checked", "cipher"], 1],
-    ["autokey", ["id:autokey_in:value", "id:autokey_key:value", "id:autokey_alphabet:value", "id:vigenere_casesensitive:checked", "cipher"], 1],
+    ["autokey", ["id:autokey_in:value", "id:autokey_key:value", "id:autokey_alphabet:value", "id:autokey_casesensitive:checked", "cipher"], 1],
+    ["trithemius", ["id:trithemius_in:value", "id:trithemius_casesensitive:checked", "cipher"], 0],
 ];
 for(var i = 0; i < ciphers.length; i++){
     (function(i){
