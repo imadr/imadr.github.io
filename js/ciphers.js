@@ -402,6 +402,52 @@ function autokey(input, key, alphabet, casesensitive, cipher){
     }
 }
 
+get("frequency_analyse").addEventListener("click", function(){
+    var input = get("frequency_in").value;
+    if(input.length > 0){
+        get("frequency_table").classList.remove("invisible");
+        var n = parseInt(get("frequency_n").value);
+        var frequency = {};
+        input = input.replace(/\s/g, "");
+        input = input.toUpperCase();
+        if(get("frequency_letters").checked){
+            input = input.replace(/[^A-Z]/g, "");
+        }
+        for(var i = 0; i < input.length; i+=n){
+            var b = false;
+            var ngram = "";
+            for(var j = 0; j < n; j++){
+                if(input[i+j] == undefined){
+                    b = true;
+                    break;
+                }
+                ngram += input[i+j];
+            }
+            if(b) break;
+            if(frequency[ngram] == undefined){
+                frequency[ngram] = 1;
+            }
+            else{
+                frequency[ngram]++;
+            }
+        }
+        var frequency_sorted = [];
+        for(var key in frequency){
+            frequency_sorted.push([key, frequency[key]]);
+        }
+        frequency_sorted.sort(function(a, b){
+            return b[1]-a[1];
+        });
+        var tbody = get("frequency_table").querySelector("tbody");
+        tbody.innerHTML = "";
+        for(var i = 0; i < frequency_sorted.length; i++){
+            var p = Math.round(frequency_sorted[i][1]/input.length*10000)/100;
+            var str = "<tr><td>"+(i+1)+"</td><td>"+frequency_sorted[i][0]+"</td><td>"+frequency_sorted[i][1]+"</td><td>"+p+"</td></tr>";
+            tbody.insertAdjacentHTML("beforeend", str.toString());
+        }
+    }
+});
+
 function random_alphabet(){
     return shuffle("ABCDEFGHIJKLMNOPQRSTUVWXYZ");
 }

@@ -35,3 +35,6 @@ input[type="checkbox"]:checked:after{
 main{
 	background-color: white;
 }
+table, td, th{
+    border: 1px solid black;
+}

@@ -114,6 +114,30 @@
         <textarea id="vigenere_out"></textarea>
     </div>
 
+    <h2 class="n_title">Cryptanalysis</h2>
+
+    <h3 class="collapse" id="collapse_frequency">Frequency Analysis <span>▼</span></h3>
+    <div id="frequency" class="">
+        <textarea id="frequency_in"></textarea>
+        <br class="tenpx">
+        n = <input id="frequency_n" type="number" value="1">
+        <br class="tenpx">
+        Letters only: <input checked="" type="checkbox" id="frequency_letters">
+        <br class="tenpx">
+        <button id="frequency_analyse">Analyse</button>
+        <br class="tenpx">
+        <table id="frequency_table" class="invisible">
+            <thead>
+                <th>#</th>
+                <th>n-gram</th>
+                <th>occurrences</th>
+                <th>%</th>
+            </thead>
+            <tbody>
+            </tbody>
+        </table>
+    </div>
+
     <h2 class="n_title">Character encoding</h2>
 
     <h3 class="collapse" id="collapse_ascii">ASCII/UTF-16 <span>▼</span></h3>

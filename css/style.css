@@ -125,3 +125,10 @@ input[type=number]::-webkit-inner-spin-button, input[type=number]::-webkit-outer
     padding-left: 6px;
     padding-right: 6px;
 }
+table{
+    border-collapse: collapse;
+}
+td, th{
+    padding-left: 1em;
+    padding-right: 1em;
+}
