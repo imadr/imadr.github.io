@@ -50,6 +50,8 @@
     <br>
     <button id="pause_button">Pause</button> <button id="step_button">Step</button> ms: <input type="number" id="input_ms" class="small_input" min="1">
     <br>
+    <button id="clear_button">Clear</button>
+    <br>
     Grid size: <input type="number" id="input_grid_size_x" class="small_input" min="1"> x <input type="number" id="input_grid_size_y" class="small_input" min="1">
     <br>
     Rule: <input type="text" id="input_rule">
@@ -115,6 +117,9 @@ get("hide_button").addEventListener("click", function(){
 get("show_button").addEventListener("click", function(){
     get("option").classList.toggle("invisible");
     get("show_button").classList.toggle("invisible");
+});
+get("clear_button").addEventListener("click", function(){
+    reset_grid();
 });
 
 var inputs = [
