@@ -7,6 +7,7 @@ a{
 textarea, button, input{
     border: 1px solid black;
     color: black;
+    background-color: white;
 }
 input[type="checkbox"]{
     border: 1px solid black;

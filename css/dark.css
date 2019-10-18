@@ -11,6 +11,7 @@ a{
 button, textarea, input{
     border: 1px solid white;
     color: white;
+    background-color: #1a1a1a;
 }
 input[type="checkbox"]{
     border: 1px solid white;

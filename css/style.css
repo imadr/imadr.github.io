@@ -55,7 +55,7 @@ textarea{
     user-select: none;
 }
 .invisible{
-    display: none;
+    display: none !important;
 }
 input[type="checkbox"]{
     appearance: none;

@@ -5,9 +5,326 @@
     <title>Cellular automaton</title>
     <link rel="stylesheet" href="css/style.css">
     <link id="css" rel="stylesheet" href="css/light.css">
+    <style>
+    body{
+        overflow: hidden;
+        max-width: inherit;
+        width: 100%;
+        margin: 0;
+        padding: 0;
+    }
+    #canvas{
+        position: absolute;
+        top: 0px;
+        left: 0px;
+        z-index: 0;
+    }
+    #option{
+        z-index: 1;
+        position: absolute;
+        display: inline-block;
+        top: 10px;
+        left: 10px;
+        background-color: white;
+        border: 1px solid black;
+        padding: 10px;
+    }
+    #show_button{
+        position: absolute;
+        top: 10px;
+        left: 10px;
+    }
+    .small_input{
+        width: 30px;
+        text-align: center;
+    }
+    br{
+        margin-bottom: 8px;
+    }
+    </style>
 </head>
 <body>
 <canvas id="canvas"></canvas>
+<div id="option">
+    <button id="hide_button">Hide</button>
+    <br>
+    <button id="pause_button">Pause</button> <button id="step_button">Step</button> ms: <input type="number" id="input_ms" class="small_input" min="1">
+    <br>
+    Grid size: <input type="number" id="input_grid_size_x" class="small_input" min="1"> x <input type="number" id="input_grid_size_y" class="small_input" min="1">
+    <br>
+    Rule: <input type="text" id="input_rule">
+    <br>
+    <div id="logs"></div>
+    <!--Neighborhood:
+    <br>
+    <canvas id="neighborhood"></canvas>-->
+</div>
+<button class="invisible" id="show_button">►</button>
+<script>
+var canvas = document.getElementById("canvas");
+var ctx = canvas.getContext("2d");
 
+/*var canvas_neighborhood = document.getElementById("neighborhood");
+var ctx2 = canvas_neighborhood.getContext("2d");
+canvas_neighborhood.width = 45+4;
+canvas_neighborhood.height = 45+4;
+ctx2.fillStyle = "black";
+for(var i = 0; i < 4; i++){
+    ctx2.fillRect(i*((canvas_neighborhood.width-1)/3), 0, 1, canvas_neighborhood.height);
+    ctx2.fillRect(0, i*((canvas_neighborhood.height-1)/3), canvas_neighborhood.width, 1);
+}
+ctx2.fillRect(17, 17, 15, 15);*/
+
+var grid_size = [100, 100];
+var offset = [0, 0];
+var grid = [];
+var ms = 100;
+var cell_size = 10;
+var hover_cell = [-1, -1];
+var neighborhood = [1,1,1,1,1,1,1,1];
+
+var rule = "B3/S23";
+var born, survive;
+var paused = false;
+var step = false;
+var anim_request;
+var time;
+var mouse_dragging = false;
+var start_drag = [0, 0];
+var offset_drag = [0, 0];
+
+window.addEventListener("resize", init);
+document.body.addEventListener("mousemove", mousemove);
+document.body.addEventListener("mousedown", mousedown);
+document.body.addEventListener("mouseup", mouseup);
+document.body.addEventListener("wheel", zoom);
+
+get("pause_button").addEventListener("click", function(){
+    paused = !paused;
+    this.innerHTML = this.innerHTML == "Pause" ? "Play" : "Pause";
+});
+get("step_button").addEventListener("click", function(){
+    paused = true;
+    step = true;
+    get("pause_button").innerHTML = "Play";
+});
+get("hide_button").addEventListener("click", function(){
+    get("option").classList.toggle("invisible");
+    get("show_button").classList.toggle("invisible");
+});
+get("show_button").addEventListener("click", function(){
+    get("option").classList.toggle("invisible");
+    get("show_button").classList.toggle("invisible");
+});
+
+var inputs = [
+    ["input_grid_size_x", "array", "grid_size", 0, "int", ["reset_grid", "init"]],
+    ["input_grid_size_y", "array", "grid_size", 1, "int", ["reset_grid", "init"]],
+    ["input_ms", "notarray", "ms", 0, "int", []],
+    ["input_rule", "notarray", "rule", 0, "string", ["update_rule"]],
+];
+for(var i = 0; i < inputs.length; i++){
+    (function(i){
+        if(inputs[i][1] == "array"){
+            get(inputs[i][0]).value = window[inputs[i][2]][inputs[i][3]];
+        }
+        else{
+            get(inputs[i][0]).value = window[inputs[i][2]];
+        }
+        get(inputs[i][0]).addEventListener("input", function(){
+            if(this.checkValidity()){
+                var val = this.value;
+                if(inputs[i][4] == "int"){
+                    val = parseInt(val);
+                }
+                if(inputs[i][1] == "array"){
+                    window[inputs[i][2]][inputs[i][3]] = val;
+                }
+                else{
+                    window[inputs[i][2]] = val;
+                }
+                var fns = inputs[i][5];
+                for(var j = 0; j < fns.length; j++){
+                    window[fns[j]]();
+                }
+            }
+        });
+    }(i));
+}
+
+reset_grid();
+init();
+
+function get(i){
+    return document.getElementById(i);
+}
+
+function zoom(e){
+    if(event.deltaY > 0){
+        if(cell_size > 1) cell_size--;
+    }
+    else{
+        if(cell_size < 50) cell_size++;
+    }
+    center_offset();
+}
+
+function mousemove(e){
+    hover_cell[0] = Math.floor((e.clientX-offset[0])/cell_size);
+    hover_cell[1] = Math.floor((e.clientY-offset[1])/cell_size);
+    if(mouse_dragging){
+        offset_drag[0] = start_drag[0]-e.clientX;
+        offset_drag[1] = start_drag[1]-e.clientY;
+        center_offset();
+    }
+}
+
+function mousedown(e){
+    if(e.target != canvas){
+        return;
+    }
+    if(e.which == 1){
+        var x = Math.floor((e.clientX-offset[0])/cell_size);
+        var y = Math.floor((e.clientY-offset[1])/cell_size);
+        if(grid[x] !== undefined && grid[x][y] !== undefined) grid[x][y] = grid[x][y] == 0 ? 1 : 0;
+    }
+    if(e.which == 2){
+        start_drag = [e.clientX+offset_drag[0], e.clientY+offset_drag[1]];
+        mouse_dragging = true;
+    }
+}
+
+function mouseup(e){
+    if(e.which == 2){
+        mouse_dragging = false;
+    }
+}
+
+function update_rule(){
+    born = rule.split("/")[0].replace("B", "").split("").map(function(x){ return parseInt(x); });
+    survive = rule.split("/")[1].replace("S", "").split("").map(function(x){ return parseInt(x); });
+}
+
+function update(){
+    var perf = performance.now();
+    anim_request = window.requestAnimationFrame(update);
+    if((!paused || step) && Date.now()-time > ms){
+        step = false;
+        time = Date.now();
+
+        var new_gen = [];
+        for(var i = 0; i < grid_size[0]; i++){
+            new_gen[i] = [];
+            for(var j = 0; j < grid_size[1]; j++){
+                var neighbours = 0;
+                var alive = grid[i][j];
+
+                var i2 = i+1;
+                var i3 = i-1;
+                var j2 = j+1;
+                var j3 = j-1;
+
+                if(i2 == grid_size[0]){
+                    i2 = 0;
+                }
+                if(i3 == -1){
+                    i3 = grid_size[0]-1;
+                }
+                if(j2 == grid_size[1]){
+                    j2 = 0;
+                }
+                if(j3 == -1){
+                    j3 = grid_size[1]-1;
+                }
+
+                if(neighborhood[0]) neighbours += grid[i2][j];
+                if(neighborhood[1]) neighbours += grid[i2][j2];
+                if(neighborhood[2]) neighbours += grid[i2][j3];
+                if(neighborhood[3]) neighbours += grid[i3][j];
+                if(neighborhood[4]) neighbours += grid[i3][j2];
+                if(neighborhood[5]) neighbours += grid[i3][j3];
+                if(neighborhood[6]) neighbours += grid[i][j3];
+                if(neighborhood[7]) neighbours += grid[i][j2];
+
+                if(alive){
+                    if(survive.indexOf(neighbours) > -1){
+                        new_gen[i][j] = 1;
+                    }
+
+                    else{
+                        new_gen[i][j] = 0;
+                    }
+                }
+                else if(!alive){
+                    if(born.indexOf(neighbours) > -1){
+                        new_gen[i][j] = 1;
+                    }
+                    else{
+                        new_gen[i][j] = 0;
+                    }
+                }
+            }
+        }
+        grid = new_gen;
+    }
+    draw();
+}
+
+function draw(){
+    ctx.fillStyle = "white";
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    for(var i = 0; i < grid_size[0]; i++){
+        for(var j = 0; j < grid_size[1]; j++){
+            if(grid[i][j] == 0){
+                ctx.fillStyle = "white";
+            }
+            if(grid[i][j] == 1){
+                ctx.fillStyle = "black";
+            }
+            if(i == hover_cell[0] && j == hover_cell[1]){
+                if(grid[i][j] == 0){
+                    ctx.fillStyle = "rgba(0, 0, 0, 0.3)";
+                }
+                else{
+                    ctx.fillStyle = "rgba(0, 0, 0, 0.7)";
+                }
+            }
+            ctx.fillRect(i*cell_size+offset[0], j*cell_size+offset[1], cell_size, cell_size);
+        }
+    }
+
+    ctx.fillStyle = "black";
+    ctx.beginPath();
+    ctx.moveTo(offset[0], offset[1]);
+    ctx.lineTo(grid_size[0]*cell_size+offset[0], offset[1]);
+    ctx.lineTo(grid_size[0]*cell_size+offset[0], grid_size[1]*cell_size+offset[1]);
+    ctx.lineTo(offset[0], grid_size[1]*cell_size+offset[1]);
+    ctx.lineTo(offset[0], offset[1]);
+    ctx.stroke();
+}
+
+function center_offset(zoom){
+    offset = [canvas.width/2-(grid_size[0]*cell_size)/2-offset_drag[0], canvas.height/2-(grid_size[1]*cell_size)/2-offset_drag[1]];
+}
+
+function reset_grid(){
+    for(var i = 0; i < grid_size[0]; i++){
+        grid[i] = [];
+        for(var j = 0; j < grid_size[1]; j++){
+            grid[i][j] = 0;
+        }
+    }
+}
+
+function init(){
+    cancelAnimationFrame(anim_request);
+    canvas.width = document.documentElement.clientWidth;
+    canvas.height = document.documentElement.clientHeight;
+    center_offset();
+    time = Date.now();
+    update_rule();
+    update();
+}
+</script>
 </body>
 </html>

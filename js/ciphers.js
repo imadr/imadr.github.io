@@ -228,23 +228,6 @@ function morse(input, dash, dot, space, cipher){
     }
 }
 
-function cipher_button_click(e, i){
-    var args = [];
-    for(var j = 0; j < ciphers[i][1].length; j++){
-        var watdo = ciphers[i][1][j].split(":")[0];
-        var current_arg = ciphers[i][1][j].split(":")[1];
-        var attribute = ciphers[i][1][j].split(":")[2];
-
-        if(watdo == "id"){
-            args[j] = get(current_arg)[attribute];
-        }
-        else if(watdo == "cipher"){
-            args[j] = e.id.startsWith("cipher_button");
-        }
-    }
-    get(ciphers[i][0]+"_out").value = window[ciphers[i][0]].apply(null, args);
-}
-
 function base64(input, encode){
     // rework this
     if(encode){
@@ -450,6 +433,23 @@ get("frequency_analyse").addEventListener("click", function(){
 
 function random_alphabet(){
     return shuffle("ABCDEFGHIJKLMNOPQRSTUVWXYZ");
+}
+
+function cipher_button_click(e, i){
+    var args = [];
+    for(var j = 0; j < ciphers[i][1].length; j++){
+        var watdo = ciphers[i][1][j].split(":")[0];
+        var current_arg = ciphers[i][1][j].split(":")[1];
+        var attribute = ciphers[i][1][j].split(":")[2];
+
+        if(watdo == "id"){
+            args[j] = get(current_arg)[attribute];
+        }
+        else if(watdo == "cipher"){
+            args[j] = e.id.startsWith("cipher_button");
+        }
+    }
+    get(ciphers[i][0]+"_out").value = window[ciphers[i][0]].apply(null, args);
 }
 
 var ciphers = [
