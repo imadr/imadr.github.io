@@ -2,7 +2,7 @@
 <html>
 <head>
     <meta charset="utf-8">
-    <title>Cryptography Tools</title>
+    <title>Cryptography</title>
     <link rel="stylesheet" href="css/style.css">
     <link id="css" rel="stylesheet" href="css/light.css">
     <style>
@@ -10,11 +10,18 @@
             list-style-type: none;
             padding: 0;
         }
+        .s{
+            width: 2em;
+        }
+        #hill_matrix input{
+            margin-right: 3px;
+            margin-bottom: 3px;
+        }
     </style>
 </head>
 <body>
     <div id="index"><a href="index.html">Index</a></div>
-    <h1>Cryptography Tools</h1>
+    <h1>Cryptography</h1>
     <h2 class="n_title">Monoalphabetic substitution</h2>
 
     <h3 class="collapse" id="collapse_affine">Affine cipher <span>▼</span></h3>
@@ -118,6 +125,22 @@
 
     <h3 class="collapse" id="collapse_hill">Hill cipher <span>▼</span></h3>
 
+    <div id="hill" class="">
+        <textarea id="hill_in"></textarea>
+        <br class="tenpx">
+        n: <input id="hill_n" class="s" type="number" value="3">
+        <br class="tenpx">
+        n × n matrix:
+        <br class="tenpx">
+        <div id="hill_matrix">
+        </div>
+        <br>
+        <button id="cipher_button_hill">Cipher</button>
+        <button id="decipher_button_hill">Decipher</button>
+        <br class="tenpx">
+        <textarea id="hill_out"></textarea>
+    </div>
+
     <h2 class="n_title">Cryptanalysis</h2>
 
     <h3 class="collapse" id="collapse_frequency">Frequency Analysis <span>▼</span></h3>
@@ -195,7 +218,7 @@
     </div>
 
     <script src="js/light.js"></script>
-    <script src="js/ciphers.js"></script>
+    <script src="js/cryptography.js"></script>
     <script src="js/select.js"></script>
 </body>
 </html>

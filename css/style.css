@@ -1,9 +1,10 @@
 @font-face {
-    font-family: 'IBM Plex Mono';
+    font-family: "IBM Plex Mono";
     src: url('plex.woff2') format('woff2');
+    font-display: swap;
 }
 body{
-    font-family: 'IBM Plex Mono', monospace;
+    font-family: "IBM Plex Mono", monospace;
     font-weight: normal;
     margin: 2em auto;
     max-width: 50em;
@@ -36,7 +37,7 @@ p{
 }
 textarea, button, input{
     background-color: transparent;
-    font-family: 'IBM Plex Mono', monospace;
+    font-family: "IBM Plex Mono", monospace;
 }
 button{
     height: 20px;

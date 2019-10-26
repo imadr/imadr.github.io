@@ -385,6 +385,34 @@ function autokey(input, key, alphabet, casesensitive, cipher){
     }
 }
 
+get("hill_n").addEventListener("input", function(){
+    hill_matrix(this);
+});
+hill_matrix(get("hill_n"));
+
+function hill_matrix(e){
+    var n = parseInt(e.value);
+    if(n > 15){
+        e.value = 15;
+    }
+    if(n < 2){
+        e.value = 2;
+    }
+    n = parseInt(e.value);
+    get("hill_matrix").innerHTML = "";
+    for(var i = 0; i < n; i++){
+        for(var j = 0; j < n; j++){
+            var s = "<input id=\"hill_n\" class=\"s\" type=\"number\" value=\"0\">";
+            get("hill_matrix").insertAdjacentHTML("beforeend", s);
+        }
+        get("hill_matrix").insertAdjacentHTML("beforeend", "<br>");
+    }
+}
+
+function hill(input){
+
+}
+
 get("frequency_analyse").addEventListener("click", function(){
     var input = get("frequency_in").value;
     if(input.length > 0){
@@ -462,6 +490,7 @@ var ciphers = [
     ["vigenere", ["id:vigenere_in:value", "id:vigenere_key:value", "id:vigenere_alphabet:value", "id:vigenere_casesensitive:checked", "cipher"], 1],
     ["autokey", ["id:autokey_in:value", "id:autokey_key:value", "id:autokey_alphabet:value", "id:autokey_casesensitive:checked", "cipher"], 1],
     ["trithemius", ["id:trithemius_in:value", "id:trithemius_casesensitive:checked", "cipher"], 0],
+    ["hill", ["id:hill_in:value", "cipher"], 0],
 ];
 for(var i = 0; i < ciphers.length; i++){
     (function(i){
