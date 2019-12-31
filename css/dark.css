@@ -43,3 +43,7 @@ main{
 table, td, th{
     border: 1px solid white;
 }
+h1{
+    color: #1a1a1a;
+    background-color: #eaeaea;
+}

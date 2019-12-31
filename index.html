@@ -25,6 +25,7 @@
         }
         h1{
             margin: 0;
+            display: inline-block;
         }
         canvas{
             position: absolute;
@@ -45,7 +46,7 @@
 </head>
 <body>
 <main>
-    <h1>Stuff</h1>
+    <h1>imadr.codes</h1>
     <h2><a href="automaton.html">Cellular automaton</a></h2>
     <h2><a href="cryptography.html">Cryptography</a></h2>
     <h2><a href="websites.html">Cool websites</a></h2>
@@ -63,8 +64,8 @@ var time;
 var pixel_size;
 var born, survive;
 
-var rules = ["B3/S23", "B3/S12345", "B36/S125", "B1357/S1357", "B3/S012345678"]
-var random = [1, 1, 1, 0, 0];
+var rules = ["B3/S23", "B3/S12345", "B1357/S1357", "B3/S012345678"];
+var random = [1, 1, 1, 1];
 
 var random_rule = pick(rules);
 var rule = random_rule[1];

@@ -207,7 +207,7 @@ function morse(input, dash, dot, space, cipher){
                 output += m+" ";
             }
         }
-        output = output.subinput(0, output.length-1);
+        output = output.substring(0, output.length-1);
         return output;
     }
     else{
