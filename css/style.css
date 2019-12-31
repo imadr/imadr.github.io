@@ -1,6 +1,6 @@
 @font-face {
     font-family: "IBM Plex Mono";
-    src: url('plex.woff2') format('woff2');
+    src: url("plex.woff2") format("woff2");
     font-display: swap;
 }
 body{
@@ -10,7 +10,7 @@ body{
     max-width: 50em;
     padding: 1em;
 }
-h2, h1{
+h3, h2, h1{
     font-weight: normal;
 }
 #light{
@@ -45,9 +45,6 @@ button{
 textarea{
     width: 400px;
     height: 120px;
-}
-.tenpx{
-    margin-bottom: 10px;
 }
 .collapse span{
     -webkit-user-select: none;

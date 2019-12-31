@@ -17,6 +17,13 @@
             margin-right: 3px;
             margin-bottom: 3px;
         }
+        br{
+            display: block;
+            content: "";
+            margin-top: 0.5em;
+            line-height: 190%;
+            vertical-align: top;
+        }
     </style>
 </head>
 <body>
@@ -27,17 +34,17 @@
     <h3 class="collapse" id="collapse_affine">Affine cipher <span>▼</span></h3>
     <div id="affine" class="invisible">
         <textarea id="affine_in"></textarea>
-        <br class="tenpx">
+        <br>
         Alphabet: <input id="affine_alphabet" type="text" value="ABCDEFGHIJKLMNOPQRSTUVWXYZ" style="min-width: 210px;">
-        <br class="tenpx">
+        <br>
         Case Sensitive: <input checked="" type="checkbox" id="affine_casesensitive">
-        <br class="tenpx">
+        <br>
         Key A: <input id="affine_a" type="number" style="width: 50px;">
         Key B: <input id="affine_b" type="number" style="width: 50px;">
-        <br class="tenpx">
+        <br>
         <button id="cipher_button_affine">Cipher</button>
         <button id="decipher_button_affine">Decipher</button>
-        <br class="tenpx">
+        <br>
         <span id="affine_error"></span>
         <textarea id="affine_out"></textarea>
     </div>
@@ -45,29 +52,29 @@
     <h3 class="collapse" id="collapse_caesar">Caesar cipher <span>▼</span></h3>
     <div id="caesar" class="invisible">
         <textarea id="caesar_in"></textarea>
-        <br class="tenpx">
+        <br>
         Case Sensitive: <input checked="" type="checkbox" id="caesar_casesensitive">
         Shift: <input id="caesar_shift" type="number" value="6">
-        <br class="tenpx">
+        <br>
         <button id="cipher_button_caesar">Cipher</button>
         <button id="decipher_button_caesar">Decipher</button>
-        <br class="tenpx">
+        <br>
         <textarea id="caesar_out"></textarea>
     </div>
 
     <h3 class="collapse" id="collapse_alphabetsub">Monoalphabetic substitution <span>▼</span></h3>
     <div id="alphabetsub" class="invisible">
         <textarea id="alphabetsub_in"></textarea>
-        <br class="tenpx">
+        <br>
         Alphabet: <input id="alphabetsub_alphabet" type="text" value="ABCDEFGHIJKLMNOPQRSTUVWXYZ" style="min-width: 210px;">
-        <br class="tenpx">
+        <br>
         <button id="generate_alphabetsub">Generate alphabet</button>
-        <br class="tenpx">
+        <br>
         Case Sensitive: <input checked="" type="checkbox" id="alphabetsub_casesensitive">
-        <br class="tenpx">
+        <br>
         <button id="cipher_button_alphabetsub">Cipher</button>
         <button id="decipher_button_alphabetsub">Decipher</button>
-        <br class="tenpx">
+        <br>
         <textarea id="alphabetsub_out"></textarea>
     </div>
 
@@ -76,48 +83,48 @@
     <h3 class="collapse" id="collapse_autokey">Autokey cipher <span>▼</span></h3>
     <div id="autokey" class="invisible">
         <textarea id="autokey_in"></textarea>
-        <br class="tenpx">
+        <br>
         Key: <input id="autokey_key" type="text">
-        <br class="tenpx">
+        <br>
         Alphabet: <input id="autokey_alphabet" type="text" value="ABCDEFGHIJKLMNOPQRSTUVWXYZ" style="min-width: 210px;">
-        <br class="tenpx">
+        <br>
         <button id="generate_autokey">Generate alphabet</button>
-        <br class="tenpx">
+        <br>
         Case Sensitive: <input checked="" type="checkbox" id="autokey_casesensitive">
-        <br class="tenpx">
+        <br>
         <button id="cipher_button_autokey">Cipher</button>
         <button id="decipher_button_autokey">Decipher</button>
-        <br class="tenpx">
+        <br>
         <textarea id="autokey_out"></textarea>
     </div>
 
     <h3 class="collapse" id="collapse_trithemius">Trithemius Cipher <span>▼</span></h3>
     <div id="trithemius" class="invisible">
         <textarea id="trithemius_in"></textarea>
-        <br class="tenpx">
+        <br>
         Case Sensitive: <input checked="" type="checkbox" id="trithemius_casesensitive">
-        <br class="tenpx">
+        <br>
         <button id="cipher_button_trithemius">Cipher</button>
         <button id="decipher_button_trithemius">Decipher</button>
-        <br class="tenpx">
+        <br>
         <textarea id="trithemius_out"></textarea>
     </div>
 
     <h3 class="collapse" id="collapse_vigenere">Vigenère cipher <span>▼</span></h3>
     <div id="vigenere" class="invisible">
         <textarea id="vigenere_in"></textarea>
-        <br class="tenpx">
+        <br>
         Key: <input id="vigenere_key" type="text">
-        <br class="tenpx">
+        <br>
         Alphabet: <input id="vigenere_alphabet" type="text" value="ABCDEFGHIJKLMNOPQRSTUVWXYZ" style="min-width: 210px;">
-        <br class="tenpx">
+        <br>
         <button id="generate_vigenere">Generate alphabet</button>
-        <br class="tenpx">
+        <br>
         Case Sensitive: <input checked="" type="checkbox" id="vigenere_casesensitive">
-        <br class="tenpx">
+        <br>
         <button id="cipher_button_vigenere">Cipher</button>
         <button id="decipher_button_vigenere">Decipher</button>
-        <br class="tenpx">
+        <br>
         <textarea id="vigenere_out"></textarea>
     </div>
 
@@ -127,17 +134,17 @@
 
     <div id="hill" class="invisible">
         <textarea id="hill_in"></textarea>
-        <br class="tenpx">
+        <br>
         n: <input id="hill_n" class="s" type="number" value="3">
-        <br class="tenpx">
+        <br>
         n × n matrix:
-        <br class="tenpx">
+        <br>
         <div id="hill_matrix">
         </div>
         <br>
         <button id="cipher_button_hill">Cipher</button>
         <button id="decipher_button_hill">Decipher</button>
-        <br class="tenpx">
+        <br>
         <textarea id="hill_out"></textarea>
     </div>
 
@@ -146,13 +153,13 @@
     <h3 class="collapse" id="collapse_frequency">Frequency Analysis <span>▼</span></h3>
     <div id="frequency" class="invisible">
         <textarea id="frequency_in"></textarea>
-        <br class="tenpx">
+        <br>
         n = <input id="frequency_n" type="number" value="1">
-        <br class="tenpx">
+        <br>
         Letters only: <input checked="" type="checkbox" id="frequency_letters">
-        <br class="tenpx">
+        <br>
         <button id="frequency_analyse">Analyse</button>
-        <br class="tenpx">
+        <br>
         <table id="frequency_table" class="invisible">
             <thead>
                 <th>#</th>
@@ -170,7 +177,7 @@
     <h3 class="collapse" id="collapse_ascii">ASCII/UTF-16 <span>▼</span></h3>
     <div id="ascii" class="invisible">
         <textarea id="ascii_in"></textarea>
-        <br class="tenpx">
+        <br>
         Base:
         <div class="select">
             <div class="select_view">
@@ -184,36 +191,36 @@
                 <div class="option">Hexadecimal</div>
             </div>
         </div>
-        <br class="tenpx">
+        <br>
         <button id="cipher_button_ascii">Encode</button>
         <button id="decipher_button_ascii">Decode</button>
-        <br class="tenpx">
+        <br>
         <textarea id="ascii_out"></textarea>
     </div>
 
     <h3 class="collapse" id="collapse_base64">Base64 <span>▼</span></h3>
     <div id="base64" class="invisible">
         <textarea id="base64_in"></textarea>
-        <br class="tenpx">
+        <br>
         <button id="cipher_button_base64">Encode</button>
         <button id="decipher_button_base64">Decode</button>
-        <br class="tenpx">
+        <br>
         <textarea id="base64_out"></textarea>
     </div>
 
     <h3 class="collapse" id="collapse_morse">Morse code <span>▼</span></h3>
-    <div id="morse" class="invisible">
+    <div id="morse" class="">
         <textarea id="morse_in"></textarea>
-        <br class="tenpx">
+        <br>
         Dash character: <input id="morse_dash" type="text" value="−">
-        <br class="tenpx">
+        <br>
         Dot character: <input id="morse_dot" type="text" value="·">
-        <br class="tenpx">
+        <br>
         Space character: <input id="morse_space" type="text" value="/">
-        <br class="tenpx">
+        <br>
         <button id="cipher_button_morse">Encode</button>
         <button id="decipher_button_morse">Decode</button>
-        <br class="tenpx">
+        <br>
         <textarea id="morse_out"></textarea>
     </div>
 
