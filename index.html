@@ -64,8 +64,8 @@ var time;
 var pixel_size;
 var born, survive;
 
-var rules = ["B3/S23", "B3/S12345", "B1357/S1357", "B3/S012345678"];
-var random = [1, 1, 1, 1];
+var rules = ["B3/S23", "B3/S12345", "B678/S345678"];
+var random = [0.1, 0.1, 0.5];
 
 var random_rule = pick(rules);
 var rule = random_rule[1];
@@ -93,12 +93,7 @@ function init(){
     for(var i = 0; i < array_size[0]; i++){
         array[i] = [];
         for(var j = 0; j < array_size[1]; j++){
-            if(random[rule_index]){
-                array[i][j] = Math.random() > 0.1 ? 0 : 1;
-            }
-            else{
-                array[i][j] = 0;
-            }
+            array[i][j] = Math.random() > random[rule_index] ? 0 : 1;
         }
     }
 
