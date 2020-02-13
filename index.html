@@ -33,7 +33,7 @@
             top: 0px;
             left: 0px;
             z-index: -1;
-            opacity: 1;
+            opacity: 0.2;
             image-rendering: optimizeSpeed;
             image-rendering: -moz-crisp-edges;
             image-rendering: -webkit-optimize-contrast;
@@ -42,9 +42,6 @@
             -ms-interpolation-mode: nearest-neighbor;
             width: 100%;
             height: 100%;
-        }
-        main{
-            display: none;
         }
     </style>
 </head>
@@ -61,288 +58,178 @@
 <script>
 var canvas = document.getElementById("canvas");
 var ctx = canvas.getContext("2d");
+var array_size;
+var array;
+var anim_request;
+var time;
+var pixel_size;
+var born, survive;
+
+var rules = ["B3/S23", "B3/S12345", "B678/S345678"];
+var random = [0.1, 0.1, 0.5];
+
+var random_rule = pick(rules);
+var rule = random_rule[1];
+var rule_index = random_rule[0];
+
+var pixel_ratio = 4/1366;
+var ms = 1;
 var min_width = 900;
 
-function rand(min, max){
-    return Math.floor(Math.random()*(max-min+1)+min);
+window.addEventListener("resize", pre_init);
+pre_init();
+
+function pick(array){
+    var index = Math.floor(Math.random()*array.length);
+    return [index, array[index]];
 }
 
-function boids_anim(){
-    var boids = [];
-    var boids_size = 100;
-    var anim_request;
-
-    var boid_size = 15;
-    var boid_speed = 1;
-
-    var k = 150;
-
-    function generate_boids(n){
-        boids = [];
-        for(var i = 0; i < n; i++){
-            var angle = rand(0, 360)*Math.PI/180;
-            boids[i] = {};
-            boids[i].dx = Math.cos(angle);
-            boids[i].dy = Math.sin(angle);
-            boids[i].x = rand(0, canvas.width);
-            boids[i].y = rand(0, canvas.height);
+function init(){
+    cancelAnimationFrame(anim_request);
+    pixel_size = document.documentElement.clientWidth*pixel_ratio;
+    array_size = [Math.ceil(document.documentElement.clientWidth/pixel_size), Math.ceil(document.documentElement.clientHeight/pixel_size)];
+    canvas.width = array_size[0];
+    canvas.height = array_size[1];
+    array = [];
+    for(var i = 0; i < array_size[0]; i++){
+        array[i] = [];
+        for(var j = 0; j < array_size[1]; j++){
+            array[i][j] = Math.random() > random[rule_index] ? 0 : 1;
         }
     }
 
-    function update(){
-        anim_request = window.requestAnimationFrame(update);
+    born = rule.split("/")[0].replace("B", "").split("").map(function(x){ return parseInt(x); });
+    survive = rule.split("/")[1].replace("S", "").split("").map(function(x){ return parseInt(x); });
 
-        ctx.clearRect(0, 0, canvas.width, canvas.height);
-        for(var i = 0; i < boids.length; i++){
-            boids[i].x += boids[i].dx*boid_speed;
-            boids[i].y += boids[i].dy*boid_speed;
-
-            if(boids[i].x < 0) boids[i].x = canvas.width;
-            if(boids[i].y < 0) boids[i].y = canvas.height;
-            if(boids[i].x > canvas.width) boids[i].x = 0;
-            if(boids[i].y > canvas.height) boids[i].y = 0;
-
-            if(i == 50){
-
-                ctx.fillStyle = "red";
-                ctx.strokeStyle = "red";
-
-                var sum = [0, 0];
-                var count = 0;
-                for(var j = 0; j < boids.length; j++){
-                    if(j == i) continue;
-                    var d = Math.sqrt(Math.pow(boids[i].x-boids[j].x, 2)+Math.pow(boids[i].y-boids[j].y, 2));
-                    if(d <= k){
-                        var diff = [boids[i].x-boids[j].x, boids[i].y-boids[j].y];
-                        var diff_magnitude = Math.sqrt(Math.pow(diff[0], 2)+Math.pow(diff[1], 2));
-                        diff[0] /= diff_magnitude;
-                        diff[1] /= diff_magnitude;
-                        sum[0] += diff[0];
-                        sum[1] += diff[1];
-                        count++
-
-                        ctx.beginPath();
-                        ctx.moveTo(boids[i].x, boids[i].y);
-                        ctx.lineTo(boids[j].x, boids[j].y);
-                        ctx.stroke();
-                    }
-                }
-
-                if(count > 0){
-                    sum[0] /= count;
-                    sum[1] /= count;
-                    console.log(sum[0]);
-
-                    boids[i].dx = sum[0];
-                    boids[i].dy = sum[1];
-                }
-
-                ctx.beginPath();
-                ctx.arc(boids[i].x, boids[i].y, k, 0, 2*Math.PI);
-                ctx.stroke();
-            }
-
-            ctx.fillStyle = "black";
-            ctx.beginPath();
-
-            ctx.moveTo(boids[i].x+boids[i].dx*boid_size, boids[i].y+boids[i].dy*boid_size);
-            ctx.lineTo(boids[i].x-boids[i].dx*boid_size+boids[i].dy*boid_size/2, boids[i].y-boids[i].dy*boid_size-boids[i].dx*boid_size/2);
-            ctx.lineTo(boids[i].x-boids[i].dx*boid_size-boids[i].dy*boid_size/2, boids[i].y-boids[i].dy*boid_size+boids[i].dx*boid_size/2);
-            ctx.fill();
-        }
-    }
-
-    function resize(){
-        canvas.width = document.documentElement.clientWidth;
-        canvas.height = document.documentElement.clientHeight;
-        if(document.documentElement.clientWidth < min_width){
-            cancelAnimationFrame(anim_request);
-            ctx.clearRect(0, 0, canvas.width, canvas.height);
-        }
-    }
-
-    window.addEventListener("resize", resize);
-    resize();
-    generate_boids(boids_size);
-    update();
+    time = Date.now();
+    update(true);
 }
 
-boids_anim();
+function update(first){
+    anim_request = window.requestAnimationFrame(update);
+    if(first !== true && Date.now()-time < ms) return;
 
-function cellular_automata(){
-    var array_size;
-    var array;
-    var anim_request;
-    var time;
-    var pixel_size;
-    var born, survive;
+    var new_gen = [];
+    for(var i = 0; i < array_size[0]; i++){
+        new_gen[i] = [];
+        for(var j = 0; j < array_size[1]; j++){
+            var neighbours = 0;
+            var alive = array[i][j];
 
-    var rules = ["B3/S23", "B3/S12345", "B678/S345678"];
-    var random = [0.1, 0.1, 0.5];
+            var i2 = i+1;
+            var i3 = i-1;
+            var j2 = j+1;
+            var j3 = j-1;
 
-    var random_rule = pick(rules);
-    var rule = random_rule[1];
-    var rule_index = random_rule[0];
-
-    var pixel_ratio = 4/1366;
-    var ms = 1;
-
-    window.addEventListener("resize", pre_init);
-    pre_init();
-
-    function pick(array){
-        var index = Math.floor(Math.random()*array.length);
-        return [index, array[index]];
-    }
-
-    function init(){
-        cancelAnimationFrame(anim_request);
-        pixel_size = document.documentElement.clientWidth*pixel_ratio;
-        array_size = [Math.ceil(document.documentElement.clientWidth/pixel_size), Math.ceil(document.documentElement.clientHeight/pixel_size)];
-        canvas.width = array_size[0];
-        canvas.height = array_size[1];
-        array = [];
-        for(var i = 0; i < array_size[0]; i++){
-            array[i] = [];
-            for(var j = 0; j < array_size[1]; j++){
-                array[i][j] = Math.random() > random[rule_index] ? 0 : 1;
+            if(i2 == array_size[0]){
+                i2 = 0;
             }
-        }
+            if(i3 == -1){
+                i3 = array_size[0]-1;
+            }
+            if(j2 == array_size[1]){
+                j2 = 0;
+            }
+            if(j3 == -1){
+                j3 = array_size[1]-1;
+            }
 
-        born = rule.split("/")[0].replace("B", "").split("").map(function(x){ return parseInt(x); });
-        survive = rule.split("/")[1].replace("S", "").split("").map(function(x){ return parseInt(x); });
+            neighbours += array[i2][j];
+            neighbours += array[i2][j2];
+            neighbours += array[i2][j3];
+            neighbours += array[i3][j];
+            neighbours += array[i3][j2];
+            neighbours += array[i3][j3];
+            neighbours += array[i][j3];
+            neighbours += array[i][j2];
 
-        time = Date.now();
-        update(true);
-    }
-
-    function update(first){
-        anim_request = window.requestAnimationFrame(update);
-        if(first !== true && Date.now()-time < ms) return;
-
-        var new_gen = [];
-        for(var i = 0; i < array_size[0]; i++){
-            new_gen[i] = [];
-            for(var j = 0; j < array_size[1]; j++){
-                var neighbours = 0;
-                var alive = array[i][j];
-
-                var i2 = i+1;
-                var i3 = i-1;
-                var j2 = j+1;
-                var j3 = j-1;
-
-                if(i2 == array_size[0]){
-                    i2 = 0;
-                }
-                if(i3 == -1){
-                    i3 = array_size[0]-1;
-                }
-                if(j2 == array_size[1]){
-                    j2 = 0;
-                }
-                if(j3 == -1){
-                    j3 = array_size[1]-1;
+            if(alive){
+                if(survive.indexOf(neighbours) > -1){
+                    new_gen[i][j] = 1;
                 }
 
-                neighbours += array[i2][j];
-                neighbours += array[i2][j2];
-                neighbours += array[i2][j3];
-                neighbours += array[i3][j];
-                neighbours += array[i3][j2];
-                neighbours += array[i3][j3];
-                neighbours += array[i][j3];
-                neighbours += array[i][j2];
-
-                if(alive){
-                    if(survive.indexOf(neighbours) > -1){
-                        new_gen[i][j] = 1;
-                    }
-
-                    else{
-                        new_gen[i][j] = 0;
-                    }
-                }
-                else if(!alive){
-                    if(born.indexOf(neighbours) > -1){
-                        new_gen[i][j] = 1;
-                    }
-                    else{
-                        new_gen[i][j] = 0;
-                    }
+                else{
+                    new_gen[i][j] = 0;
                 }
             }
-        }
-        array = new_gen;
-        draw();
-
-        time = Date.now();
-    }
-
-    function draw(){
-        var imgData = ctx.getImageData(0, 0, canvas.width, canvas.height);
-        var d = imgData.data;
-
-        for(var i = 0; i < d.length; i += 4){
-            if(array[(i >> 2)%array_size[0]][Math.floor((i >> 2)/array_size[0])]){
-                if(theme == "dark"){
-                    d[i] = d[i+1] = d[i+2] = 255;
+            else if(!alive){
+                if(born.indexOf(neighbours) > -1){
+                    new_gen[i][j] = 1;
                 }
                 else{
-                    d[i] = d[i+1] = d[i+2] = 0;
+                    new_gen[i][j] = 0;
                 }
-                d[i+3] = 255;
+            }
+        }
+    }
+    array = new_gen;
+    draw();
+
+    time = Date.now();
+}
+
+function draw(){
+    var imgData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+    var d = imgData.data;
+
+    for(var i = 0; i < d.length; i += 4){
+        if(array[(i >> 2)%array_size[0]][Math.floor((i >> 2)/array_size[0])]){
+            if(theme == "dark"){
+                d[i] = d[i+1] = d[i+2] = 255;
             }
             else{
-                d[i+3] = 0;
+                d[i] = d[i+1] = d[i+2] = 0;
             }
-        }
-        ctx.putImageData(imgData, 0, 0);
-    }
-
-    function mousemove_event(e){
-        var x = Math.floor(e.clientX/pixel_size);
-        var y = Math.floor(e.clientY/pixel_size);
-        array[x][y] = 1;
-        if(array[x][y-1] !== undefined){
-            array[x][y-1] = 1;
-        }
-        if(array[x][y+1] !== undefined){
-            array[x][y+1] = 1;
-        }
-        if(array[x+1] !== undefined){
-            array[x+1][y] = 1;
-            if(array[x+1][y+1] !== undefined){
-                array[x+1][y+1] = 1;
-            }
-            if(array[x+1][y-1] !== undefined){
-                array[x+1][y-1] = 1;
-            }
-        }
-        if(array[x-1] !== undefined){
-            array[x-1][y] = 1;
-            if(array[x-1][y+1] !== undefined){
-                array[x-1][y+1] = 1;
-            }
-            if(array[x-1][y-1] !== undefined){
-                array[x-1][y-1] = 1;
-            }
-        }
-    }
-
-    function pre_init(){
-        if(document.documentElement.clientWidth >= min_width){
-            init();
-            document.body.addEventListener("mousemove", mousemove_event);
+            d[i+3] = 255;
         }
         else{
-            cancelAnimationFrame(anim_request);
-            ctx.clearRect(0, 0, canvas.width, canvas.height);
-            document.body.removeEventListener("mousemove", mousemove_event);
+            d[i+3] = 0;
+        }
+    }
+    ctx.putImageData(imgData, 0, 0);
+}
+
+function mousemove_event(e){
+    var x = Math.floor(e.clientX/pixel_size);
+    var y = Math.floor(e.clientY/pixel_size);
+    array[x][y] = 1;
+    if(array[x][y-1] !== undefined){
+        array[x][y-1] = 1;
+    }
+    if(array[x][y+1] !== undefined){
+        array[x][y+1] = 1;
+    }
+    if(array[x+1] !== undefined){
+        array[x+1][y] = 1;
+        if(array[x+1][y+1] !== undefined){
+            array[x+1][y+1] = 1;
+        }
+        if(array[x+1][y-1] !== undefined){
+            array[x+1][y-1] = 1;
+        }
+    }
+    if(array[x-1] !== undefined){
+        array[x-1][y] = 1;
+        if(array[x-1][y+1] !== undefined){
+            array[x-1][y+1] = 1;
+        }
+        if(array[x-1][y-1] !== undefined){
+            array[x-1][y-1] = 1;
         }
     }
 }
-//cellular_automata();
+
+function pre_init(){
+    if(document.documentElement.clientWidth >= min_width){
+        init();
+        document.body.addEventListener("mousemove", mousemove_event);
+    }
+    else{
+        cancelAnimationFrame(anim_request);
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        document.body.removeEventListener("mousemove", mousemove_event);
+    }
+}
 </script>
 </body>
 </html>
