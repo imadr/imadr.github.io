@@ -31,13 +31,20 @@
             color: rgb(240, 217, 181);
         }
         .pos{
-            position: absolute;
-            bottom: 0px;
-            right: 2px;
             font-size: 10px;
             color: rgb(181, 136, 99);
             font-weight: bold;
             user-select: none;
+        }
+        .pos .file{
+            position: absolute;
+            left: 2px;
+            bottom: 0px;
+        }
+        .pos .rank{
+            position: absolute;
+            right: 2px;
+            top: 0px;
         }
         .cell{
             cursor: pointer;
@@ -48,135 +55,485 @@
         }
         .main{
             display: flex;
-            justify-content: center;
-            margin-top: 30px;
+            margin: 30px;
         }
         .info{
             margin-left: 20px;
+            width: 500px;
         }
         h1{
             margin: 0;
         }
         .selected{
-            background-color: grey;
+            background-color: #286028c4;
         }
-        .circle:before{
+        .indicator-target-empty:before{
             content: " \25CF";
             font-size: 50px;
-            color: grey;
+            color: #286028c4;
             display: none;
         }
-        .target .circle:before{
+        .indicator-target-piece{
+            background-image: url("img/corner.svg");
+            background-size: 100% 100%;
+            background-position: 50% 50%;
+            background-repeat: no-repeat;
+            width: 100%;
+            height: 100%;
+            display: none;
+        }
+        .target-empty .indicator-target-empty:before{
             display: inherit;
+        }
+        .target-piece .indicator-target-piece{
+            display: inherit;
+        }
+        #moves{
+            border-collapse: collapse;
+        }
+        #moves tr{
+            border-bottom: 2px solid gray;
+        }
+        #moves td{
+            width: 25px;
+            padding: 5px;
+        }
+        #moves_container{
+            height: 420px;
+            width: 260px;
+            overflow-y: scroll;
+            scrollbar-width: thin;
+            margin-top: 20px;
+            resize: both;
+        }
+        #current_turn{
+            font-size: 30px;
+            font-weight: bold;
+        }
+        table{
+            width: 100%;
         }
     </style>
 </head>
 <body>
     <div class="main">
-        <div class="board"></div>
+        <div id="game_board" class="board"></div>
         <div class="info">
-            <h1>White turn to play</h1>
+            <div id="current_turn">White turn to play</div>
+            <div id="moves_container"><table id="moves"></table></div>
         </div>
     </div>
 
     <script>
-var current_turn = 0;
-var board = [
-    ["br", "bn", "bb", "bq", "bk", "bb", "bn", "br"],
-    ["bp", "bp", "bp", "bp", "bp", "bp", "bp", "bp"],
-    ["", "", "", "", "", "", "", ""],
-    ["", "", "", "", "", "", "", ""],
-    ["", "", "", "", "", "", "", ""],
-    ["", "", "", "", "", "", "", ""],
-    ["wp", "wp", "wp", "wp", "wp", "wp", "wp", "wp"],
-    ["wr", "wn", "wb", "wq", "wk", "wb", "wn", "wr"]
-];
 
-function generate_cells(){
-    var board = document.querySelectorAll(".board")[0];
-    var color = false;
-    var to_add = "";
-    for(var i = 0; i < 8; i++){
-        to_add += "<div class=\"row\">";
-        for(var j = 0; j < 8; j++){
-            to_add += "<div id=\""+(7-i)+"-"+j+"\" class=\"cell "+(color ? "cell-dark" : "")+"\">";
-            to_add += "<span class=\"circle\"></span>";
-            to_add += "<span class=\"pos\">";
-            if(j == 7) to_add += 8-i;
-            if(i == 7) to_add += String.fromCharCode(j+65);
-            to_add += "</span></div>";
+class Game{
+    constructor(){
+        this.board = [["r", "n", "b", "q", "k", "b", "n", "r"], ["p", "p", "p", "p", "p", "p", "p", "p"], ["", "", "", "", "", "", "", ""], ["", "", "", "", "", "", "", ""], ["", "", "", "", "", "", "", ""], ["", "", "", "", "", "", "", ""], ["P", "P", "P", "P", "P", "P", "P", "P"], ["R", "N", "B", "Q", "K", "B", "N", "R"]];
+        //this.board = [["","","","","","","","K"],["","","","","","q","",""],["","","","","","k","",""],["","","","","","","",""],["","","","","","","",""],["","","","","","","",""],["","","","","","","",""],["","","","","","","",""]];
+        this.current_turn = "w";
+        this.moves = [];
+        this.check = [];
+        this.checkmate = "";
+    }
+
+    valid(pos){
+        if(pos[0] > 7 || pos[0] < 0 || pos[1] > 7 || pos[1] < 0) return false;
+        return true;
+    }
+
+    file(n){
+        return String.fromCharCode(n+97);
+    }
+
+    figurine(piece){
+        let f = {"k": "♔", "q": "♕", "r": "♖", "b": "♗", "n": "♘", "p": "♙"};
+        return f[piece.toLowerCase()];
+    }
+
+    color(piece){
+        if(piece == "") return "";
+        return piece.toLowerCase() == piece ? "b" : "w";
+    }
+
+    in_check(color, board){
+        for(let i = 0; i < 8; i++){
+            for(let j = 0; j < 8; j++){
+                let current_piece = board[i][j];
+                if(current_piece != "" && color != this.color(current_piece)){
+                    let current_piece_valid_moves = this.valid_moves([i, j], true, board);
+                    for(let k = 0; k < current_piece_valid_moves.length; k++){
+                        let king = color == "w" ? "K" : "k";
+                        if(board[current_piece_valid_moves[k][0]][current_piece_valid_moves[k][1]] == king){
+                            return [current_piece_valid_moves[k][0], current_piece_valid_moves[k][1]];
+                        }
+                    }
+                }
+            }
+        }
+        return [];
+    }
+
+    play(pos, target, gui){
+        if(this.checkmate != "") return;
+
+        let piece = this.board[pos[0]][pos[1]];
+        let target_piece = this.board[target[0]][target[1]];
+        let capture = target_piece == "" ? "" : "x";
+        let check = "";
+        this.board[pos[0]][pos[1]] = "";
+        this.board[target[0]][target[1]] = piece;
+
+        if(piece.toLowerCase() == "p"){
+            if(target[0] == 0){
+                this.board[target[0]][target[1]] = "Q";
+            }
+            else if(target[0] == 7){
+                this.board[target[0]][target[1]] = "q";
+            }
+        }
+        this.current_turn = this.current_turn == "w" ? "b" : "w";
+
+        let in_check = this.in_check(this.current_turn, this.board);
+        let checkmate = true;
+
+        if(in_check.length > 0){
+            check = "+";
+            this.check = in_check;
+
+            for(let i = 0; i < 8; i++){
+                for(let j = 0; j < 8; j++){
+                    let current_piece = this.board[i][j];
+                    if(current_piece != "" && this.color(current_piece) == this.current_turn){
+                        if(this.valid_moves([i, j], false, this.board).length != 0){
+                            checkmate = false;
+                            break;
+                        }
+                    }
+                }
+                if(!checkmate) break;
+            }
+
+            if(checkmate){
+                check = "#";
+                this.checkmate = this.current_turn == "w" ? "b" : "w";
+            }
+        }
+        else{
+            this.check = [];
+        }
+
+        let algebraic = "";
+        if(capture == ""){
+            algebraic = (piece.toLowerCase() != "p" ? this.figurine(piece) : "")+this.file(target[1])+(8-target[0])+check;
+        }
+        else{
+            algebraic = (piece.toLowerCase() != "p" ? this.figurine(piece) : this.file(pos[1]))+capture+this.file(target[1])+(8-target[0])+check;
+        }
+
+        this.moves.push(algebraic);
+
+        gui.update_gui();
+    }
+
+    diagonal(pos, board){
+        let valid_moves = [];
+        let piece = board[pos[0]][pos[1]];
+        for(let i = pos[0]+1, j = pos[1]+1; i < 8 && j < 8; i++, j++){
+            let target = [i, j];
+            if(this.color(piece) != this.color(board[target[0]][target[1]])) valid_moves.push(target);
+            if(board[target[0]][target[1]] != "") break;
+        }
+        for(let i = pos[0]-1, j = pos[1]+1; i >= 0 && j < 8; i--, j++){
+            let target = [i, j];
+            if(this.color(piece) != this.color(board[target[0]][target[1]])) valid_moves.push(target);
+            if(board[target[0]][target[1]] != "") break;
+        }
+        for(let i = pos[0]-1, j = pos[1]-1; i >= 0 && j >= 0; i--, j--){
+            let target = [i, j];
+            if(this.color(piece) != this.color(board[target[0]][target[1]])) valid_moves.push(target);
+            if(board[target[0]][target[1]] != "") break;
+        }
+        for(let i = pos[0]+1, j = pos[1]-1; i < 8 && j >= 0; i++, j--){
+            let target = [i, j];
+            if(this.color(piece) != this.color(board[target[0]][target[1]])) valid_moves.push(target);
+            if(board[target[0]][target[1]] != "") break;
+        }
+        return valid_moves;
+    }
+
+    line(pos, board){
+        let valid_moves = [];
+        let piece = board[pos[0]][pos[1]];
+        for(let i = pos[0]+1, j = pos[1]; i < 8; i++){
+            let target = [i, j];
+            if(this.color(piece) != this.color(board[target[0]][target[1]])) valid_moves.push(target);
+            if(board[target[0]][target[1]] != "") break;
+        }
+        for(let i = pos[0]-1, j = pos[1]; i >= 0; i--){
+            let target = [i, j];
+            if(this.color(piece) != this.color(board[target[0]][target[1]])) valid_moves.push(target);
+            if(board[target[0]][target[1]] != "") break;
+        }
+        for(let i = pos[0], j = pos[1]+1; j < 8; j++){
+            let target = [i, j];
+            if(this.color(piece) != this.color(board[target[0]][target[1]])) valid_moves.push(target);
+            if(board[target[0]][target[1]] != "") break;
+        }
+        for(let i = pos[0], j = pos[1]-1; j >= 0; j--){
+            let target = [i, j];
+            if(this.color(piece) != this.color(board[target[0]][target[1]])) valid_moves.push(target);
+            if(board[target[0]][target[1]] != "") break;
+        }
+        return valid_moves;
+    }
+
+    valid_moves(pos, skip_check, board){
+        let piece = board[pos[0]][pos[1]];
+        let valid_moves = [];
+
+        if(piece.toLowerCase() == "p"){
+            let color = piece.toLowerCase() == piece ? 1 : -1;
+            let first_rank = color == 1 ? 1 : 6;
+            let target = [pos[0]+1*color, pos[1]];
+
+            if(this.valid(target) && board[target[0]][target[1]] == ""){
+                valid_moves.push(target);
+            }
+
+            target = [pos[0]+2*color, pos[1]];
+            if(this.valid(target) && board[target[0]][target[1]] == "" && pos[0] == first_rank){
+                valid_moves.push(target);
+            }
+
+            target = [pos[0]+1*color, pos[1]+1];
+            if(this.valid(target) && board[target[0]][target[1]] != "" && this.color(piece) != this.color(board[target[0]][target[1]])){
+                valid_moves.push(target);
+            }
+
+            target = [pos[0]+1*color, pos[1]-1];
+            if(this.valid(target) && board[target[0]][target[1]] != "" && this.color(piece) != this.color(board[target[0]][target[1]])){
+                valid_moves.push(target);
+            }
+        }
+        else if(piece.toLowerCase() == "b"){
+            let diagonal_moves = this.diagonal(pos, board);
+            for(let i = 0; i < diagonal_moves.length; i++){
+                valid_moves.push(diagonal_moves[i]);
+            }
+        }
+        else if(piece.toLowerCase() == "r"){
+            let line_moves = this.line(pos, board);
+            for(let i = 0; i < line_moves.length; i++){
+                valid_moves.push(line_moves[i]);
+            }
+        }
+        else if(piece.toLowerCase() == "n"){
+            let targets = [[pos[0]+1, pos[1]+2], [pos[0]+1, pos[1]-2], [pos[0]-1, pos[1]-2], [pos[0]-1, pos[1]+2],
+            [pos[0]+2, pos[1]+1], [pos[0]+2, pos[1]-1], [pos[0]-2, pos[1]-1], [pos[0]-2, pos[1]+1]];
+            for(let i = 0; i < targets.length; i++){
+                let target = targets[i];
+                if(this.valid(target) && this.color(piece) != this.color(board[target[0]][target[1]])){
+                    valid_moves.push(target);
+                }
+            }
+        }
+        else if(piece.toLowerCase() == "k"){
+            let targets = [[pos[0]+1, pos[1]], [pos[0]-1, pos[1]], [pos[0], pos[1]+1], [pos[0], pos[1]-1],
+            [pos[0]+1, pos[1]+1], [pos[0]-1, pos[1]-1], [pos[0]-1, pos[1]+1], [pos[0]+1, pos[1]-1]];
+            for(let i = 0; i < targets.length; i++){
+                let target = targets[i];
+                if(this.valid(target) && this.color(piece) != this.color(board[target[0]][target[1]])){
+                    valid_moves.push(target);
+                }
+            }
+        }
+        else if(piece.toLowerCase() == "q"){
+            let diagonal_moves = this.diagonal(pos, board);
+            for(let i = 0; i < diagonal_moves.length; i++){
+                valid_moves.push(diagonal_moves[i]);
+            }
+
+            let line_moves = this.line(pos, board);
+            for(let i = 0; i < line_moves.length; i++){
+                valid_moves.push(line_moves[i]);
+            }
+        }
+
+        if(skip_check) return valid_moves;
+
+        let valid_moves_not_check = [];
+        for(let i = 0; i < valid_moves.length; i++){
+            let board_after_move = JSON.parse(JSON.stringify(board));
+            let tmp = board_after_move[pos[0]][pos[1]];
+            board_after_move[pos[0]][pos[1]] = "";
+            board_after_move[valid_moves[i][0]][valid_moves[i][1]] = tmp;
+
+            if(this.in_check(this.current_turn, board_after_move).length == 0){
+                valid_moves_not_check.push(valid_moves[i]);
+            }
+        }
+        return valid_moves_not_check;
+    }
+}
+
+class GUI{
+    constructor(id, game){
+        this.board = document.getElementById(id);
+        this.game = game;
+        this.previous_selected = null;
+    }
+
+    init(){
+        this.generate_cells();
+        this.update_gui();
+    }
+
+    generate_cells(){
+        let color = false;
+        let to_add = "";
+        for(let i = 0; i < 8; i++){
+            to_add += "<div class=\"row\">";
+            for(let j = 0; j < 8; j++){
+                to_add += "<div id=\""+i+"-"+j+"\" class=\"cell "+(color ? "cell-dark" : "")+"\">";
+                to_add += "<span class=\"indicator-target-empty\"></span>";
+                to_add += "<span class=\"indicator-target-piece\"></span>";
+                to_add += "<span class=\"pos\">";
+                if(j == 7) to_add += "<span class=\"rank\">"+(8-i)+"</span>";
+                if(i == 7) to_add += "<span class=\"file\">"+String.fromCharCode(j+97)+"</span>";
+                to_add += "</span></div>";
+                color = !color;
+            }
+            to_add += "</div>";
             color = !color;
         }
-        to_add += "</div>";
-        color = !color;
-    }
-    board.innerHTML = to_add;
-}
+        this.board.innerHTML = to_add;
 
-function update_pieces(){
-    for(var i = 0; i < board.length; i++){
-        for(var j = 0; j < board[i].length; j++){
-            var current_cell = (7-i)+"-"+j;
-            if(board[i][j] != ""){
-                document.getElementById(current_cell).style.backgroundImage = "url(img/"+board[i][j]+".svg)";
-            }
-            else{
-                document.getElementById(current_cell).classList.add("empty");
-            }
+        let cells = document.querySelectorAll(".cell");
+        for(let i = 0; i < cells.length; i++){
+            (function(gui, game){
+                cells[i].addEventListener("click", function(){
+                    if(game.checkmate != "") return;
+
+                    let pos = [parseInt(this.id.split("-")[0]), parseInt(this.id.split("-")[1])];
+
+                    if(this.classList.contains("target")){
+                        let previous_pos = [parseInt(gui.previous_selected.id.split("-")[0]), parseInt(gui.previous_selected.id.split("-")[1])]
+                        game.play(previous_pos, pos, gui);
+                        gui.remove_targets_cells();
+                        gui.previous_selected.classList.remove("selected");
+                        return;
+                    }
+
+                    gui.remove_targets_cells();
+                    let piece = game.board[pos[0]][pos[1]];
+                    let piece_color = piece == piece.toLowerCase() ? "b" : "w";
+                    if(this.classList.contains("empty") || piece_color != game.current_turn || gui.previous_selected == this){
+                        if(gui.previous_selected != null) gui.previous_selected.classList.remove("selected");
+                        gui.previous_selected = null;
+                        return;
+                    }
+                    if(gui.previous_selected != null){
+                        gui.previous_selected.classList.remove("selected");
+                    }
+                    this.classList.add("selected");
+                    gui.previous_selected = this;
+
+                    let valid_moves = game.valid_moves(pos, false, game.board);
+                    for(let i = 0; i < valid_moves.length; i++){
+                        let cell_id = valid_moves[i][0]+"-"+valid_moves[i][1];
+                        document.getElementById(cell_id).classList.add("target");
+                        if(game.board[valid_moves[i][0]][valid_moves[i][1]] == ""){
+                            document.getElementById(cell_id).classList.add("target-empty");
+                        }
+                        else{
+                            document.getElementById(cell_id).classList.add("target-piece");
+                        }
+                    }
+                });
+            })(this, this.game);
         }
     }
-}
 
-function get_piece(pos){
-    var pos = pos.split("-");
-    return board[7-parseInt(pos[0])][parseInt(pos[1])];
-}
-
-function get_valid_moves(pos, piece){
-    var pos = [parseInt(pos.split("-")[0]), parseInt(pos.split("-")[1])];
-    var valid_moves = [];
-    if(piece[1] == "p"){
-        valid_moves.push([pos[0]+1, pos[1]]);
-        if(){
-            valid_moves.push([pos[0]+2, pos[1]]);
-        }
-    }
-    return valid_moves;
-}
-
-function show_valid_moves(pos, piece){
-    var valid_moves = get_valid_moves(pos, piece);
-    for(var i = 0; i < valid_moves.length; i++){
-        document.getElementById(valid_moves[i][0]+"-"+valid_moves[i][1]).classList.add("target");
-    }
-}
-
-generate_cells();
-update_pieces();
-
-var cells = document.querySelectorAll(".cell");
-var previous_selected = null;
-for(var i = 0; i < cells.length; i++){
-    cells[i].addEventListener("click", function(){
-        var targets = document.querySelectorAll(".target");
-        for(var j = 0; j < targets.length; j++){
+    remove_targets_cells(){
+        let targets = document.querySelectorAll(".target");
+        for(let j = 0; j < targets.length; j++){
             targets[j].classList.remove("target");
         }
-        var piece = get_piece(this.id);
-        var piece_color = piece.indexOf("w") > -1 ? 0 : 1;
-        if(this.classList.contains("empty") || piece_color != current_turn || previous_selected == this){
-            if(previous_selected != null) previous_selected.classList.remove("selected");
-            previous_selected = null;
-            return;
+        targets = document.querySelectorAll(".target-empty");
+        for(let j = 0; j < targets.length; j++){
+            targets[j].classList.remove("target-empty");
         }
-        if(previous_selected != null){
-            previous_selected.classList.remove("selected");
+        targets = document.querySelectorAll(".target-piece");
+        for(let j = 0; j < targets.length; j++){
+            targets[j].classList.remove("target-piece");
         }
-        this.classList.add("selected");
-        previous_selected = this;
-        show_valid_moves(this.id, piece);
-    });
+    }
+
+    update_gui(){
+        let checks = document.querySelectorAll(".check");
+        for(let j = 0; j < checks.length; j++){
+            checks[j].classList.remove("check");
+        }
+        if(game.check.length > 0){
+            document.getElementById(game.check[0]+"-"+game.check[1]).classList.add("check");
+        }
+
+        for(let i = 0; i < this.game.board.length; i++){
+            for(let j = 0; j < this.game.board[i].length; j++){
+                let current_cell = i+"-"+j;
+                if(this.game.board[i][j] != ""){
+                    document.getElementById(current_cell).classList.remove("empty");
+                    let bg = "";
+                    if(this.game.board[i][j].toUpperCase() == this.game.board[i][j]){
+                        bg = "url(img/w"+this.game.board[i][j]+".svg)";
+                    }
+                    else{
+                        bg = "url(img/b"+this.game.board[i][j]+".svg)";
+                    }
+                    if(document.getElementById(current_cell).classList.contains("check")){
+                        document.getElementById(current_cell).style.backgroundImage = bg+", radial-gradient(rgb(235, 1, 1) 30%, rgba(255, 255, 255, 0) 90%)";
+                    }
+                    else{
+                        document.getElementById(current_cell).style.backgroundImage = bg;
+                    }
+                }
+                else{
+                    document.getElementById(current_cell).style.backgroundImage = "";
+                    document.getElementById(current_cell).classList.add("empty");
+                }
+            }
+        }
+
+        if(game.checkmate != ""){
+            document.getElementById("current_turn").innerHTML = "Checkmate, "+(game.checkmate == "b" ? "Black" : "White")+" is victorious";
+        }
+        else{
+            if(this.game.current_turn == "w"){
+                document.getElementById("current_turn").innerHTML = "White turn to play";
+            }
+            else{
+                document.getElementById("current_turn").innerHTML = "Black turn to play";
+            }
+        }
+
+        let moves_table = "";
+        for(let i = 0; i < game.moves.length; i+=2){
+            moves_table += "<tr>";
+            moves_table += "<td>"+((i/2)+1)+".</td>";
+            moves_table += "<td>"+game.moves[i]+"</td>";
+            moves_table += "<td>"+(game.moves[i+1] !== undefined ? game.moves[i+1] : "")+"</td>";
+            moves_table += "</tr>";
+        }
+        document.getElementById("moves").innerHTML = "<table>"+moves_table+"</table>";
+        let move_container = document.getElementById("moves_container");
+        move_container.scrollTop = move_container.scrollHeight;
+    }
 }
+
+let game = new Game();
+let gui = new GUI("game_board", game);
+gui.init();
+
     </script>
 </body>
 </html>
