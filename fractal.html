@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>Fractals</title>
+    <style>
+    body{
+        overflow: hidden;
+        max-width: inherit;
+        width: 100%;
+        margin: 0;
+        padding: 0;
+    }
+    #canvas{
+        position: absolute;
+        top: 0px;
+        left: 0px;
+        z-index: 0;
+    }
+    </style>
+</head>
+<body>
+<canvas id="canvas"></canvas>
+<script>
+var canvas = document.getElementById("canvas");
+var ctx = canvas.getContext("2d");
+
+ctx.fillStyle = "black";
+ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+function add(a, b){
+    return [a[0]+b[0], a[1]+b[1]];
+}
+
+function multiply(a, b){
+    return [a[0]*b[0]-a[1]*b[1], a[0]*b[1]+a[1]*b[0]];
+}
+
+function iter(c, z){
+    return add(multiply(z, z), c);
+}
+
+function magnitude(c){
+    return Math.sqrt(c[0]*c[0]+c[1]*c[1]);
+}
+
+function color(n){
+    n *= 5;
+    return "rgb("+n+", "+n+", "+n+")";
+}
+
+var n_iter = 50;
+var unbound_threshold = 2;
+
+window.addEventListener("resize", generate);
+generate();
+
+function generate(){
+    canvas.width = document.documentElement.clientWidth;
+    canvas.height = document.documentElement.clientHeight;
+
+    for(var i = 0; i < canvas.width; i++){
+        for(var j = 0; j < canvas.height; j++){
+            var re = (i/canvas.height*2-2.5);
+            var im = (j/canvas.height*2-1)*-1;
+
+            var c = [re, im];
+            var z = [0, 0];
+            for(var n = 0; n < n_iter; n++){
+                z = iter(c, z);
+                if(magnitude(z) > unbound_threshold) break;
+            }
+
+            if(magnitude(z) > unbound_threshold){
+                ctx.fillStyle = color(n);
+                ctx.fillRect(i, j, 1, 1);
+            }
+            else{
+                ctx.fillStyle = "white";
+                ctx.fillRect(i, j, 1, 1);
+            }
+        }
+    }
+}
+</script>
+</body>
+</html>

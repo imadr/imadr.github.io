@@ -63,10 +63,13 @@ h1{
 .selected{
     background-color: #286028c4;
 }
-.indicator-target-empty:before{
-    content: " \25CF";
-    font-size: 50px;
-    color: #286028c4;
+.indicator-target-empty{
+    background-image: url("img/circle.svg");
+    background-size: 100% 100%;
+    background-position: 50% 50%;
+    background-repeat: no-repeat;
+    width: 100%;
+    height: 100%;
     display: none;
 }
 .indicator-target-piece{
@@ -78,7 +81,7 @@ h1{
     height: 100%;
     display: none;
 }
-.target-empty .indicator-target-empty:before{
+.target-empty .indicator-target-empty{
     display: inherit;
 }
 .target-piece .indicator-target-piece{
