@@ -3,6 +3,8 @@
 <head>
     <meta charset="utf-8">
     <title>Fractals</title>
+    <link rel="stylesheet" href="css/style.css">
+    <link id="css" rel="stylesheet" href="css/dark.css">
     <style>
     body{
         overflow: hidden;
@@ -17,11 +19,60 @@
         left: 0px;
         z-index: 0;
     }
+    #option{
+        z-index: 1;
+        position: absolute;
+        display: inline-block;
+        top: 10px;
+        left: 10px;
+        background-color: #1a1a1a;
+        border: 1px solid white;
+        padding: 10px;
+    }
+    #show_button{
+        position: absolute;
+        top: 10px;
+        left: 10px;
+    }
+    .p{
+        margin-bottom: 8px;
+    }
     </style>
 </head>
 <body>
 <canvas id="canvas"></canvas>
+<div id="option">
+    <div class="p"><button id="hide_button">Hide Options</button></div>
+    <div class="p">Max iterations: <input type="number" id="max_iter_input"></div>
+    <div class="p">Unbound magnitude: <input type="number" id="unbound_magnitude_input" step="0.1"></div>
+</div>
+<button class="invisible" id="show_button">►</button>
 <script>
+function get(i){
+    return document.getElementById(i);
+}
+get("hide_button").addEventListener("click", function(){
+    get("option").classList.toggle("invisible");
+    get("show_button").classList.toggle("invisible");
+});
+get("show_button").addEventListener("click", function(){
+    get("option").classList.toggle("invisible");
+    get("show_button").classList.toggle("invisible");
+});
+
+var options = {"max_iter": 50, "unbound_magnitude": 2};
+
+function bind(key, id, callback){
+    get(id).value = options[key];
+    get(id).addEventListener("input", function(){
+        options[key] = this.value;
+        window[callback]();
+    });
+}
+
+bind("max_iter", "max_iter_input", "update");
+bind("unbound_magnitude", "unbound_magnitude_input", "update");
+
 var canvas = document.getElementById("canvas");
 var ctx = canvas.getContext("2d");
 
@@ -44,18 +95,15 @@ function magnitude(c){
     return Math.sqrt(c[0]*c[0]+c[1]*c[1]);
 }
 
-function color(n){
-    n *= 5;
-    return "rgb("+n+", "+n+", "+n+")";
-}
+window.addEventListener("resize", update);
+document.body.addEventListener("mousedown", function(e){
+    console.log(e.clientX);
+    console.log(e.clientY);
+});
 
-var n_iter = 50;
-var unbound_threshold = 2;
+update();
 
-window.addEventListener("resize", generate);
-generate();
-
-function generate(){
+function update(){
     canvas.width = document.documentElement.clientWidth;
     canvas.height = document.documentElement.clientHeight;
 
@@ -66,13 +114,14 @@ function generate(){
 
             var c = [re, im];
             var z = [0, 0];
-            for(var n = 0; n < n_iter; n++){
+            for(var n = 0; n < options["max_iter"]; n++){
                 z = iter(c, z);
-                if(magnitude(z) > unbound_threshold) break;
+                if(magnitude(z) > options["unbound_magnitude"]) break;
             }
 
-            if(magnitude(z) > unbound_threshold){
-                ctx.fillStyle = color(n);
+            if(magnitude(z) > options["unbound_magnitude"]){
+                n *= 5;
+                ctx.fillStyle = "rgb("+n+", "+n+", "+n+")";
                 ctx.fillRect(i, j, 1, 1);
             }
             else{
