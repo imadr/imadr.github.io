@@ -19,15 +19,17 @@
         left: 0px;
         z-index: 0;
     }
-    #option{
+    #settings{
         z-index: 1;
         position: absolute;
         display: inline-block;
         top: 10px;
-        left: 10px;
-        background-color: #1a1a1a;
+        right: 10px;
         border: 1px solid white;
         padding: 10px;
+    }
+    #settings, input{
+        background-color: rgba(0, 0, 0, 0.5);
     }
     #show_button{
         position: absolute;
@@ -41,10 +43,14 @@
 </head>
 <body>
 <canvas id="canvas"></canvas>
-<div id="option">
-    <div class="p"><button id="hide_button">Hide Options</button></div>
-    <div class="p">Max iterations: <input type="number" id="max_iter_input"></div>
-    <div class="p">Unbound magnitude: <input type="number" id="unbound_magnitude_input" step="0.1"></div>
+<div id="settings">
+    <div class="p"><button id="hide_button">Hide Settings</button></div>
+    <div class="p">Max iterations: <input type="number" id="max_iter_input" min="0"></div>
+    <div class="p">Unbound magnitude: <input type="number" id="unbound_magnitude_input" step="0.1" min="0"></div>
+    <div class="p">Zoom: <input type="text" id="zoom_input" step="0.1" min="0"></div>
+    <div class="p">Center X: <input type="text" id="center_x_input"> Center Y: <input type="text" id="center_y_input" step="0.1"></div>
+    <div class="p"><button id="update_button">Update</button> <button id="reset_button">Reset</button> <button id="save_button">Save Image</button></div>
+    <div class="p">Time: <span id="time"></span></div>
 </div>
 <button class="invisible" id="show_button">►</button>
 <script>
@@ -52,32 +58,33 @@ function get(i){
     return document.getElementById(i);
 }
 get("hide_button").addEventListener("click", function(){
-    get("option").classList.toggle("invisible");
+    get("settings").classList.toggle("invisible");
     get("show_button").classList.toggle("invisible");
 });
+
 get("show_button").addEventListener("click", function(){
-    get("option").classList.toggle("invisible");
+    get("settings").classList.toggle("invisible");
     get("show_button").classList.toggle("invisible");
 });
 
-var options = {"max_iter": 50, "unbound_magnitude": 2};
+get("update_button").addEventListener("click", function(){
+    update();
+});
 
-function bind(key, id, callback){
-    get(id).value = options[key];
+get("reset_button").addEventListener("click", function(){
+    reset();
+});
+
+get("save_button").addEventListener("click", function(){
+    window.open(canvas.toDataURL("image/png"), "_blank");
+});
+
+function bind(key, id){
+    get(id).value = settings[key];
     get(id).addEventListener("input", function(){
-        options[key] = this.value;
-        window[callback]();
+        settings[key] = parseFloat(this.value);
     });
 }
-
-bind("max_iter", "max_iter_input", "update");
-bind("unbound_magnitude", "unbound_magnitude_input", "update");
-
-var canvas = document.getElementById("canvas");
-var ctx = canvas.getContext("2d");
-
-ctx.fillStyle = "black";
-ctx.fillRect(0, 0, canvas.width, canvas.height);
 
 function add(a, b){
     return [a[0]+b[0], a[1]+b[1]];
@@ -95,42 +102,103 @@ function magnitude(c){
     return Math.sqrt(c[0]*c[0]+c[1]*c[1]);
 }
 
-window.addEventListener("resize", update);
-document.body.addEventListener("mousedown", function(e){
-    console.log(e.clientX);
-    console.log(e.clientY);
-});
-
-update();
+var colors = [];
+var step = 2;
+var color_range = [0, 100];
+for(var i = color_range[0]; i < color_range[1]; i+=step){
+    colors.push(i);
+}
+for(var i = color_range[1]; i >= color_range[0]; i-=step){
+    colors.push(i);
+}
 
 function update(){
+    var begin = new Date();
+
     canvas.width = document.documentElement.clientWidth;
     canvas.height = document.documentElement.clientHeight;
 
-    for(var i = 0; i < canvas.width; i++){
-        for(var j = 0; j < canvas.height; j++){
-            var re = (i/canvas.height*2-2.5);
-            var im = (j/canvas.height*2-1)*-1;
+    var imageData = ctx.createImageData(canvas.width, canvas.height);
+
+    for(var j = 0; j < canvas.height; j++){
+        for(var i = 0; i < canvas.width; i++){
+            var re = (i/canvas.height-canvas.width/2/canvas.height)/settings["zoom"]+settings["center_x"];
+            var im = (j/canvas.height-canvas.height/2/canvas.height)/settings["zoom"]-settings["center_y"];
 
             var c = [re, im];
             var z = [0, 0];
-            for(var n = 0; n < options["max_iter"]; n++){
+            for(var n = 0; n < settings["max_iter"]; n++){
                 z = iter(c, z);
-                if(magnitude(z) > options["unbound_magnitude"]) break;
+                if(magnitude(z) > settings["unbound_magnitude"]) break;
             }
 
-            if(magnitude(z) > options["unbound_magnitude"]){
-                n *= 5;
-                ctx.fillStyle = "rgb("+n+", "+n+", "+n+")";
-                ctx.fillRect(i, j, 1, 1);
+            var pos = (i+j*canvas.width)*4;
+            if(magnitude(z) > settings["unbound_magnitude"]){
+                var color = colors[n%colors.length];
+                imageData.data[pos] = color;
+                imageData.data[pos+1] = color;
+                imageData.data[pos+2] = color;
+                imageData.data[pos+3] = 255;
             }
             else{
-                ctx.fillStyle = "white";
-                ctx.fillRect(i, j, 1, 1);
+                imageData.data[pos] = 255;
+                imageData.data[pos+1] = 255;
+                imageData.data[pos+2] = 255;
+                imageData.data[pos+3] = 255;
             }
         }
     }
+
+    ctx.putImageData(imageData, 0, 0);
+    get("time").innerHTML = (new Date()-begin)/1000+"s";
 }
+
+function reset(){
+    settings = {"max_iter": 50, "unbound_magnitude": 2, "zoom": 0.4, "center_x": 0, "center_y": 0};
+    update();
+}
+
+function zoom(x, y, zoom){
+    var new_center_x = (x/canvas.height-canvas.width/2/canvas.height)/settings["zoom"]+settings["center_x"];
+    var new_center_y = -1*(y/canvas.height-canvas.height/2/canvas.height)/settings["zoom"]+settings["center_y"];
+    settings["center_x"] = new_center_x;
+    settings["center_y"] = new_center_y;
+
+    if(zoom){
+        settings["zoom"] *= 2;
+        settings["max_iter"] += 10;
+    }
+    else{
+        settings["zoom"] /= 2;
+        settings["max_iter"] -= 10;
+    }
+
+    if(settings["max_iter"] <= 10) settings["max_iter"] = 10;
+
+    get("center_x_input").value = settings["center_x"];
+    get("center_y_input").value = settings["center_y"];
+    get("zoom_input").value = settings["zoom"];
+    get("max_iter_input").value = settings["max_iter"];
+    update();
+}
+
+window.addEventListener("resize", update);
+document.body.addEventListener("mousedown", function(e){
+    if(e.target == canvas && (e.which == 1 || e.which == 3)) zoom(e.clientX, e.clientY, e.which == 1);
+});
+
+var canvas = document.getElementById("canvas");
+canvas.oncontextmenu = () => false;
+var ctx = canvas.getContext("2d");
+
+var settings = {"max_iter": 50, "unbound_magnitude": 2, "zoom": 0.4, "center_x": 0, "center_y": 0};
+bind("max_iter", "max_iter_input");
+bind("unbound_magnitude", "unbound_magnitude_input");
+bind("zoom", "zoom_input");
+bind("center_x", "center_x_input");
+bind("center_y", "center_y_input");
+
+update();
 </script>
 </body>
 </html>

@@ -19,7 +19,7 @@
         left: 0px;
         z-index: 0;
     }
-    #option{
+    #settings{
         z-index: 1;
         position: absolute;
         display: inline-block;
@@ -45,7 +45,7 @@
 </head>
 <body>
 <canvas id="canvas"></canvas>
-<div id="option">
+<div id="settings">
     <button id="hide_button">Hide</button>
     <br>
     <button id="pause_button">Pause</button> <button id="step_button">Step</button> ms: <input type="number" id="input_ms" class="small_input" min="1">
@@ -190,11 +190,11 @@ get("step_button").addEventListener("click", function(){
     get("pause_button").innerHTML = "Play";
 });
 get("hide_button").addEventListener("click", function(){
-    get("option").classList.toggle("invisible");
+    get("settings").classList.toggle("invisible");
     get("show_button").classList.toggle("invisible");
 });
 get("show_button").addEventListener("click", function(){
-    get("option").classList.toggle("invisible");
+    get("settings").classList.toggle("invisible");
     get("show_button").classList.toggle("invisible");
 });
 get("clear_button").addEventListener("click", function(){
