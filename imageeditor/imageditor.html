@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Image Editor</title>
+    <link rel="stylesheet" href="../css/style.css">
+    <link id="css" rel="stylesheet" href="../css/light.css">
+    <style>
+        html{
+            height: 100%;
+        }
+        body{
+            overflow: hidden;
+            max-width: inherit;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            align-items: stretch;
+            height: 100%;
+        }
+        #container{
+            overflow: hidden;
+            cursor: grabbing;
+            flex: 3;
+        }
+        canvas{
+            image-rendering: optimizeSpeed;
+            image-rendering: -moz-crisp-edges;
+            image-rendering: -webkit-optimize-contrast;
+            image-rendering: -o-crisp-edges;
+            image-rendering: pixelated;
+            -ms-interpolation-mode: nearest-neighbor;
+            position: absolute;
+        }
+        #toolbar{
+            flex: 1;
+            border-right: 1px solid black;
+            padding: 10px;
+            z-index: 1000;
+            background-color: white;
+        }
+        input[type=file]{
+            border: none;
+            display: inline;
+        }
+        p{
+            margin: 0;
+        }
+    </style>
+</head>
+<body>
+    <div id="toolbar">
+        Current image : <span id="current_image"></span>
+        <br>
+        <label for="image_upload">Upload:</label>
+        <input type="file" id="image_upload">
+        <br>
+        <h3>Tools:</h3>
+        <hr>
+        <p class="collapse" id="collapse_grayscale">Grayscale <span>▼</span></p>
+        <div id="grayscale" class="invisible">
+            <button id="grayscale_button">Convert image to grayscale</button>
+        </div>
+    </div>
+    <div id="container">
+        <canvas id="canvas" width="500" height="200"></canvas>
+    </div>
+    <script src="main.js"></script>
+</body>
+</html>
