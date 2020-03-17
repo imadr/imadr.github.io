@@ -1,22 +1,3 @@
-function get(i){
-    return document.getElementById(i);
-}
-function getc(c){
-    return document.getElementsByClassName(c);
-}
-
-var collapse = getc("collapse");
-for(var i = 0; i < collapse.length; i++){
-    (function(){
-        collapse[i].addEventListener("click", function(){
-            var arrow = this.querySelector("span");
-            arrow.innerHTML = arrow.innerHTML == "▲" ? "▼" : "▲";
-            var div = get(this.id.split("_")[1]);
-            div.classList.toggle("invisible");
-        });
-    }());
-}
-
 function set_error(id, errors){
     for(var i = 0; i < errors.length; i++){
         var class_error = errors[i][1] == 0 ? "error" : "warning";

@@ -1,3 +1,13 @@
+*::-webkit-scrollbar{
+    background-color: #444;
+    width: 10px;
+}
+*::-webkit-scrollbar-thumb{
+    background: white;
+}
+*{
+    scrollbar-color: white #444;
+}
 body{
     background-color: #1a1a1a;
     color: #eaeaea;
@@ -13,10 +23,10 @@ button, textarea, input{
     color: white;
     background-color: #1a1a1a;
 }
-input[type="checkbox"]{
+input[type="checkbox"], input[type="radio"]{
     border: 1px solid white;
 }
-input[type="checkbox"]:checked:after{
+input[type="checkbox"]:checked:after, input[type="radio"]:checked:after{
     color: white;
 }
 .n_title{

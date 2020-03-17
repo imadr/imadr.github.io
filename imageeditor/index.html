@@ -6,66 +6,62 @@
     <title>Image Editor</title>
     <link rel="stylesheet" href="../css/style.css">
     <link id="css" rel="stylesheet" href="../css/light.css">
-    <style>
-        html{
-            height: 100%;
-        }
-        body{
-            overflow: hidden;
-            max-width: inherit;
-            margin: 0;
-            padding: 0;
-            display: flex;
-            align-items: stretch;
-            height: 100%;
-        }
-        #container{
-            overflow: hidden;
-            cursor: grabbing;
-            flex: 3;
-        }
-        canvas{
-            image-rendering: optimizeSpeed;
-            image-rendering: -moz-crisp-edges;
-            image-rendering: -webkit-optimize-contrast;
-            image-rendering: -o-crisp-edges;
-            image-rendering: pixelated;
-            -ms-interpolation-mode: nearest-neighbor;
-            position: absolute;
-        }
-        #toolbar{
-            flex: 1;
-            border-right: 1px solid black;
-            padding: 10px;
-            z-index: 1000;
-            background-color: white;
-        }
-        input[type=file]{
-            border: none;
-            display: inline;
-        }
-        p{
-            margin: 0;
-        }
-    </style>
+    <link id="css" rel="stylesheet" href="style.css">
+    <link id="css" rel="stylesheet" href="../css/all.min.css">
 </head>
 <body>
     <div id="toolbar">
-        Current image : <span id="current_image"></span>
+        <div id="layers">
+        </div>
+        <span class="float-right layers-buttons">
+            <span><i class="far fa-file"></i></span>
+            <span id="layer-delete"><i class="far fa-trash-alt"></i></span>
+        </span>
         <br>
-        <label for="image_upload">Upload:</label>
-        <input type="file" id="image_upload">
-        <br>
-        <h3>Tools:</h3>
+
+        <p class="collapse" id="collapse_canvassize">Canvas size <span>▼</span></p>
+        <div id="canvassize" class="invisible collapsed">
+            <table class="no-borders-table">
+                <tr>
+                    <td>Width:</td>
+                    <td><input type="text" value="512" id="canvas_width_input"> px</td>
+                </tr>
+                <tr>
+                    <td>Height:</td>
+                    <td><input type="text" value="512" id="canvas_height_input"> px</td>
+                </tr>
+            </table>
+            <button id="resize_canvas_button">Resize</button>
+        </div>
+
+        <p class="collapse" id="collapse_uploadimage">Upload image <span>▼</span></p>
+        <div id="uploadimage" class="invisible collapsed">
+            <div class="uploader_wrapper">
+                <input type="file" id="image_upload">
+                <button>Browse...</button>
+            </div>
+        </div>
+
         <hr>
+
         <p class="collapse" id="collapse_grayscale">Grayscale <span>▼</span></p>
         <div id="grayscale" class="invisible">
-            <button id="grayscale_button">Convert image to grayscale</button>
+            <p>R': <input autocomplete="off" type="text" value="0.299" id="r_grayscale_input"></p>
+            <p>G': <input autocomplete="off" type="text" value="0.587" id="g_grayscale_input"></p>
+            <p>B': <input autocomplete="off" type="text" value="0.144" id="b_grayscale_input"></p>
+            <p><button id="grayscale_button">Add grayscale filter</button></p>
+        </div>
+
+        <p class="collapse" id="collapse_threshold">Threshold <span>▼</span></p>
+        <div id="threshold" class="invisible">
+            <p>Threshold level: <input autocomplete="off" type="text" value="100" id="level_threshold_input"></p>
+            <p><button id="threshold_button">Add threshold filter</button></p>
         </div>
     </div>
     <div id="container">
-        <canvas id="canvas" width="500" height="200"></canvas>
+        <canvas id="canvas"></canvas>
     </div>
+    <script src="../js/gui.js"></script>
     <script src="main.js"></script>
 </body>
 </html>

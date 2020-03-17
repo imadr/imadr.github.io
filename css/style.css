@@ -1,4 +1,4 @@
-@font-face {
+@font-face{
     font-family: "IBM Plex Mono";
     src: url("plex.woff2") format("woff2");
     font-display: swap;
@@ -13,24 +13,18 @@ body{
 h3, h2, h1{
     font-weight: normal;
 }
-#light{
-    font-size: 30px;
-    margin: 5px;
-    position: fixed;
-    top: 5px;
-    right: 5px;
-    user-select: none;
-    -moz-user-select: none;
-    -webkit-user-select: none;
-    -ms-user-select: none;
-}
 p{
     line-height: 1.7;
 }
 .muted{
     font-size: 15px;
 }
-#index{
+#menu-icons{
+    user-select: none;
+    -moz-user-select: none;
+    -webkit-user-select: none;
+    -ms-user-select: none;
+    font-size: 30px;
     position: fixed;
     top: 5px;
     left: 5px;
@@ -40,7 +34,7 @@ textarea, button, input{
     font-family: "IBM Plex Mono", monospace;
 }
 button{
-    height: 20px;
+    height: 22px;
 }
 textarea{
     width: 400px;
@@ -55,6 +49,24 @@ textarea{
 }
 .invisible{
     display: none !important;
+}
+input[type="radio"]{
+    appearance: none;
+    -webkit-appearance: none;
+    background-color: transparent;
+    padding: 6px;
+    display: inline-block;
+    margin: 0;
+    margin-bottom: -2px;
+    position: relative;
+    border-radius: 50%;
+}
+input[type="radio"]:checked:after{
+    content: "\25CF";
+    font-size: 17px;
+    position: absolute;
+    top: calc(50% - 13px);
+    left: 1px;
 }
 input[type="checkbox"]{
     appearance: none;

@@ -1,3 +1,13 @@
+*::-webkit-scrollbar{
+    background-color: #dfdfdf;
+    width: 10px;
+}
+*::-webkit-scrollbar-thumb{
+    background: black;
+}
+*{
+    scrollbar-color: black #dfdfdf;
+}
 a{
     color: black;
 }
@@ -9,10 +19,10 @@ textarea, button, input{
     color: black;
     background-color: white;
 }
-input[type="checkbox"]{
+input[type="checkbox"], input[type="radio"]{
     border: 1px solid black;
 }
-input[type="checkbox"]:checked:after{
+input[type="checkbox"]:checked:after, input[type="radio"]:checked:after{
     color: black;
 }
 .n_title{

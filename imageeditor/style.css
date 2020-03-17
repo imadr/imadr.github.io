@@ -1,0 +1,117 @@
+html{
+    height: 100%;
+}
+body{
+    overflow: hidden;
+    max-width: inherit;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    align-items: stretch;
+    height: 100%;
+}
+#container{
+    overflow: hidden;
+    cursor: grabbing;
+    flex: 3;
+}
+canvas{
+    image-rendering: -moz-crisp-edges;
+    image-rendering: -o-crisp-edges;
+    image-rendering: pixelated;
+    -ms-interpolation-mode: nearest-neighbor;
+    position: absolute;
+    border: 1px solid black;
+}
+#toolbar{
+    flex: 1;
+    border-right: 1px solid black;
+    padding: 10px;
+    z-index: 1000;
+    background-color: white;
+}
+#layers{
+    border: 1px solid black;
+    box-shadow: 3px 3px 0px 0px black;
+    margin-bottom: 3px;
+    user-select: none;
+    -moz-user-select: none;
+    -webkit-user-select: none;
+    -ms-user-select: none;
+    min-height: 26px;
+}
+.layer{
+    border-bottom: 1px solid black;
+    padding: 3px 6px 3px 6px;
+    min-height: 20px;
+    box-sizing: border-box;
+    height: 26px;
+}
+.layer:last-child{
+    border-bottom: none;
+}
+.float-right{
+    float: right;
+}
+.layer-hide{
+    width: 20px;
+    text-align: center;
+    vertical-align: top;
+}
+.layer-hide, .layer-move-up, .layer-move-down{
+    cursor: pointer;
+    display: inline-block;
+}
+.disabled{
+    color: #ddd;
+}
+.layers-buttons{
+    padding-top: 5px;
+}
+.layers-buttons span{
+    cursor: pointer;
+}
+.layer-name{
+    text-overflow: ellipsis;
+    overflow: hidden;
+    width: 70%;
+    display: inline-block;
+    pointer-events: none;
+}
+.selected-layer .layer-name{
+    text-decoration: underline;
+}
+.selected-layer{
+    background-color: #f4f4f4;
+}
+p{
+    margin: 5px 0px 5px 0px;
+}
+input{
+    width: 60px;
+}
+.no-borders-table{
+    border-collapse: collapse;
+    margin-bottom: 10px;
+}
+.no-borders-table, .no-borders-table td{
+    border: none;
+    padding: 0;
+    padding-top: 5px;
+    padding-right: 5px;
+}
+.collapsed{
+    margin-bottom: 15px;
+}
+.uploader_wrapper input{
+    position: absolute;
+    top: 0px;
+    left: 0px;
+    width: initial;
+    width: 90px;
+    opacity: 0;
+}
+.uploader_wrapper{
+    position: relative;
+    display: inline-block;
+}
