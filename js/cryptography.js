@@ -198,9 +198,7 @@ function morse(input, dash, dot, space, cipher){
             var chars = words[i].split(" ");
             for(var j = 0; j < chars.length; j++){
                 var char = chars[j];
-                console.log(char);
                 char = char.replace(new RegExp(dash, "g"), "1").replace(new RegExp("\\"+dot, "g"), "0");
-                console.log(char);
                 if(morse_table.indexOf(char) > -1) output += alphabet[morse_table.indexOf(char)];
             }
             if(i < words.length-1) output += " ";

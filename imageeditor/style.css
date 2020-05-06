@@ -16,12 +16,12 @@ body{
     flex: 3;
 }
 canvas{
+    background-color: gray;
     image-rendering: -moz-crisp-edges;
     image-rendering: -o-crisp-edges;
     image-rendering: pixelated;
     -ms-interpolation-mode: nearest-neighbor;
     position: absolute;
-    border: 1px solid black;
 }
 #toolbar{
     flex: 1;
@@ -74,7 +74,7 @@ canvas{
 .layer-name{
     text-overflow: ellipsis;
     overflow: hidden;
-    width: 70%;
+    max-width: 256px;
     display: inline-block;
     pointer-events: none;
 }
@@ -94,7 +94,10 @@ input{
     border-collapse: collapse;
     margin-bottom: 10px;
 }
-.no-borders-table, .no-borders-table td{
+.no-borders-table{
+    border: none;
+}
+.no-borders-table td{
     border: none;
     padding: 0;
     padding-top: 5px;
@@ -103,7 +106,7 @@ input{
 .collapsed{
     margin-bottom: 15px;
 }
-.uploader_wrapper input{
+.uploader-wrapper input{
     position: absolute;
     top: 0px;
     left: 0px;
@@ -111,7 +114,21 @@ input{
     width: 90px;
     opacity: 0;
 }
-.uploader_wrapper{
+.uploader-wrapper{
     position: relative;
     display: inline-block;
+}
+#layers-settings{
+    border: 1px solid black;
+    min-height: 150px;
+    margin-bottom: 20px;
+}
+.layer-settings{
+    padding: 4px;
+    padding-left: 8px;
+}
+fieldset{
+    padding: 0px;
+    padding-left: 6px;
+    padding-right: 6px;
 }

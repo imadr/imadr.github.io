@@ -4,7 +4,6 @@
     <meta charset="utf-8">
     <title>Fractals</title>
     <link rel="stylesheet" href="css/style.css">
-    <link id="css" rel="stylesheet" href="css/dark.css">
     <style>
     body{
         overflow: hidden;
@@ -54,6 +53,7 @@
 </div>
 <button class="invisible" id="show_button">◄</button>
 <script>
+document.body.setAttribute("data-theme", "dark");
 function get(i){
     return document.getElementById(i);
 }

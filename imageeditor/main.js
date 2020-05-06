@@ -1,17 +1,18 @@
 class Layer{
-    constructor(_name, _visible, _type, _thing){
+    constructor(_name, _visible, _function, _settings){
         this.name = _name;
         this.visible = _visible;
-        this.type = _type;
-        if(_type == "image"){
-            this.img = _thing;
-        }
-        else if(_type == "filter"){
-            this.function = _thing;
-        }
+        this.function = _function;
+        this.settings = _settings;
     }
 }
 
+var layers_input = {
+    "pixel": {
+        "order": {0: 1, 1: 2},
+        "parse_to": {0: "int", 1: "int"}
+    }
+};
 var layers = [];
 var current_selected_layer = -1;
 
@@ -40,15 +41,52 @@ function update_layers_ui(){
     }
 }
 
+function set_layer_settings(){
+    var divs = getc("layer-settings");
+    for(var i = 0; i < divs.length; i++){
+        divs[i].classList.toggle("invisible", true);
+    }
+
+    if(current_selected_layer == -1){
+        get("settings-title").innerHTML = "Layer settings";
+        return;
+    }
+
+
+    var layer = layers[current_selected_layer];
+    var layer_type = layer.function.name;
+    var div_id = layer_type+"_settings";
+    var div_name = layer_type[0].toUpperCase()+layer_type.substring(1);
+
+    get("settings-title").innerHTML = div_name+" layer settings:";
+    get(div_id).classList.toggle("invisible", false);
+
+    var inputs = document.querySelectorAll("#"+div_id+" input");
+    for(var i = 0; i < inputs.length; i++){
+        (function(i){
+            inputs[i].onchange = function(){
+                var settings_to_change_i = layers_input[layer_type]["order"][i];
+                var new_value = this.value;
+                switch(layers_input[layer_type]["parse_to"][i]){
+                    case "int":
+                        new_value = parseInt(new_value);
+                        break;
+                }
+                layer.settings[settings_to_change_i] = new_value;
+
+                update_canvas();
+            }
+        })(i);
+    }
+}
+
 update_layers_ui();
 
 document.addEventListener("click", function(e){
-    if(!e.target.classList.contains("layer")){
-        current_selected_layer = -1;
-    }
-    else{
+    if(e.target.classList.contains("layer")){
         current_selected_layer = parseInt(e.target.id.split("-")[1]);
     }
+    set_layer_settings();
     update_layers_ui();
 });
 
@@ -93,7 +131,7 @@ function add_layer(layer){
     update_layers_ui();
 }
 
-get("image_upload").onchange = function(e){
+get("image-upload").onchange = function(e){
     var file = e.target.files[0];
     var reader = new FileReader();
     reader.readAsDataURL(file);
@@ -107,20 +145,27 @@ function upload_image(src, name){
     img.crossOrigin = "Anonymous";
     img.src = src;
     img.onload = function(){
-        add_layer(new Layer(name, true, "image", img));
+        var tmp_canvas = document.createElement("canvas");
+        var tmp_ctx = tmp_canvas.getContext("2d");
+        tmp_canvas.width = img.width;
+        tmp_canvas.height = img.height;
+        tmp_ctx.drawImage(img, 0, 0, img.width, img.height);
+        var img_data = tmp_ctx.getImageData(0, 0, tmp_canvas.width, tmp_canvas.height);
+        add_layer(new Layer(name, true, pixel, [img_data, 0, 0]));
     }
 }
 
 function resize_canvas(width, height){
     canvas.width = width;
     canvas.height = height;
+    canvas.style.width = "512px";
     update_canvas();
     center_canvas();
 }
 
-get("resize_canvas_button").addEventListener("click", function(){
-    var width = parseInt(get("canvas_width_input").value);
-    var height = parseInt(get("canvas_height_input").value);
+get("resize-canvas-button").addEventListener("click", function(){
+    var width = parseInt(get("canvas-width-input").value);
+    var height = parseInt(get("canvas-height-input").value);
     resize_canvas(width, height);
 })
 
@@ -175,51 +220,64 @@ function update_canvas(){
     ctx.clearRect(0, 0, canvas.width, canvas.height);
     for(var i = 0; i < layers.length; i++){
         if(!layers[i].visible) continue;
-        if(layers[i].type == "image"){
-            ctx.drawImage(layers[i].img, 0, 0);
-        }
-        else if(layers[i].type == "filter"){
-            layers[i].function();
-        }
+        layers[i].function(layers[i].settings);
     }
 }
 
-function grayscale(){
-    var imgData = ctx.getImageData(0, 0, canvas.width, canvas.height);
-    var r_luminance = parseFloat(get("r_grayscale_input").value);
-    var g_luminance = parseFloat(get("g_grayscale_input").value);
-    var b_luminance = parseFloat(get("b_grayscale_input").value);
-    for(i = 0; i < imgData.data.length; i += 4){
-        var r = imgData.data[i+0];
-        var g = imgData.data[i+1];
-        var b = imgData.data[i+2];
-        imgData.data[i+0] = imgData.data[i+1] = imgData.data[i+2] = r_luminance*r+g_luminance*g+b_luminance*b;
-    }
-    ctx.putImageData(imgData, 0, 0);
-}
+function pixel(settings){
+    var canvas_data = ctx.getImageData(0, 0, canvas.width, canvas.height);
+    var img_data = settings[0];
 
-function threshold(){
-    var imgData = ctx.getImageData(0, 0, canvas.width, canvas.height);
-    var level = parseFloat(get("level_threshold_input").value);
-    for(i = 0; i < imgData.data.length; i += 4){
-        if(imgData.data[i+0] >= level){
-            imgData.data[i+0] = imgData.data[i+1] = imgData.data[i+2] = 255;
-        }
-        else{
-            imgData.data[i+0] = imgData.data[i+1] = imgData.data[i+2] = 0;
+    var width = Math.min(canvas_data.width, img_data.width);
+    var height = Math.min(canvas_data.height, img_data.height);
+
+    for(var j = 0; j < height; j++){
+        for(var i = 0; i < width; i++){
+            var index = i+j*width;
+            index *= 4;
+            var index_canvas = i+j*canvas_data.width;
+            index_canvas *= 4;
+            canvas_data.data[index_canvas+0] = img_data.data[index+0];
+            canvas_data.data[index_canvas+1] = img_data.data[index+1];
+            canvas_data.data[index_canvas+2] = img_data.data[index+2];
+            canvas_data.data[index_canvas+3] = 255;
         }
     }
-    ctx.putImageData(imgData, 0, 0);
+
+    ctx.putImageData(canvas_data, 0, 0);
 }
 
-get("grayscale_button").onclick = function(){
-    add_layer(new Layer("Grayscale", true, "filter", grayscale));
+function grayscale(settings){
+    var img_data = ctx.getImageData(0, 0, canvas.width, canvas.height);
+    var r_luminance = settings[0];
+    var g_luminance = settings[1];
+    var b_luminance = settings[2];
+    for(i = 0; i < img_data.data.length; i += 4){
+        var r = img_data.data[i+0];
+        var g = img_data.data[i+1];
+        var b = img_data.data[i+2];
+        img_data.data[i+0] = img_data.data[i+1] = img_data.data[i+2] = r_luminance*r+g_luminance*g+b_luminance*b;
+    }
+    ctx.putImageData(img_data, 0, 0);
+}
+
+// function threshold(){
+//     var img_data = ctx.getImageData(0, 0, canvas.width, canvas.height);
+//     var level = parseFloat(get("level_threshold_input").value);
+//     for(i = 0; i < img_data.data.length; i += 4){
+//         if(img_data.data[i+0] >= level){
+//             img_data.data[i+0] = img_data.data[i+1] = img_data.data[i+2] = 255;
+//         }
+//         else{
+//             img_data.data[i+0] = img_data.data[i+1] = img_data.data[i+2] = 0;
+//         }
+//     }
+//     ctx.putImageData(img_data, 0, 0);
+// }
+
+get("grayscale-button").onclick = function(){
+    add_layer(new Layer("Grayscale", true, grayscale, [0.299, 0.587, 0.144]));
 };
-get("threshold_button").onclick = function(){
-    add_layer(new Layer("Threshold", true, "filter", threshold));
-};
-
-/// Test ///
 
 resize_canvas(512, 512);
 upload_image("peppers.png", "peppers.png");
