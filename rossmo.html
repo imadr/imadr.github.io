@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Geographic profiling using Rossmo's formula</title>
+    <link rel="stylesheet" href="css/style.css">
+    <link id="css" rel="stylesheet" href="css/all.min.css">
+    <link id="css" rel="stylesheet" href="css/katex.min.css">
+    <script defer src="js/katex.min.js"></script>
+    <script defer src="js/contrib/auto-render.min.js" onload="renderMathInElement(document.body);"></script>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.6.0/dist/leaflet.css">
+    <style>
+        body{
+            max-width: 80vw;
+        }
+        #canvas{
+            z-index: 10;
+            position: absolute;
+            image-rendering: -moz-crisp-edges !important;
+            image-rendering: -webkit-crisp-edges !important;
+            image-rendering: pixelated !important;
+            image-rendering: crisp-edges !important;
+        }
+        #map{
+            height: 600px;
+            z-index: 1;
+        }
+        .katex{
+            font-size: 21px;
+        }
+        p{
+            margin-bottom: 0;
+            margin-top: 5px;
+        }
+    </style>
+</head>
+<body>
+    <div id="menu-icons"><a href="index.html"><i class="fas fa-home"></i></a></div>
+    <h1>Geographic profiling using Rossmo's formula</h1>
+    <p>Radius of the buffer zone \(B\): <input type="range" id="b_input" min="0" max="200"> <span id="b"></span></p>
+    <p>\(f\) parameter: <input type="range" id="f_input" min="-10" max="10" step="0.01"> <span id="f"></span></p>
+    <p>\(g\) parameter: <input type="range" id="g_input" min="-10" max="10" step="0.01"> <span id="g"></span></p>
+    <p>Distance type:
+        <input type="radio" name="distance" value="manhattan" checked="" id="manhattan_radio">
+        <label for="manhattan_radio">Manhattan distance</label>
+        <input type="radio" name="distance" value="euclidean" id="euclidean_radio">
+        <label for="euclidean_radio">Euclidean distance</label>
+    </p>
+    <p>Crimes:<br><textarea id="crimes" autocomplete="off"></textarea></p>
+    <p>Resolution: <input type="number" id="resolution" min="1" max="3000" value="500"></p>
+    <p><button id="map_control">Switch map control</button> <button id="clear_crimes">Clear crimes list</button></p>
+    <br>
+    <div id="map"></div>
+    <canvas id="canvas"></canvas>
+    <script src="js/light.js"></script>
+    <script src="https://unpkg.com/leaflet@1.6.0/dist/leaflet.js"></script>
+    <script src="js/rossmo.js"></script>
+</body>
+</html>
