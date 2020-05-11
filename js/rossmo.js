@@ -3,7 +3,7 @@ var $ = function(selector){
     else return document.querySelector(selector);
 };
 
-var map = L.map("map").setView([51.505, -0.09], 13);
+var map = L.map("map").setView([40.7612, -73.9812], 14.5);
 var layer = L.tileLayer("https://api.mapbox.com/styles/v1/{id}/tiles/{z}/{x}/{y}?access_token={accessToken}", {
     attribution: `Map data &copy; <a href="https://www.openstreetmap.org/">OpenStreetMap</a> contributors, <a href="https://creativecommons.org/licenses/by-sa/2.0/">CC-BY-SA</a>, Imagery © <a href="https://www.mapbox.com/">Mapbox</a>`,
     maxZoom: 18,
@@ -19,32 +19,53 @@ var map_div = $("#map");
 
 var crimes = [];
 
-var buffer_radius = 20;
-var f = 1;
-var g = 2;
+var opacity = 40;
+var buffer_radius = 10;
+var f = 0.4;
+var g = 0.9;
+var resolution = 100;
 
-canvas.style.width = map_div.offsetWidth+"px";
-canvas.style.height = map_div.offsetHeight+"px";
-canvas.style.top = map_div.offsetTop+"px";
-canvas.style.left = map_div.offsetLeft+"px";
-
-var resolution = parseInt($("#resolution").value);
-set_canvas_size();
-
-$("#resolution").addEventListener("input", function(){
-    resolution = parseInt(this.value);
-    set_canvas_size()
+window.addEventListener("resize", function(){
+    set_canvas_pos();
+    resolution = parseInt($("#resolution").value);
+    set_canvas_size();
 });
 
+window.addEventListener("load", function(){
+    set_canvas_pos();
+    resolution = parseInt($("#resolution").value);
+    set_canvas_size();
+});
+
+$("#resolution").addEventListener("change", function(){
+    resolution = parseInt(this.value);
+    set_canvas_size();
+});
+
+$("#resolution").value = resolution;
+
+function set_canvas_pos(){
+    canvas.style.left = map_div.offsetLeft+"px";
+    canvas.style.top = map_div.offsetTop+"px";
+    canvas.style.width = map_div.offsetWidth+"px";
+    canvas.style.height = map_div.offsetHeight+"px";
+}
+
 function set_canvas_size(){
+    var c = canvas.width;
     canvas.width = resolution;
     var ratio = canvas.offsetWidth/canvas.offsetHeight;
     canvas.height = resolution/ratio;
+    c /= canvas.width;
+    for(var i = 0; i < crimes.length; i++){
+        crimes[i][0] = Math.floor(crimes[i][0]/c);
+        crimes[i][1] = Math.floor(crimes[i][1]/c);
+    }
+    update_crimes_input();
     update_crimes();
 }
 
 canvas.addEventListener("click", function(e){
-    canvas.style.top = map_div.offsetTop+"px";
     var rect = e.target.getBoundingClientRect();
     var click = [e.clientX-rect.left, e.clientY-rect.top];
     click[0] /= rect.width;
@@ -52,32 +73,40 @@ canvas.addEventListener("click", function(e){
     click[0] = Math.floor(click[0]*canvas.width);
     click[1] = Math.floor(click[1]*canvas.height);
     crimes.push(click);
+    update_crimes_input();
+    update_crimes();
+});
+
+function update_crimes_input(){
     $("#crimes").value = "";
     for(var i = 0; i < crimes.length; i++){
         $("#crimes").value += "("+crimes[i][0]+","+crimes[i][1]+");";
     }
-    update_crimes();
-});
+}
 
-$("#b_input").value = $("#b").innerHTML = buffer_radius;
-$("#f_input").value = $("#f").innerHTML = f;
-$("#g_input").value = $("#g").innerHTML = g;
+$("#opacity_input").value = $("#opacity").innerHTML = opacity;
+$("#b_input").value = buffer_radius;
+$("#f_input").value = f;
+$("#g_input").value = g;
 
 $("#b_input").addEventListener("input", function(){
     buffer_radius = parseFloat(this.value);
-    $("#b").innerHTML = buffer_radius;
     update_crimes();
 });
 
 $("#f_input").addEventListener("input", function(){
     f = parseFloat(this.value);
-    $("#f").innerHTML = f;
     update_crimes();
 });
 
 $("#g_input").addEventListener("input", function(){
     g = parseFloat(this.value);
-    $("#g").innerHTML = g;
+    update_crimes();
+});
+
+$("#opacity_input").addEventListener("input", function(){
+    opacity = parseInt(this.value);
+    $("#opacity").innerHTML = opacity;
     update_crimes();
 });
 
@@ -165,10 +194,10 @@ function update_crimes(){
 
         var probability = rossmo([x, y]);
         var r = (probability-min_probability)/(max_probability-min_probability);
-        d[i] = r > 0.5 ? 255-((r-0.5)*255) : 255;
-        d[i+1] = r > 0.5 ? 255 : r*255*2;
+        d[i+1] = r > 0.5 ? 255-((r-0.5)*255) : 255;
+        d[i] = r > 0.5 ? 255 : r*255*2;
         d[i+2] = 0;
-        d[i+3] = 120;
+        d[i+3] = opacity*255/100;
     }
     ctx.putImageData(imgData, 0, 0);
 }

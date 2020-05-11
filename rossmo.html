@@ -38,9 +38,16 @@
 <body>
     <div id="menu-icons"><a href="index.html"><i class="fas fa-home"></i></a></div>
     <h1>Geographic profiling using Rossmo's formula</h1>
-    <p>Radius of the buffer zone \(B\): <input type="range" id="b_input" min="0" max="200"> <span id="b"></span></p>
-    <p>\(f\) parameter: <input type="range" id="f_input" min="-10" max="10" step="0.01"> <span id="f"></span></p>
-    <p>\(g\) parameter: <input type="range" id="g_input" min="-10" max="10" step="0.01"> <span id="g"></span></p>
+    <p>
+        <a href="https://en.wikipedia.org/wiki/Rossmo%27s_formula">Rossmo's formula:</a>
+        For each pixel \(x\), the probability \(p(x)\) of the criminal residing in that pixel is:<br>
+        $$p(x) =  \sum_{\text{crime location c}}{ \frac{\phi}{d(c, x)^{f}} + \frac{(1-\phi)B^{f-g}}{(2B-d(c, x))^{g}} }$$
+        where \(\phi = 1\) if \(d(c, x) > B\) and \(0\) otherwise. \(d(c, x)\) is the distance between the crime location \(c\) and the pixel \(x\).
+    </p>
+    <hr>
+    <p>Radius of the buffer zone \(B\): <input type="text" id="b_input"></span></p>
+    <p>\(f\) parameter: <input type="text" id="f_input"></span></p>
+    <p>\(g\) parameter: <input type="text" id="g_input"></span></p>
     <p>Distance type:
         <input type="radio" name="distance" value="manhattan" checked="" id="manhattan_radio">
         <label for="manhattan_radio">Manhattan distance</label>
@@ -48,7 +55,8 @@
         <label for="euclidean_radio">Euclidean distance</label>
     </p>
     <p>Crimes:<br><textarea id="crimes" autocomplete="off"></textarea></p>
-    <p>Resolution: <input type="number" id="resolution" min="1" max="3000" value="500"></p>
+    <p>Opacity: <input type="range" id="opacity_input" min="0" max="100"> <span id="opacity"></span></p>
+    <p>Resolution: <input type="number" id="resolution" min="1" max="3000" autocomplete="off"></p>
     <p><button id="map_control">Switch map control</button> <button id="clear_crimes">Clear crimes list</button></p>
     <br>
     <div id="map"></div>
