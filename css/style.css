@@ -13,9 +13,6 @@
     --color-bg-2: #444;
     --color-fg-1: white;
 }
-a{
-    color: var(--color-fg-1);
-}
 input[type="checkbox"], input[type="radio"]{
     border: 1px solid var(--color-fg-1);
 }
@@ -50,7 +47,22 @@ h1{
     color: var(--color-bg-1);
     background-color: var(--color-fg-1);
 }
-#menu-icons{
+a{
+    color: rgb(79, 140, 201);
+    text-decoration: none;
+}
+a:hover{
+    text-decoration: underline;
+}
+a:after{
+    font-family: "FontAwesome";
+    content: " \f08e";
+    font-size: 14px;
+}
+#menu-icons a:after, h2 a:after{
+    content: "";
+}
+#menu-icons, #menu-icons a, h2 a{
     color: var(--color-fg-1);
 }
 @font-face{

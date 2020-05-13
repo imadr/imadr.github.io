@@ -6,9 +6,9 @@
     <title>Geographic profiling using Rossmo's formula</title>
     <link rel="stylesheet" href="css/style.css">
     <link id="css" rel="stylesheet" href="css/all.min.css">
-    <link id="css" rel="stylesheet" href="css/katex.min.css">
-    <script defer src="js/katex.min.js"></script>
-    <script defer src="js/contrib/auto-render.min.js" onload="renderMathInElement(document.body);"></script>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.11.1/dist/katex.min.css" integrity="sha384-zB1R0rpPzHqg7Kpt0Aljp8JPLqbXI3bhnPWROx27a9N0Ll6ZP/+DiW/UqRcLbRjq" crossorigin="anonymous">
+    <script defer src="https://cdn.jsdelivr.net/npm/katex@0.11.1/dist/katex.min.js" integrity="sha384-y23I5Q6l+B6vatafAwxRu/0oK/79VlbSz7Q9aiSZUvyWYIYsd+qj+o24G5ZU2zJz" crossorigin="anonymous"></script>
+    <script defer src="https://cdn.jsdelivr.net/npm/katex@0.11.1/dist/contrib/auto-render.min.js" integrity="sha384-kWPLUVMOks5AQFrykwIup5lo0m3iMkkHrD0uJ4H5cjeGihAutqP0yW0J6dpFiVkI" crossorigin="anonymous" onload="renderMathInElement(document.body);"></script>
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.6.0/dist/leaflet.css">
     <style>
         body{
@@ -26,9 +26,6 @@
             height: 600px;
             z-index: 1;
         }
-        .katex{
-            font-size: 21px;
-        }
         p{
             margin-bottom: 0;
             margin-top: 5px;
@@ -39,9 +36,9 @@
     <div id="menu-icons"><a href="index.html"><i class="fas fa-home"></i></a></div>
     <h1>Geographic profiling using Rossmo's formula</h1>
     <p>
-        <a href="https://en.wikipedia.org/wiki/Rossmo%27s_formula">Rossmo's formula:</a>
+        <a href="https://en.wikipedia.org/wiki/Rossmo%27s_formula">Rossmo's formula</a>
         For each pixel \(x\), the probability \(p(x)\) of the criminal residing in that pixel is:<br>
-        $$p(x) =  \sum_{\text{crime location c}}{ \frac{\phi}{d(c, x)^{f}} + \frac{(1-\phi)B^{f-g}}{(2B-d(c, x))^{g}} }$$
+        $$p(x) =  \sum_{\text{crime location c}}{ \left[ \frac{\phi}{d(c, x)^{f}} + \frac{(1-\phi)B^{f-g}}{(2B-d(c, x))^{g}} \right] }$$
         where \(\phi = 1\) if \(d(c, x) > B\) and \(0\) otherwise. \(d(c, x)\) is the distance between the crime location \(c\) and the pixel \(x\).
     </p>
     <hr>
