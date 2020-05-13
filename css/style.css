@@ -105,6 +105,9 @@ textarea, button, input{
     color: var(--color-fg-1);
     background-color: var(--color-bg-1);
 }
+input[type="file"]{
+    border: none;
+}
 button{
     height: 22px;
 }
