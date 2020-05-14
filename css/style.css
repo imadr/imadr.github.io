@@ -1,6 +1,9 @@
 *{
     box-sizing: border-box;
 }
+:root{
+    --color-ext-url: rgb(79, 140, 201);
+}
 [data-theme="light"]{
     --color-muted: #5f5f5f;
     --color-bg-1: white;
@@ -48,22 +51,19 @@ h1{
     background-color: var(--color-fg-1);
 }
 a{
-    color: rgb(79, 140, 201);
+    color: var(--color-fg-1);
     text-decoration: none;
 }
 a:hover{
     text-decoration: underline;
 }
-a:after{
+a[href^="http://"], a[href^="https://"]{
+    color: var(--color-ext-url);
+}
+a[href^="http://"]:after, a[href^="https://"]:after{
     font-family: "FontAwesome";
     content: " \f08e";
     font-size: 14px;
-}
-#menu-icons a:after, h2 a:after{
-    content: "";
-}
-#menu-icons, #menu-icons a, h2 a{
-    color: var(--color-fg-1);
 }
 @font-face{
     font-family: "IBM Plex Mono";
