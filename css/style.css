@@ -16,10 +16,10 @@
     --color-bg-2: #444;
     --color-fg-1: white;
 }
-input[type="checkbox"], input[type="radio"]{
+input[type="checkbox"]{
     border: 1px solid var(--color-fg-1);
 }
-input[type="checkbox"]:checked:after, input[type="radio"]:checked:after{
+input[type="checkbox"]:checked:after{
     color: var(--color-fg-1);
 }
 .n_title{
@@ -131,24 +131,6 @@ textarea{
 }
 .invisible{
     display: none !important;
-}
-input[type="radio"]{
-    appearance: none;
-    -webkit-appearance: none;
-    background-color: transparent;
-    padding: 6px;
-    display: inline-block;
-    margin: 0;
-    margin-bottom: -2px;
-    position: relative;
-    border-radius: 50%;
-}
-input[type="radio"]:checked:after{
-    content: "\25CF";
-    font-size: 17px;
-    position: absolute;
-    top: calc(50% - 13px);
-    left: 1px;
 }
 input[type="checkbox"]{
     appearance: none;
