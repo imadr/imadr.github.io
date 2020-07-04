@@ -1,4 +1,4 @@
-var canvas = get("image");
+var canvas = $("#image");
 var ctx = canvas.getContext("2d");
 
 function upload_image(src){
@@ -18,7 +18,7 @@ function upload_image(src){
     }
 }
 
-get("image-upload").onchange = function(e){
+$("#image-upload").onchange = function(e){
     var file = e.target.files[0];
     var reader = new FileReader();
     reader.readAsDataURL(file);
@@ -28,7 +28,7 @@ get("image-upload").onchange = function(e){
 }
 
 function draw(img_data){
-    get("planes-canvas").innerHTML = "";
+    $("#planes-canvas").innerHTML = "";
 
     var canvas_data = ctx.getImageData(0, 0, canvas.width, canvas.height);
     for(var i = 0; i < img_data.data.length; i+=4){
@@ -60,7 +60,7 @@ function draw(img_data){
             data.data[j+3] = 255;
         }
         new_ctx.putImageData(data, 0, 0);
-        get("planes-canvas").appendChild(new_canvas_container);
+        $("#planes-canvas").appendChild(new_canvas_container);
     }
 }
 

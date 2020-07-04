@@ -1,14 +1,14 @@
 function set_error(id, errors){
     for(var i = 0; i < errors.length; i++){
         var class_error = errors[i][1] == 0 ? "error" : "warning";
-        get(id+"_error").innerHTML += "<span class=\""+class_error+"\">"+errors[i][0]+"</span>";
-        if(i < errors.length-1) get(id+"_error").innerHTML += "<br>";
+        $("#"+id+"_error").innerHTML += "<span class=\""+class_error+"\">"+errors[i][0]+"</span>";
+        if(i < errors.length-1) $("#"+id+"_error").innerHTML += "<br>";
     }
-    if(errors.length > 0) get(id+"_error").innerHTML += "<br class=\"tenpx\">";
+    if(errors.length > 0) $("#"+id+"_error").innerHTML += "<br class=\"tenpx\">";
 }
 
 function clear_error(id){
-    get(id+"_error").innerHTML = "";
+    $("#"+id+"_error").innerHTML = "";
 }
 
 function egcd(a, b){
@@ -218,7 +218,7 @@ function base64(input, encode){
 }
 
 function ascii(input, encode){
-    switch(get("ascii_base").innerHTML){
+    switch($("#ascii_base").innerHTML){
         case "Binary":
             var base = 2;
             break;
@@ -364,10 +364,10 @@ function autokey(input, key, alphabet, casesensitive, cipher){
     }
 }
 
-get("hill_n").addEventListener("input", function(){
+$("#hill_n").addEventListener("input", function(){
     hill_matrix(this);
 });
-hill_matrix(get("hill_n"));
+hill_matrix($("#hill_n"));
 
 function hill_matrix(e){
     var n = parseInt(e.value);
@@ -378,13 +378,13 @@ function hill_matrix(e){
         e.value = 2;
     }
     n = parseInt(e.value);
-    get("hill_matrix").innerHTML = "";
+    $("#hill_matrix").innerHTML = "";
     for(var i = 0; i < n; i++){
         for(var j = 0; j < n; j++){
             var s = "<input id=\"hill_n\" class=\"s\" type=\"number\" value=\"0\">";
-            get("hill_matrix").insertAdjacentHTML("beforeend", s);
+            $("#hill_matrix").insertAdjacentHTML("beforeend", s);
         }
-        get("hill_matrix").insertAdjacentHTML("beforeend", "<br>");
+        $("#hill_matrix").insertAdjacentHTML("beforeend", "<br>");
     }
 }
 
@@ -392,15 +392,15 @@ function hill(input){
 
 }
 
-get("frequency_analyse").addEventListener("click", function(){
-    var input = get("frequency_in").value;
+$("#frequency_analyse").addEventListener("click", function(){
+    var input = $("#frequency_in").value;
     if(input.length > 0){
-        get("frequency_table").classList.remove("invisible");
-        var n = parseInt(get("frequency_n").value);
+        $("#frequency_table").classList.remove("invisible");
+        var n = parseInt($("#frequency_n").value);
         var frequency = {};
         input = input.replace(/\s/g, "");
         input = input.toUpperCase();
-        if(get("frequency_letters").checked){
+        if($("#frequency_letters").checked){
             input = input.replace(/[^A-Z]/g, "");
         }
         for(var i = 0; i < input.length; i+=n){
@@ -428,7 +428,7 @@ get("frequency_analyse").addEventListener("click", function(){
         frequency_sorted.sort(function(a, b){
             return b[1]-a[1];
         });
-        var tbody = get("frequency_table").querySelector("tbody");
+        var tbody = $("#frequency_table").querySelector("tbody");
         tbody.innerHTML = "";
         for(var i = 0; i < frequency_sorted.length; i++){
             var p = Math.round(frequency_sorted[i][1]/input.length*10000)/100;
@@ -450,13 +450,13 @@ function cipher_button_click(e, i){
         var attribute = ciphers[i][1][j].split(":")[2];
 
         if(watdo == "id"){
-            args[j] = get(current_arg)[attribute];
+            args[j] = $("#"+current_arg)[attribute];
         }
         else if(watdo == "cipher"){
             args[j] = e.id.startsWith("cipher_button");
         }
     }
-    get(ciphers[i][0]+"_out").value = window[ciphers[i][0]].apply(null, args);
+    $("#"+ciphers[i][0]+"_out").value = window[ciphers[i][0]].apply(null, args);
 }
 
 var ciphers = [
@@ -473,18 +473,18 @@ var ciphers = [
 ];
 for(var i = 0; i < ciphers.length; i++){
     (function(i){
-        get("cipher_button_"+ciphers[i][0]).addEventListener("click", function(){
+        $("#cipher_button_"+ciphers[i][0]).addEventListener("click", function(){
             cipher_button_click(this, i);
         });
-        get("decipher_button_"+ciphers[i][0]).addEventListener("click", function(){
+        $("#decipher_button_"+ciphers[i][0]).addEventListener("click", function(){
             cipher_button_click(this, i);
         });
         if(ciphers[i][2]){
-            get("generate_"+ciphers[i][0]).addEventListener("click", function(){
-                get(ciphers[i][0]+"_alphabet").value = random_alphabet();
+            $("#generate_"+ciphers[i][0]).addEventListener("click", function(){
+                $("#"+ciphers[i][0]+"_alphabet").value = random_alphabet();
             });
         }
     }(i));
 }
 
-get("alphabetsub_alphabet").value = random_alphabet();
+$("#alphabetsub_alphabet").value = random_alphabet();

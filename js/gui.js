@@ -1,12 +1,14 @@
-function get(i){
-    return document.getElementById(i);
-}
-function getc(c){
-    return document.getElementsByClassName(c);
-}
+var $ = function(selector){
+    if(selector[0] == "."){
+        return document.querySelectorAll(selector);
+    }
+    else{
+        return document.querySelector(selector);
+    }
+};
 
 document.addEventListener("click", function(e){
-    var options = getc("select_option");
+    var options = $(".select_option");
     for(var i = 0; i < options.length; i++){
         if(options[i].closest(".select").contains(e.target)){
             options[i].classList.remove("invisible");
@@ -22,13 +24,13 @@ document.addEventListener("click", function(e){
     }
 });
 
-var collapse = getc("collapse");
+var collapse = $(".collapse");
 for(var i = 0; i < collapse.length; i++){
     (function(){
         collapse[i].addEventListener("click", function(){
             var arrow = this.querySelector("span");
             arrow.innerHTML = arrow.innerHTML == "▲" ? "▼" : "▲";
-            var div = get(this.id.split("_")[1]);
+            var div = $("#"+this.id.split("_")[1]);
             div.classList.toggle("invisible");
         });
     }());
