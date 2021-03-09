@@ -16,37 +16,11 @@
     --color-bg-2: #444;
     --color-fg-1: white;
 }
-input[type="checkbox"]{
-    border: 1px solid var(--color-fg-1);
-}
-input[type="checkbox"]:checked:after{
-    color: var(--color-fg-1);
-}
-.n_title{
-    background-color: var(--color-fg-1);
-    color: var(--color-bg-1);
-}
-.select_option .option:hover{
-    background-color: var(--color-bg-2);
-}
-.select_option .option{
-    border: 1px solid var(--color-fg-1);
-    background-color: var(--color-bg-1);
-    border-top: none;
-}
-.select_option{
-    border-top: 1px solid var(--color-fg-1);
-}
-.select_view{
-    border: 1px solid var(--color-fg-1);
-}
-main{
-    background-color: var(--color-bg-1);
-}
 table, td, th{
     border: 1px solid var(--color-fg-1);
 }
 h1{
+    margin-bottom: 40px;
     padding: 4px;
     padding-left: 10px;
     padding-right: 10px;
@@ -80,8 +54,10 @@ a[href^="http://"]:after, a[href^="https://"]:after{
 body{
     font-family: "IBM Plex Mono", monospace;
     font-weight: normal;
-    margin: 2em auto;
-    max-width: 50em;
+    margin-right: auto;
+    margin-left: auto;
+    margin-top: 2rem;
+    max-width: 55rem;
     padding: 1em;
     color: var(--color-fg-1);
     background-color: var(--color-bg-1);
@@ -95,113 +71,16 @@ p{
 .muted{
     font-size: 15px;
 }
-#menu-icons{
+#menu{
     user-select: none;
     -moz-user-select: none;
     -webkit-user-select: none;
     -ms-user-select: none;
-    font-size: 30px;
     position: fixed;
     top: 5px;
     left: 5px;
+}
+#menu span{
     cursor: pointer;
-}
-textarea, button, input{
-    font-family: "IBM Plex Mono", monospace;
-    border: 1px solid var(--color-fg-1);
-    color: var(--color-fg-1);
-    background-color: var(--color-bg-1);
-}
-input[type="file"]{
-    border: none;
-}
-button{
-    height: 22px;
-}
-textarea{
-    width: 400px;
-    height: 120px;
-}
-.collapse span{
-    -webkit-user-select: none;
-    -moz-user-select: none;
-    -ms-user-select: none;
-    user-select: none;
-    cursor: pointer;
-}
-.invisible{
-    display: none !important;
-}
-input[type="checkbox"]{
-    appearance: none;
-    -webkit-appearance: none;
-    background-color: transparent;
-    padding: 6px;
-    display: inline-block;
-    margin: 0;
-    margin-bottom: -2px;
-    position: relative;
-}
-input[type="checkbox"]:checked:after{
-    content: "\2714";
-    font-size: 14px;
-    position: absolute;
-    top: -4px;
-    left: 1px;
-}
-.error{
-    color: red;
-    font-size: small;
-}
-.warning{
-    color: #fda900;
-    font-size: small;
-}
-.n_title{
-    display: inline-block;
-    margin: initial;
-    margin-top: 20px;
-}
-.select{
-    height: 20px;
-    font-size: 14px;
-    display: inline-block;
-    position: relative;
-    user-select: none;
-    -moz-user-select: none;
-    -webkit-user-select: none;
-    -ms-user-select: none;
-}
-.select_view{
-    height: 100%;
-    padding-left: 6px;
-    padding-right: 6px;
-    cursor: default;
-}
-.select_arrow{
-    padding-left: 10px;
-}
-.select_option{
-    z-index: 999;
-    position: absolute;
-    margin-top: -1px;
-    min-width: 100%;
-}
-.select_option .option{
-    padding-left: 6px;
-    padding-right: 6px;
-}
-table{
-    border-collapse: collapse;
-}
-td, th{
-    padding-left: 1em;
-    padding-right: 1em;
-}
-input[type=range]{
-    vertical-align: middle;
-}
-hr{
-    margin: 27px;
-    border: 1px solid var(--color-fg-1);
+    text-decoration: underline;
 }
