@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Cross-platform window in C</title>
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+    <div id="menu"><span><a href="index.html">Home</a></span> <span id="light">Dark Mode</span></div>
+    <h1>Cross-platform window in C</h1>
+
+    Motivations:
+    <ul>
+        <li>I want complete control over my program</li>
+        <li>It's a fun learning experience</li>
+        <li>GLFW is nice, but I can't figure out how to statically link it</li>
+    </ul>
+
+    Building the program for multiple platforms should not be any more complicated than this:
+    <code>
+    <pre class="code">
+gcc.exe main.c -l gdi32 -mwindows</pre>
+    <div class="code-description">build_windows.bat</div>
+    </code>
+
+    <code>
+    <pre class="code">#!/bin/bash
+gcc main.c -l X11 -D X11</pre>
+    <div class="code-description">build_linux_x11.sh</div>
+    </code>
+
+    <code>
+    <pre class="code">#!/bin/bash
+gcc main.c -l wayland-client -D WAYLAND</pre>
+    <div class="code-description">build_linux_wayland.sh</div>
+    </code>
+    <br>
+    So let's get started!<br><br>
+    First we want to display a blank window like this:
+    <code>
+    <pre class="code">int main(){
+    int err = create_window("my window", width, height);
+
+    if(err){
+        return 1;
+    }
+
+    while(event_loop()){
+    }
+
+    return 0;
+}</pre>
+        <div class="code-description">main.c</div>
+        </code>
+
+
+
+    <h2>Windows</h2>
+    <p>teqteq</p>
+    <script src="js/light.js"></script>
+</body>
+</html>
