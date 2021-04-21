@@ -300,7 +300,7 @@ void close_window(){
 
     <h2>Displaying a bitmap</h2>
 
-    We will use <a href="https://github.com/nothings/stb/blob/master/stb_image.h">stb_image</a> to load our image and copy its data to a buffer, we will then display that buffer in our window. Our new main.c is now:
+    We will use <a href="https://github.com/nothings/stb/blob/master/stb_image.h">stb_image</a> to load an image file and copy its data to a buffer, we will then display that buffer in our window. Our new main.c is now:
 
     <code>
     <pre class="code language-c">#include "window.h"
@@ -359,6 +359,8 @@ void init_buffer(int width, int height){
     <div class="code-description">window.h</div>
     </code>
 
+    <h2>Bitmap on Windows</h2>
+
     We add a function that draws the buffer and we modify the event callback:
 
     <code>
@@ -416,14 +418,27 @@ LRESULT CALLBACK window_procedure(HWND window_handle, UINT message, WPARAM w_par
     <div class="code-description">window.h</div>
     </code>
 
+    <p>Here is the <a href="https://github.com/imadr/cross-platform-window/tree/main/windows_bitmap">full code</a>. We get this result: </p>
+
     <img src="windows_bitmap.png">
+
+    <h2>Bitmap on Linux</h2>
+
+    <p>Here is the <a href="https://github.com/imadr/cross-platform-window/tree/main/linux_x11_bitmap">full code</a>. We get this result: </p>
+
     <img src="linux_x11_bitmap.png">
 
-    <h2>Todo...</h2>
+    <h2>Todo</h2>
+    <h3>Linux Wayland</h3>
     <ul>
-        <li>Linux Wayland</li>
-        <li>macOS</li>
+        <li><a href="https://bugaevc.gitbooks.io/writing-wayland-clients/content/">Writing Wayland clients</a></li>
     </ul>
+
+    <h3>macOS</h3>
+    <ul>
+        <li><a href="https://theobendixson.medium.com/handmade-hero-osx-platform-layer-day-2-b26d6966e214">Handmade Hero Mac OS Platform Layer</a></li>
+    </ul>
+
 <script src="../js/light.js"></script>
 <script>
 document.addEventListener("DOMContentLoaded", function(e){

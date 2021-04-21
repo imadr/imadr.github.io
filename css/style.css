@@ -58,7 +58,7 @@ a[href^="http://"]:after, a[href^="https://"]:after{
     src: url("IBMPlexMono-Regular.woff2") format("woff2");
     font-display: swap;
 }
-pre, h1, h2, #menu{
+pre, h1, h2, h3, #menu{
     font-family: "IBM Plex Mono";
 }
 pre{
