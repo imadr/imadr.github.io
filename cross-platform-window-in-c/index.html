@@ -18,10 +18,10 @@
     <h1>Cross-platform window in C</h1>
     <p>
         Let's make a small library like <a href="https://www.glfw.org/">GLFW</a> to open a window and display a bitmap on it. The library must be easy to use and to integrate into a project, it must also be cross-platform.
-        The complete code example can be found <a href="https://github.com/imadr/cross-platform-window/tree/main/src">here</a>.
+        The complete source code can be found <a href="https://github.com/imadr/cross-platform-window/tree/main/src">here</a>.
     </p>
     <p>
-        Building our program should not require any build system like cmake, instead we will use a simple script to compile for each operating system.
+        Building our program should not require any build system like CMake, instead we will use a simple script to compile for each operating system.
     </p>
 
     For windows with GCC:
@@ -390,7 +390,7 @@ LRESULT CALLBACK window_procedure(HWND window_handle, UINT message, WPARAM w_par
     <div class="code-description">window.h</div>
     </code>
 
-    We also specify the dimension and depth of our DIB (A "Device-Independent Bitmap", which for our purposes is just a bitmap).
+    We also specify the dimension and depth of our DIB (A "Device-Independent Bitmap", which for our purposes is just a bitmap):
     <code>
     <pre class="code language-c">int create_window(char* title, int width, int height){
     ...
@@ -428,14 +428,17 @@ LRESULT CALLBACK window_procedure(HWND window_handle, UINT message, WPARAM w_par
 
     <img src="linux_x11_bitmap.png">
 
-    <h2>Todo</h2>
+    <h2>Todo...</h2>
     <h3>Linux Wayland</h3>
     <ul>
+        <li>For now the program works with XWayland, but eventually I should implement the standalone wayland thing</li>
         <li><a href="https://bugaevc.gitbooks.io/writing-wayland-clients/content/">Writing Wayland clients</a></li>
+        <li><a href="https://hdante.wordpress.com/2014/07/08/the-hello-wayland-tutorial//">The Hello Wayland Tutorial</a></li>
     </ul>
 
     <h3>macOS</h3>
     <ul>
+        <li>Is there a way to mix Objective-C and C in the same file?</li>
         <li><a href="https://theobendixson.medium.com/handmade-hero-osx-platform-layer-day-2-b26d6966e214">Handmade Hero Mac OS Platform Layer</a></li>
     </ul>
 
