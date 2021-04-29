@@ -118,8 +118,8 @@ make it worse with unreadable variable names.
 HWND window_handle;
 
 void close_window(){
-    UnregisterClass("WindowClass", GetModuleHandle(0));
     DestroyWindow(window_handle);
+    UnregisterClass("WindowClass", GetModuleHandle(0));
 }
 
 /* This function handles the events (messages) that our window
