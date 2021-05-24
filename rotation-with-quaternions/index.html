@@ -77,7 +77,10 @@ $$||q|| = \sqrt{x^{2}+y^{2}+z^{2}+w^{2}}$$
 
 <p>Multiplying two unit quaternions represents a <strong>composition of two rotations</strong>.<br>
 Quaternion multiplication looks like this:
-$$ \textrm{q}_{1}.\textrm{q}_{2} = $$
+$$\textrm{q}_{1} = a+b\textrm{i}+c\textrm{j}+d\textrm{k}$$
+$$\textrm{q}_{2} = e+f\textrm{i}+g\textrm{j}+h\textrm{k}$$
+$$\begin{align*} \textrm{q}_{1}.\textrm{q}_{2} = (ae-bf-cg-dh)+(af+be+ch-dg)\textrm{i}+\\
+(ag-bh+ce+df)\textrm{j}+(ah+bg-cf+de)\textrm{k}\end{align*}$$
 </p>
 
 <code>
