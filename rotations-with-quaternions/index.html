@@ -3,7 +3,7 @@
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>Rotation with quaternions</title>
+    <title>Rotations with quaternions</title>
     <link rel="stylesheet" href="../css/style.css">
     <link rel="stylesheet" href="../css/highlight.css">
     <script src="../js/highlight.js"></script>
@@ -154,7 +154,7 @@ typedef struct Transform{
 <code>
 <pre class="code language-c">Transform t;
 t.position = (Vector3){0, 0, 0};
-t.scale = (Vector3){0, 0, 0};
+t.scale = (Vector3){1, 1, 1};
 t.rotation = quat_id(); // Initially our object isn't rotated
 
 // We rotate the object by PI/4 around the Y axis
