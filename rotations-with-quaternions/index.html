@@ -75,13 +75,17 @@ $$||q|| = \sqrt{x^{2}+y^{2}+z^{2}+w^{2}}$$
 }</pre>
 </code>
 
-<p>Multiplying two unit quaternions represents a <strong>composition of two rotations</strong>.<br>
-Quaternion multiplication looks like this:
+<p>Multiplying two unit quaternions represents a <strong>composition of two rotations</strong>.</p>
+
+<p><strong>Quaternion multiplication isn't commutative</strong> (\(\textrm{q}_{1}.\textrm{q}_{2} \ne \textrm{q}_{2}.\textrm{q}_{1}\)). If we want to apply a rotation \(\textrm{q}_{1}\) <strong>then</strong> a rotation \(\textrm{q}_{2}\), the resulting rotation \(\textrm{q}_{3}\) is: </p>
+
+$$\textrm{q}_{3}=\textrm{q}_{2}.\textrm{q}_{1}$$
+
+<p>Quaternion multiplication looks like this:</p>
 $$\textrm{q}_{1} = a+b\textrm{i}+c\textrm{j}+d\textrm{k}$$
 $$\textrm{q}_{2} = e+f\textrm{i}+g\textrm{j}+h\textrm{k}$$
 $$\begin{align*} \textrm{q}_{1}.\textrm{q}_{2} = (ae-bf-cg-dh)+(af+be+ch-dg)\textrm{i}+\\
 (ag-bh+ce+df)\textrm{j}+(ah+bg-cf+de)\textrm{k}\end{align*}$$
-</p>
 
 <code>
     <pre class="code language-c">Quaternion quat_quat_mul(Quaternion a, Quaternion b){
@@ -100,12 +104,11 @@ $$\begin{align*} \textrm{q}_{1}.\textrm{q}_{2} = (ae-bf-cg-dh)+(af+be+ch-dg)\tex
     <li>Interpolating between two Euler angles lead to weird results</li>
 </ul>
 
-<p>We represent the orientation of an object using only a quaternion, then we multiply that orientation by another quaternion to rotate it.<br><strong>Quaternion multiplication isn't commutative</strong> (\(\textrm{q}_{1}.\textrm{q}_{2} \ne \textrm{q}_{2}.\textrm{q}_{1}\)), if we want to apply a rotation \(\textrm{q}_{1}\) <strong>then</strong> a rotation \(\textrm{q}_{2}\), the resulting rotation \(\textrm{q}_{3}\) is: </p>
-$$\textrm{q}_{3}=\textrm{q}_{2}.\textrm{q}_{1}$$
+<p>We represent the orientation of an object using only a quaternion, then we multiply that orientation by another quaternion to rotate it.</p>
 
 <p>However writing a rotation directly in quaternion form isn't really intuitive, what we do instead is <strong>convert an Euler angle to a quaternion then use it for rotating</strong>.</p>
 
-<p>If we have an Euler angle rotation in the order ZYX (Yaw -> Pitch -> Roll, the order is important but arbitrary, we could have chosen another one), we can convert it to a quaternion like this:</p>
+<p>If we have an Euler angle rotation in the order ZYX (Yaw -> Pitch -> Roll, we can chose any order but must stay consistent), we can convert it to a quaternion like this:</p>
 
 $$
 \textrm{q} = \begin{bmatrix}
