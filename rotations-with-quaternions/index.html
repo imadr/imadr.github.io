@@ -8,22 +8,17 @@
     <link rel="stylesheet" href="../css/highlight.css">
     <script src="../js/highlight.js"></script>
 
-
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.13.11/dist/katex.min.css" integrity="sha384-Um5gpz1odJg5Z4HAmzPtgZKdTBHZdw8S29IecapCSB31ligYPhHQZMIlWLYQGVoc" crossorigin="anonymous">
-
-    <!-- The loading of KaTeX is deferred to speed up page rendering -->
-    <script defer src="https://cdn.jsdelivr.net/npm/katex@0.13.11/dist/katex.min.js" integrity="sha384-YNHdsYkH6gMx9y3mRkmcJ2mFUjTd0qNQQvY9VYZgQd7DcN7env35GzlmFaZ23JGp" crossorigin="anonymous"></script>
-
-    <!-- To automatically render math in text elements, include the auto-render extension: -->
-    <script defer src="https://cdn.jsdelivr.net/npm/katex@0.13.11/dist/contrib/auto-render.min.js" integrity="sha384-vZTG03m+2yp6N6BNi5iM4rW4oIwk5DfcNdFfxkk9ZWpDriOkXX8voJBFrAO7MpVl" crossorigin="anonymous"
-        onload="renderMathInElement(document.body);"></script>
+    <link rel="stylesheet" href="../css/katex.min.css">
+    <script defer src="../js/katex.min.js"></script>
+    <script defer src="../js/auto-render.min.js" onload="renderMathInElement(document.body);"></script>
 </head>
 <body>
     <div id="menu"><span><a href="../index.html">Home</a></span> <span id="light">Dark Mode</span></div>
     <h1>Rotations with quaternions</h1>
     <p>
         A quaternion is a 4 dimensional complex-like number, it has four components, three of which are the "imaginary" part.<br>
-        $$ \textrm{q} = a+b\textrm{i}+c\textrm{j}+d\textrm{k} $$
+        $$ q = a+b\textrm{i}+c\textrm{j}+d\textrm{k} $$
+        $$ q = (b,c,d, a) $$
         $$ \textrm{i}^{2}=\textrm{j}^{2}=\textrm{k}^{2}=\textrm{i}\textrm{j}\textrm{k}=-1 $$
     </p>
 
@@ -45,6 +40,7 @@
 <code>
 <pre class="code language-c">Quaternion q = (Quaternion){1, 2, 3, 4};</pre></code>
 
+<h2 id="quaternion-magnitude"><a href="#quaternion-magnitude">Quaternion magnitude</a></h2>
 <p>A quaternion is basically a 4 dimensional vector, so it has a magnitude (or norm, or length):</p>
 $$||q|| = \sqrt{x^{2}+y^{2}+z^{2}+w^{2}}$$
 <code>
@@ -53,6 +49,7 @@ $$||q|| = \sqrt{x^{2}+y^{2}+z^{2}+w^{2}}$$
 }</pre>
 </code>
 
+<h2 id="quaternion-normalization"><a href="#quaternion-normalization">Quaternion normalization</a></h2>
 <p>It can be normalized by dividing each component by the magnitude:</p>
 <code>
     <pre class="code language-c">Quaternion quat_normalize(Quaternion q){
@@ -68,6 +65,8 @@ $$||q|| = \sqrt{x^{2}+y^{2}+z^{2}+w^{2}}$$
 
 <p>A special property of quaternions is that <strong>a unit quaternion (a quaternion with magnitude 1) represents a rotation in 3D space.</strong></p>
 
+<h2 id="identity-quaternion"><a href="#identity-quaternion">Identity quaternion</a></h2>
+
 <p>There is a special quaternion called the <strong>identity quaternion</strong> which corresponds to no rotation:</p>
 <code>
     <pre class="code language-c">Quaternion quat_id(){
@@ -75,16 +74,20 @@ $$||q|| = \sqrt{x^{2}+y^{2}+z^{2}+w^{2}}$$
 }</pre>
 </code>
 
+<p>Note that \((0, 0, 0, -1)\) is also an identity quaternion.</p>
+
+<h2 id="quaternion-multiplication"><a href="#quaternion-multiplication">Quaternion multiplication</a></h2>
+
 <p>Multiplying two unit quaternions represents a <strong>composition of two rotations</strong>.</p>
 
-<p><strong>Quaternion multiplication isn't commutative</strong> (\(\textrm{q}_{1}.\textrm{q}_{2} \ne \textrm{q}_{2}.\textrm{q}_{1}\)). If we want to apply a rotation \(\textrm{q}_{1}\) <strong>then</strong> a rotation \(\textrm{q}_{2}\), the resulting rotation \(\textrm{q}_{3}\) is: </p>
+<p><strong>Quaternion multiplication isn't commutative</strong> (\(q_{1}.q_{2} \ne q_{2}.q_{1}\)). If we want to apply a rotation \(q_{1}\) <strong>then</strong> a rotation \(q_{2}\), the resulting rotation \(q_{3}\) is: </p>
 
-$$\textrm{q}_{3}=\textrm{q}_{2}.\textrm{q}_{1}$$
+$$q_{3}=q_{2}.q_{1}$$
 
 <p>Quaternion multiplication looks like this:</p>
-$$\textrm{q}_{1} = a+b\textrm{i}+c\textrm{j}+d\textrm{k}$$
-$$\textrm{q}_{2} = e+f\textrm{i}+g\textrm{j}+h\textrm{k}$$
-$$\begin{align*} \textrm{q}_{1}.\textrm{q}_{2} = (ae-bf-cg-dh)+(af+be+ch-dg)\textrm{i}+\\
+$$q_{1} = a+b\textrm{i}+c\textrm{j}+d\textrm{k}$$
+$$q_{2} = e+f\textrm{i}+g\textrm{j}+h\textrm{k}$$
+$$\begin{align*} q_{1}.q_{2} = (ae-bf-cg-dh)+(af+be+ch-dg)\textrm{i}+\\
 (ag-bh+ce+df)\textrm{j}+(ah+bg-cf+de)\textrm{k}\end{align*}$$
 
 <code>
@@ -97,6 +100,8 @@ $$\begin{align*} \textrm{q}_{1}.\textrm{q}_{2} = (ae-bf-cg-dh)+(af+be+ch-dg)\tex
     };
 }</pre>
 </code>
+
+<h2 id="quaternion-vs-euler-angles"><a href="#quaternion-vs-euler-angles">Quaternion vs Euler angles</a></h2>
 
 <p>We use quaternions instead of Euler angles to represent rotations for a couple of reasons:</p>
 <ul>
@@ -111,7 +116,7 @@ $$\begin{align*} \textrm{q}_{1}.\textrm{q}_{2} = (ae-bf-cg-dh)+(af+be+ch-dg)\tex
 <p>If we have an Euler angle rotation in the order ZYX (Yaw -> Pitch -> Roll, we can chose any order but must stay consistent), we can convert it to a quaternion like this:</p>
 
 $$
-\textrm{q} = \begin{bmatrix}
+q = \begin{bmatrix}
 \sin(x/2)\cos(y/2)\cos(z/2)-\cos(x/2)\sin(y/2)\sin(z/2) \\
 \cos(x/2)\sin(y/2)\cos(z/2)+\sin(x/2)\cos(y/2)\sin(z/2) \\
 \cos(x/2)\cos(y/2)\sin(z/2)-\sin(x/2)\sin(y/2)\cos(z/2) \\
@@ -161,7 +166,6 @@ t.scale = (Vector3){1, 1, 1};
 t.rotation = quat_id(); // Initially our object isn't rotated
 
 // We rotate the object by PI/4 around the Y axis
-// This is kinda ugly, C++ operator overloading would be nice
 t.rotation = quat_quat_mul(euler_to_quat((Vector3){0, PI/4, 0}), t.rotation);
 
 // We rotate again by PI/4 making it a PI/2 rotation around Y
@@ -171,6 +175,8 @@ t.rotation = quat_quat_mul(euler_to_quat((Vector3){0, PI/4, 0}), t.rotation);</p
 <p style="text-align: center;">
     <img style="width: 80%" src="cube_rotation.png">
 </p>
+
+<h2 id="quaternion-to-rotation-matrix"><a href="#quaternion-to-rotation-matrix">Quaternion to rotation matrix</a></h2>
 
 <p>When doing 3D rendering, we usually pass an MVP (Model View Projection) matrix to a shader to proprely display our objects in the scene:</p>
 
@@ -182,6 +188,7 @@ $$M_{\textit{model}} = M_{\textit{scale}}.M_{\textit{rotate}}.M_{\textit{transla
 
 <p>Each of those matrices is a 4x4 matrix in <a href="https://en.wikipedia.org/wiki/Homogeneous_coordinates">homogeneous coordinates</a>. Our quaternion rotation matrix is:</p>
 
+$$q = (x, y, z, w)$$
 $$
 M_{\textit{rotate}} = \begin{bmatrix}
 1-2yy-2zz && 2xy-2zw && 2xz+2yw && 0 \\
@@ -217,10 +224,49 @@ Mat4 rotate_3d_matrix(Quaternion q){
 }</pre>
 </code>
 
-<h2>Todo</h2>
-<ul>
-    <li>Spherical linear interpolation</li>
-</ul>
+<h2 id="quaternion-conjugate"><a href="#quaternion-conjugate">Quaternion Conjugate</a></h2>
+<p>The <strong>conjugate</strong> of a quaternion \(q\) is denoted \(q^{*}\):</p>
+
+$$q^{*} = a-b\textrm{i}-c\textrm{j}-d\textrm{k}$$
+
+<code>
+<pre class="code language-c">Quaternion quat_conjugate(Quaternion q){
+    return (Quaternion){-q.x, -q.y, -q.z, q.w};
+}
+</pre>
+</code>
+
+<h2 id="quaternion-inverse"><a href="#quaternion-inverse">Quaternion Inverse</a></h2>
+
+<p>The <strong>inverse</strong> of a quaternion \(q\), denoted \(q^{-1}\), is the conjugate divided by the magnitude squared:</p>
+
+$$q^{-1} = \frac{q^{*}}{||q||^{2}}$$
+
+<code>
+<pre class="code language-c">Quaternion quat_inverse(Quaternion q){
+    float m = quat_magnitude(q);
+    if(m == 0) return (Quaternion){0, 0, 0, 0}; // avoid division by 0
+    m *= m;
+    return (Quaternion){-q.x/m, -q.y/m, -q.z/m, q.w/m};
+}</pre>
+</code>
+
+<p>For unit quaternions, <strong>the conjugate is equal to the inverse</strong>.<br>
+Multiplying a quaternion by it's inverse results in the identity quaternion:</p>
+$$ q.q^{-1} = (0, 0, 0, 1) $$
+
+<h2 id="quaternion-difference"><a href="#quaternion-difference">Quaternion difference</a></h2>
+
+<p>The <strong>difference</strong> of two quaternions \(q_{1}\) and \(q_{2}\) is another quaternion \(q_{3}\) that rotates from \(q_{1}\) to \(q_{2}\):</p>
+
+$$q_{3} = q_{1}^{-1}.q_{2}$$
+
+<code>
+<pre class="code language-c">Quaternion quat_difference(Quaternion a, Quaternion b){
+    return quat_quat_mul(quat_inverse(a), b);
+}</pre>
+</code>
+
 <br><br><br><br><br><br><br><br>
 <script src="../js/light.js"></script>
 <script>

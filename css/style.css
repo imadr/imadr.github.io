@@ -87,6 +87,13 @@ body{
 h3, h2, h1{
     font-weight: normal;
 }
+h2{
+    border-bottom: 2px solid var(--color-fg-1);
+    font-family: "IBM Plex Sans";
+}
+h2 > a:hover{
+    text-decoration: none;
+}
 p{
     line-height: 1.7;
 }
@@ -105,4 +112,8 @@ p{
 #menu span{
     cursor: pointer;
     text-decoration: underline;
+}
+hr{
+    margin-top: 2em;
+    margin-bottom: 2em;
 }
