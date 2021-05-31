@@ -50,7 +50,7 @@ $$||q|| = \sqrt{x^{2}+y^{2}+z^{2}+w^{2}}$$
 </code>
 
 <h2 id="quaternion-normalization"><a href="#quaternion-normalization">Quaternion normalization</a></h2>
-<p>It can be normalized by dividing each component by the magnitude:</p>
+<p>A quaternion can be normalized by dividing each component by the magnitude:</p>
 <code>
     <pre class="code language-c">Quaternion quat_normalize(Quaternion q){
     float m = quat_magnitude(q);
@@ -63,7 +63,7 @@ $$||q|| = \sqrt{x^{2}+y^{2}+z^{2}+w^{2}}$$
 }</pre>
 </code>
 
-<p>A special property of quaternions is that <strong>a unit quaternion (a quaternion with magnitude 1) represents a rotation in 3D space.</strong></p>
+<p>A special property of quaternions is that <strong>a unit quaternion (a quaternion with magnitude \(1\)) represents a rotation in 3D space.</strong></p>
 
 <h2 id="identity-quaternion"><a href="#identity-quaternion">Identity quaternion</a></h2>
 
@@ -75,6 +75,16 @@ $$||q|| = \sqrt{x^{2}+y^{2}+z^{2}+w^{2}}$$
 </code>
 
 <p>Note that \((0, 0, 0, -1)\) is also an identity quaternion.</p>
+
+<h2 id="scaling-quaternion"><a href="#scaling-quaternion">Scaling a quaternion</a></h2>
+
+<p>Scaling a quaternion is multiplying each of its components by a real number (the scalar):</p>
+
+<code>
+<pre class="code language-c">Quaternion quat_scale(Quaternion q, float s){
+    return (Quaternion){q.x*s, q.y*s, q.z*s, q.w*s};
+}</pre>
+</code>
 
 <h2 id="quaternion-multiplication"><a href="#quaternion-multiplication">Quaternion multiplication</a></h2>
 
@@ -147,7 +157,7 @@ Quaternion euler_to_quat(Vector3 e){
         cx*cy*sz - sx*sy*cz,
         cx*cy*cz + sx*sy*sz
     };
-}}</pre>
+}</pre>
 </code>
 
 <code>
@@ -186,7 +196,9 @@ $$\textit{MVP} = M_{\textit{projection}}.M_{\textit{view}}.M_{\textit{model}}$$
 
 $$M_{\textit{model}} = M_{\textit{scale}}.M_{\textit{rotate}}.M_{\textit{translate}}$$
 
-<p>Each of those matrices is a 4x4 matrix in <a href="https://en.wikipedia.org/wiki/Homogeneous_coordinates">homogeneous coordinates</a>. Our quaternion rotation matrix is:</p>
+<p>Each of those matrices is a 4x4 matrix in <a href="https://en.wikipedia.org/wiki/Homogeneous_coordinates">homogeneous coordinates</a>.</p>
+
+<p>We convert a quaternion to a rotation matrix like this:</p>
 
 $$q = (x, y, z, w)$$
 $$
@@ -253,7 +265,7 @@ $$q^{-1} = \frac{q^{*}}{||q||^{2}}$$
 
 <p>For unit quaternions, <strong>the conjugate is equal to the inverse</strong>.<br>
 Multiplying a quaternion by it's inverse results in the identity quaternion:</p>
-$$ q.q^{-1} = (0, 0, 0, 1) $$
+$$q.q^{-1} = (0, 0, 0, 1)$$
 
 <h2 id="quaternion-difference"><a href="#quaternion-difference">Quaternion difference</a></h2>
 
@@ -267,7 +279,100 @@ $$q_{3} = q_{1}^{-1}.q_{2}$$
 }</pre>
 </code>
 
-<br><br><br><br><br><br><br><br>
+<h2 id="quaternion-exp-log"><a href="#quaternion-exp-log">Quaternion Exp and Log</a></h2>
+
+<p>The exponential and the logarithm of a quaternion won't be very useful by themselves, but we will use them to compute other functions later.</p>
+<p>Given a quaternion \(q = (x,y,z,w)\) and its vector part \(v = (x,y,z)\), the exponential of that quaternion is also a quaternion, and it's given by this formula:</p>
+
+$$\exp(q) = \exp(w)\begin{pmatrix}
+\frac{v_{x}}{||v||}\sin(||v||)\\
+\frac{v_{y}}{||v||}\sin(||v||)\\
+\frac{v_{z}}{||v||}\sin(||v||)\\
+\cos(||v||)
+\end{pmatrix}$$
+<code>
+<pre class="code language-c">Quaternion quat_exp(Quaternion q){
+    Vector3 v = (Vector3){q.x, q.y, q.z};
+    float v_m = Vector3_magnitude(v);
+    Vector3 v_n = Vector3_normalize(v);
+    float sin_v = sin(v_m);
+    float exp_w = exp(q.w);
+    return (Quaternion){
+        v_n.x*sin_v*exp_w,
+        v_n.y*sin_v*exp_w,
+        v_n.z*sin_v*exp_w,
+        cos(v_m)*exp_w
+    };
+}</pre>
+</code>
+
+<p>The logarithm of a quaternion is also a quaternion and is given by this formula:</p>
+
+$$\log(q) = \begin{pmatrix}
+\frac{v_{x}}{||v||}\arccos(\frac{w}{||q||})\\
+\frac{v_{y}}{||v||}\arccos(\frac{w}{||q||})\\
+\frac{v_{z}}{||v||}\arccos(\frac{w}{||q||})\\
+\log(||q||)
+\end{pmatrix}$$
+
+<code>
+<pre class="code language-c">Quaternion quat_log(Quaternion q){
+    Vector3 v = (Vector3){q.x, q.y, q.z};
+    float v_m = Vector3_magnitude(v);
+    Vector3 v_n = Vector3_normalize(v);
+    float m = quat_magnitude(q);
+    float a = acos(q.w/m);
+    return (Quaternion){
+        v_n.x*a,
+        v_n.y*a,
+        v_n.z*a,
+        log(m)
+    };
+}</pre>
+</code>
+
+<h2 id="quaternion-exponentiation"><a href="#quaternion-exponentiation">Quaternion exponentiation</a></h2>
+
+<p>Raising a quaternion to a power results in either a fraction or a multiple of that quaternion. \(q^{2}\) represents twice the rotation of \(q\), and \(q^{\frac{1}{2}}\) represents half of that rotation.</p>
+
+$$q^{n} = \exp(n\log(q))$$
+
+<code>
+<pre class="code language-c">Quaternion quat_pow(Quaternion q, float n){
+    return quat_exp(quat_scale(quat_log(q), n));
+}
+</pre>
+</code>
+
+<h2 id="quaternion-slerping"><a href="#quaternion-slerping">Quaternion slerping</a></h2>
+
+<p>Arguably one of the most important advantages of quaternions, "Slerp" stands for spherical linear interpolation. It's a function thats takes three parameters: a quaternion \(q_{1}\), a quaternion \(q_{2}\) and an interpolation parameter \(t\) that goes from \(0\) to \(1\). It gives us an intermediate rotation depending on the value of \(t\).</p>
+
+$$\textrm{slerp}(q_{1}, q_{2}, t) = q_{1}(q_{1}^{-1}q_{2})^{t}$$
+
+<code>
+<pre class="code language-c">Quaternion quat_slerp(Quaternion q1, Quaternion q2, float t){
+    t = t < 0 ? 0 : t;
+    t = t > 1 ? 1 : t;
+    return quat_quat_mul(q1, quat_pow(quat_quat_mul(quat_inverse(q1), q2), t));
+}</pre>
+</code>
+
+<p>Here is an animation showing a cube slerping from Euler angle \((0, \frac{5\pi}{4}, \frac{pi}{4})\) to \((0, 0, 0)\):</p>
+<p style="text-align: center;">
+    <video controls="" src="slerp.webm"></video>
+</p>
+
+<h2 id="source-code"><a href="#source-code">Source code</a></h2>
+
+<ul>
+    <li><a href="quaternion.c">quaternion.c</a></li>
+    <li><a href="quaternion.h">quaternion.h</a></li>
+</ul>
+
+
+
+<br><br>
 <script src="../js/light.js"></script>
 <script>
 document.addEventListener("DOMContentLoaded", function(e){
