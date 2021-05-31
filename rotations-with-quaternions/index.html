@@ -1,3 +1,9 @@
+<!-- TODO:
+- Nice looking animations with webgl
+- Efficient slerp technique (3D Math Primer for Graphics and Game Development 10.4.13)
+- Easy to understand proofs for each derivation
+ -->
+
 <!DOCTYPE html>
 <html>
 <head>
@@ -170,16 +176,16 @@ typedef struct Transform{
 </code>
 
 <code>
-<pre class="code language-c">Transform t;
-t.position = (Vector3){0, 0, 0};
-t.scale = (Vector3){1, 1, 1};
-t.rotation = quat_id(); // Initially our object isn't rotated
+<pre class="code language-c">Transform obj;
+obj.position = (Vector3){0, 0, 0};
+obj.scale = (Vector3){1, 1, 1};
+obj.rotation = quat_id(); // Initially our object isn't rotated
 
 // We rotate the object by PI/4 around the Y axis
-t.rotation = quat_quat_mul(euler_to_quat((Vector3){0, PI/4, 0}), t.rotation);
+obj.rotation = quat_quat_mul(euler_to_quat((Vector3){0, PI/4, 0}), obj.rotation);
 
 // We rotate again by PI/4 making it a PI/2 rotation around Y
-t.rotation = quat_quat_mul(euler_to_quat((Vector3){0, PI/4, 0}), t.rotation);</pre>
+obj.rotation = quat_quat_mul(euler_to_quat((Vector3){0, PI/4, 0}), obj.rotation);</pre>
 </code>
 
 <p style="text-align: center;">
@@ -358,10 +364,29 @@ $$\textrm{slerp}(q_{1}, q_{2}, t) = q_{1}(q_{1}^{-1}q_{2})^{t}$$
 }</pre>
 </code>
 
+
 <p>Here is an animation showing a cube slerping from Euler angle \((0, \frac{5\pi}{4}, \frac{pi}{4})\) to \((0, 0, 0)\):</p>
+
 <p style="text-align: center;">
     <video controls="" src="slerp.webm"></video>
 </p>
+<code>
+<pre class="code language-c">Transform obj;
+
+start_rotation = euler_to_quat((Vector3){0, 5*PI/4, PI/4});
+target_rotation = euler_to_quat((Vector3){0, 0, 0})
+obj.rotation = start_rotation;
+
+float t = 0;
+
+// Main loop
+while(1){
+    ...
+    obj.rotation = quat_slerp(start_rotation, target_rotation, t);
+    t += delta_time;
+    ...
+}</pre>
+</code>
 
 <h2 id="source-code"><a href="#source-code">Source code</a></h2>
 
