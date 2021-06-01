@@ -107,7 +107,7 @@ $$\begin{align*} q_{1}.q_{2} = (ae-bf-cg-dh)+(af+be+ch-dg)\textrm{i}+\\
 (ag-bh+ce+df)\textrm{j}+(ah+bg-cf+de)\textrm{k}\end{align*}$$
 
 <code>
-    <pre class="code language-c">Quaternion quat_quat_mul(Quaternion a, Quaternion b){
+    <pre class="code language-c">Quaternion quat_mul(Quaternion a, Quaternion b){
     return (Quaternion){
         a.w*b.x + a.x*b.w + a.y*b.z - a.z*b.y,
         a.w*b.y - a.x*b.z + a.y*b.w + a.z*b.x,
@@ -182,10 +182,10 @@ obj.scale = (Vector3){1, 1, 1};
 obj.rotation = quat_id(); // Initially our object isn't rotated
 
 // We rotate the object by PI/4 around the Y axis
-obj.rotation = quat_quat_mul(euler_to_quat((Vector3){0, PI/4, 0}), obj.rotation);
+obj.rotation = quat_mul(euler_to_quat((Vector3){0, PI/4, 0}), obj.rotation);
 
 // We rotate again by PI/4 making it a PI/2 rotation around Y
-obj.rotation = quat_quat_mul(euler_to_quat((Vector3){0, PI/4, 0}), obj.rotation);</pre>
+obj.rotation = quat_mul(euler_to_quat((Vector3){0, PI/4, 0}), obj.rotation);</pre>
 </code>
 
 <p style="text-align: center;">
@@ -281,7 +281,7 @@ $$q_{3} = q_{1}^{-1}.q_{2}$$
 
 <code>
 <pre class="code language-c">Quaternion quat_difference(Quaternion a, Quaternion b){
-    return quat_quat_mul(quat_inverse(a), b);
+    return quat_mul(quat_inverse(a), b);
 }</pre>
 </code>
 
@@ -359,7 +359,7 @@ $$\textrm{slerp}(q_{1}, q_{2}, t) = q_{1}(q_{1}^{-1}q_{2})^{t}$$
 <pre class="code language-c">Quaternion quat_slerp(Quaternion q1, Quaternion q2, float t){
     t = t < 0 ? 0 : t;
     t = t > 1 ? 1 : t;
-    return quat_quat_mul(q1, quat_pow(quat_quat_mul(quat_inverse(q1), q2), t));
+    return quat_mul(q1, quat_pow(quat_mul(quat_inverse(q1), q2), t));
 }</pre>
 </code>
 

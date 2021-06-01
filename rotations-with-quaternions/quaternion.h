@@ -36,7 +36,7 @@ float quat_magnitude(Quaternion q);
 Quaternion quat_normalize(Quaternion q);
 Quaternion quat_id();
 Quaternion quat_scale(Quaternion q, float s);
-Quaternion quat_quat_mul(Quaternion a, Quaternion b);
+Quaternion quat_mul(Quaternion a, Quaternion b);
 Quaternion euler_to_quat(Vector3 e);
 Mat4 rotate_3d_matrix(Quaternion q);
 Quaternion quat_conjugate(Quaternion q);

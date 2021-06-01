@@ -35,7 +35,7 @@ Quaternion quat_scale(Quaternion q, float s){
     return (Quaternion){q.x*s, q.y*s, q.z*s, q.w*s};
 }
 
-Quaternion quat_quat_mul(Quaternion a, Quaternion b){
+Quaternion quat_mul(Quaternion a, Quaternion b){
     return (Quaternion){
         a.w*b.x + a.x*b.w + a.y*b.z - a.z*b.y,
         a.w*b.y - a.x*b.z + a.y*b.w + a.z*b.x,
@@ -83,7 +83,7 @@ Quaternion quat_inverse(Quaternion q){
 }
 
 Quaternion quat_difference(Quaternion a, Quaternion b){
-    return quat_quat_mul(quat_inverse(a), b);
+    return quat_mul(quat_inverse(a), b);
 }
 
 Quaternion quat_exp(Quaternion q){
@@ -120,5 +120,5 @@ Quaternion quat_pow(Quaternion q, float n){
 Quaternion quat_slerp(Quaternion q1, Quaternion q2, float t){
     t = t < 0 ? 0 : t;
     t = t > 1 ? 1 : t;
-    return quat_quat_mul(q1, quat_pow(quat_quat_mul(quat_inverse(q1), q2), t));
+    return quat_mul(q1, quat_pow(quat_mul(quat_inverse(q1), q2), t));
 }
