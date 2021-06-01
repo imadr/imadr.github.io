@@ -102,7 +102,6 @@ Quaternion quat_exp(Quaternion q){
 
 Quaternion quat_log(Quaternion q){
     Vector3 v = (Vector3){q.x, q.y, q.z};
-    float v_m = vec3_magnitude(v);
     Vector3 v_n = vec3_normalize(v);
     float m = quat_magnitude(q);
     float a = acos(q.w/m);
