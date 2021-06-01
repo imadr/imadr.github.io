@@ -372,8 +372,8 @@ $$\textrm{slerp}(q_{1}, q_{2}, t) = q_{1}(q_{1}^{-1}q_{2})^{t}$$
 <code>
 <pre class="code language-c">Transform obj;
 
-start_rotation = euler_to_quat((Vector3){0, 5*PI/4, PI/4});
-target_rotation = euler_to_quat((Vector3){0, 0, 0})
+Quaternion start_rotation = euler_to_quat((Vector3){0, 5*PI/4, PI/4});
+Quaternion target_rotation = euler_to_quat((Vector3){0, 0, 0})
 obj.rotation = start_rotation;
 
 float t = 0;
