@@ -324,7 +324,6 @@ $$\log(q) = \begin{pmatrix}
 <code>
 <pre class="code language-c">Quaternion quat_log(Quaternion q){
     Vector3 v = (Vector3){q.x, q.y, q.z};
-    float v_m = Vector3_magnitude(v);
     Vector3 v_n = Vector3_normalize(v);
     float m = quat_magnitude(q);
     float a = acos(q.w/m);
