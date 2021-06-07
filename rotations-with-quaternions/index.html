@@ -23,8 +23,8 @@
     <h1>Rotations with quaternions</h1>
     <p>
         A quaternion is a 4 dimensional complex-like number, it has four components, three of which are the "imaginary" part.<br>
-        $$ q = a+b\textrm{i}+c\textrm{j}+d\textrm{k} $$
-        $$ q = (b,c,d, a) $$
+        $$ q = w+x\textrm{i}+y\textrm{j}+z\textrm{k} $$
+        $$ q = (x,y,z,w) $$
         $$ \textrm{i}^{2}=\textrm{j}^{2}=\textrm{k}^{2}=\textrm{i}\textrm{j}\textrm{k}=-1 $$
     </p>
 
@@ -245,7 +245,7 @@ Mat4 rotate_3d_matrix(Quaternion q){
 <h2 id="quaternion-conjugate"><a href="#quaternion-conjugate">Quaternion Conjugate</a></h2>
 <p>The <strong>conjugate</strong> of a quaternion \(q\) is denoted \(q^{*}\):</p>
 
-$$q^{*} = a-b\textrm{i}-c\textrm{j}-d\textrm{k}$$
+$$q^{*} = w-x\textrm{i}-y\textrm{j}-z\textrm{k}$$
 
 <code>
 <pre class="code language-c">Quaternion quat_conjugate(Quaternion q){
