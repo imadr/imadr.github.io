@@ -194,7 +194,7 @@ obj.rotation = quat_mul(euler_to_quat((Vector3){0, PI/4, 0}), obj.rotation);</pr
 
 <h2 id="quaternion-to-rotation-matrix"><a href="#quaternion-to-rotation-matrix">Quaternion to rotation matrix</a></h2>
 
-<p>When doing 3D rendering, we usually pass an MVP (Model View Projection) matrix to a shader to proprely display our objects in the scene:</p>
+<p>When doing 3D rendering, we usually pass an MVP (Model View Projection) matrix to a shader to properly display our objects in the scene:</p>
 
 $$\textit{MVP} = M_{\textit{projection}}.M_{\textit{view}}.M_{\textit{model}}$$
 
@@ -351,7 +351,7 @@ $$q^{n} = \exp(n\log(q))$$
 
 <h2 id="quaternion-slerping"><a href="#quaternion-slerping">Quaternion slerping</a></h2>
 
-<p>Arguably one of the most important advantages of quaternions, "Slerp" stands for spherical linear interpolation. It's a function thats takes three parameters: a quaternion \(q_{1}\), a quaternion \(q_{2}\) and an interpolation parameter \(t\) that goes from \(0\) to \(1\). It gives us an intermediate rotation depending on the value of \(t\).</p>
+<p>Arguably one of the most important advantages of quaternions, "Slerp" stands for spherical linear interpolation. It's a function that takes three parameters: a quaternion \(q_{1}\), a quaternion \(q_{2}\), and an interpolation parameter \(t\) that goes from \(0\) to \(1\). It gives us an intermediate rotation depending on the value of \(t\).</p>
 
 $$\textrm{slerp}(q_{1}, q_{2}, t) = q_{1}(q_{1}^{-1}q_{2})^{t}$$
 
