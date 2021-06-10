@@ -6,6 +6,7 @@ float vec3_magnitude(Vector3 v){
 
 Vector3 vec3_normalize(Vector3 v){
     float m = vec3_magnitude(v);
+    if(m == 0) return (Vector3){0, 0, 0};
     return (Vector3){
         v.x/m,
         v.y/m,
@@ -19,6 +20,7 @@ float quat_magnitude(Quaternion q){
 
 Quaternion quat_normalize(Quaternion q){
     float m = quat_magnitude(q);
+    if(m == 0) return (Quaternion){0, 0, 0, 0};
     return (Quaternion){
         q.x/m,
         q.y/m,

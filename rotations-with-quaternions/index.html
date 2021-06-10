@@ -2,6 +2,7 @@
 - Nice looking animations with webgl
 - Efficient slerp technique (3D Math Primer for Graphics and Game Development 10.4.13)
 - Easy to understand proofs for each derivation
+- Quaternion lookat
  -->
 
 <!DOCTYPE html>
@@ -60,6 +61,7 @@ $$||q|| = \sqrt{x^{2}+y^{2}+z^{2}+w^{2}}$$
 <code>
     <pre class="code language-c">Quaternion quat_normalize(Quaternion q){
     float m = quat_magnitude(q);
+    if(m == 0) return (Quaternion){0, 0, 0, 0};
     return (Quaternion){
         q.x/m,
         q.y/m,
