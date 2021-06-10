@@ -265,7 +265,7 @@ $$q^{-1} = \frac{q^{*}}{||q||^{2}}$$
 <code>
 <pre class="code language-c">Quaternion quat_inverse(Quaternion q){
     float m = quat_magnitude(q);
-    if(m == 0) return (Quaternion){0, 0, 0, 0}; // avoid division by 0
+    if(m == 0) return (Quaternion){0, 0, 0, 0};
     m *= m;
     return (Quaternion){-q.x/m, -q.y/m, -q.z/m, q.w/m};
 }</pre>
