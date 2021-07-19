@@ -22,32 +22,69 @@
             margin-bottom: 10px;
             font-size: 1.3em;
         }
-        .thing{
-            height: 150px;
-            border: 2px solid black;
+        #canvas{
+            width: 100%;
+            height: 200px;
+            background-image: url(css/img.jpg);
+            background-size: 100% auto;
+            background-position: 63% 92%;
+            background-repeat: no-repeat;
+            margin-bottom: 14px;
         }
     </style>
 </head>
 <body>
-    <div id="menu"><span><a href="index.html">Home</a></span> <span id="light">Dark Mode</span></div>
-    <h1>imadr</h1>
-    <div class="row">
-        <div class="col">
-            <h2>Articles</h2>
-            <ul>
-                <li><a href="rotations-with-quaternions/">Rotations with quaternions</a></li>
-                <li><a href="cross-platform-window-in-c/">Cross-platform window in C</a></li>
-                <li><a href="websites.html">Cool websites</a></li>
-                <li><a href="hello.html">Hello world!</a></li>
-            </ul>
-        </div>
-        <div class="col">
-            <h2>Contact</h2>
-            <ul>
-                <li><a href="mailto:imadr.codes@gmail.com">Email</a></li>
-            </ul>
-        </div>
+<div id="menu"><span><a href="index.html">Home</a></span> <span id="light">Dark Mode</span></div>
+<h1>imadr</h1>
+<div id="canvas"></div>
+<div class="row">
+    <div class="col">
+        <h2>Articles</h2>
+        <ul>
+            <li><a href="rotations-with-quaternions/">Rotations with quaternions</a></li>
+            <li><a href="cross-platform-window-in-c/">Cross-platform window in C</a></li>
+            <li><a href="websites.html">Cool websites</a></li>
+            <li><a href="hello.html">Hello world!</a></li>
+        </ul>
     </div>
-    <script src="js/light.js"></script>
+    <div class="col">
+        <h2>Contact</h2>
+        <ul>
+            <li><a href="mailto:imadr.codes@gmail.com">Email</a></li>
+        </ul>
+    </div>
+</div>
+<script src="js/light.js"></script>
+<script>
+// var canvas = document.getElementById("canvas");
+// canvas.width = document.getElementsByClassName("row")[0].offsetWidth;
+// canvas.height = 200;
+// var ctx = canvas.getContext("2d");
+
+// function update(){
+//     draw();
+//     window.requestAnimationFrame(update);
+// }
+
+// function draw(){
+//     var imgData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+//     var d = imgData.data;
+//     var test = 0;
+//     for(var i = 0; i < d.length; i += 4){
+//         i/4
+//         if(test == 0){
+//             d[i] = d[i+1] = d[i+2] = 0;
+//             d[i+3] = 255;
+//         }
+//         else{
+//             d[i+3] = 0;
+//         }
+//         test = test == 0 ? 1 : 0;
+//     }
+//     ctx.putImageData(imgData, 0, 0);
+// }
+// update();
+
+</script>
 </body>
 </html>
