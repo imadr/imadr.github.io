@@ -5,16 +5,49 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Stuff</title>
     <link rel="stylesheet" href="css/style.css">
+    <style>
+        .row{
+            display: flex;
+        }
+        .col{
+            flex: 50%;
+            margin-right: 10px;
+            margin-left: 10px;
+        }
+        ul{
+            padding: 0;
+            list-style: none;
+        }
+        li{
+            margin-bottom: 10px;
+            font-size: 1.3em;
+        }
+        .thing{
+            height: 150px;
+            border: 2px solid black;
+        }
+    </style>
 </head>
 <body>
     <div id="menu"><span><a href="index.html">Home</a></span> <span id="light">Dark Mode</span></div>
     <h1>imadr</h1>
-    <h2><a href="rotations-with-quaternions/">Rotations with quaternions</a></h2>
-    <h2><a href="cross-platform-window-in-c/">Cross-platform window in C</a></h2>
-    <h2><a href="websites.html">Cool websites</a></h2>
-    <h2><a href="hello.html">Hello world!</a></h2>
-    <br>
-    <a href="mailto:imadr.codes@gmail.com">Contact</a>
+    <div class="row">
+        <div class="col">
+            <h2>Articles</h2>
+            <ul>
+                <li><a href="rotations-with-quaternions/">Rotations with quaternions</a></li>
+                <li><a href="cross-platform-window-in-c/">Cross-platform window in C</a></li>
+                <li><a href="websites.html">Cool websites</a></li>
+                <li><a href="hello.html">Hello world!</a></li>
+            </ul>
+        </div>
+        <div class="col">
+            <h2>Contact</h2>
+            <ul>
+                <li><a href="mailto:imadr.codes@gmail.com">Email</a></li>
+            </ul>
+        </div>
+    </div>
     <script src="js/light.js"></script>
 </body>
 </html>
