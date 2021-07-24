@@ -1,10 +1,3 @@
-<!-- TODO:
-- Nice looking animations with webgl
-- Efficient slerp technique (3D Math Primer for Graphics and Game Development 10.4.13)
-- Easy to understand proofs for each derivation
-- Quaternion lookat
- -->
-
 <!DOCTYPE html>
 <html>
 <head>
@@ -289,7 +282,7 @@ $$q_{3} = q_{1}^{-1}.q_{2}$$
 
 <h2 id="quaternion-exp-log"><a href="#quaternion-exp-log">Quaternion Exp and Log</a></h2>
 
-<p>The exponential and the logarithm of a quaternion won't be very useful by themselves, but we will use them to compute other functions later.</p>
+<p>The <strong>exponential</strong> and the <strong>logarithm</strong> of a quaternion won't be very useful by themselves, but we will use them to compute other functions later.</p>
 <p>Given a quaternion \(q = (x,y,z,w)\) and its vector part \(v = (x,y,z)\), the exponential of that quaternion is also a quaternion, and it's given by this formula:</p>
 
 $$\exp(q) = \exp(w)\begin{pmatrix}
@@ -353,7 +346,7 @@ $$q^{n} = \exp(n\log(q))$$
 
 <h2 id="quaternion-slerping"><a href="#quaternion-slerping">Quaternion slerping</a></h2>
 
-<p>Arguably one of the most important advantages of quaternions, "Slerp" stands for spherical linear interpolation. It's a function that takes three parameters: a quaternion \(q_{1}\), a quaternion \(q_{2}\), and an interpolation parameter \(t\) that goes from \(0\) to \(1\). It gives us an intermediate rotation depending on the value of \(t\).</p>
+<p>Arguably one of the most important advantages of quaternions, "Slerp" stands for <strong>spherical linear interpolation</strong>. It's a function that takes three parameters: a quaternion \(q_{1}\), a quaternion \(q_{2}\), and an interpolation parameter \(t\) that goes from \(0\) to \(1\). It gives us an intermediate rotation depending on the value of \(t\).</p>
 
 $$\textrm{slerp}(q_{1}, q_{2}, t) = q_{1}(q_{1}^{-1}q_{2})^{t}$$
 
@@ -365,29 +358,64 @@ $$\textrm{slerp}(q_{1}, q_{2}, t) = q_{1}(q_{1}^{-1}q_{2})^{t}$$
 }</pre>
 </code>
 
+<p>Here is an interactive demo showing a cube slerping from Euler angle \((0, -\frac{3\pi}{2}, 0)\) to \((0, 0, 0)\):</p>
 
-<p>Here is an animation showing a cube slerping from Euler angle \((0, \frac{5\pi}{4}, \frac{\pi}{4})\) to \((0, 0, 0)\):</p>
+<div style="text-align: center;">
+<div style="font-family: 'mono';">t = <span id="t-value1"></span></div>
+<button id="play-demo1" style="width: 60px;">Play</button> <input style="vertical-align: bottom;" type="range" min="0" max="1" value="0" autocomplete="off" step="0.001" id="slerp-slider1">
+<br>
+<br>
+<canvas style="border: 2px solid black;" id="canvas1"></canvas>
+</div>
 
-<p style="text-align: center;">
-    <video controls="" src="slerp.webm"></video>
-</p>
+<p>Well that doesn't look quite right, the cube is doing a \(\frac{3\pi}{2}\) rotation clockwise on the Y axis, when a \(\frac{\pi}{2}\) counterclockwise rotation would have suffised. To fix that we will use the quaternion dot product.</p>
+
+<h2 id="quaternion-dot-product"><a href="#quaternion-dot-product">Quaternion dot product</a></h2>
+
+The quaternion <strong>dot product</strong> (not to be confused with quaternion multiplication) is analogous to the vector dot product, in the sense that it is a measure of how similar two quaternions are.
+
+$$q_{1} = a+b\textrm{i}+c\textrm{j}+d\textrm{k}$$
+$$q_{2} = e+f\textrm{i}+g\textrm{j}+h\textrm{k}$$
+$$
+q_{1} \bullet q_{2} = ae+bf+cg+dh
+$$
+
 <code>
-<pre class="code language-c">Transform obj;
-
-Quaternion start_rotation = euler_to_quat((Vector3){0, 5*PI/4, PI/4});
-Quaternion target_rotation = euler_to_quat((Vector3){0, 0, 0})
-obj.rotation = start_rotation;
-
-float t = 0;
-
-// Main loop
-while(1){
-    ...
-    obj.rotation = quat_slerp(start_rotation, target_rotation, t);
-    t += delta_time;
-    ...
+<pre class="code language-c">float quat_dot_product(Quaternion q1, Quaternion q2){
+    return q1.x*q2.x + q1.y*q2.y + q1.z*q2.z + q1.w*q2.w;
 }</pre>
 </code>
+
+<h2 id="fixed-quaternion-slerping"><a href="#fixed-quaternion-slerping">Fixed quaternion slerping</a></h2>
+
+<p>With the dot product we check if two quaternions are on opposite hemispheres, if they are we interpolate between \(q_{1}\) and \(-q_{2}\) instead of \(q_{2}\):</p>
+
+$$
+\textrm{slerp}(q_{1}, q_{2}, t) =
+\begin{cases}
+    q_{1}(q_{1}^{-1}q_{2})^{t},& \text{if   } q_{1} \bullet q_{2} > 0\\
+    q_{1}(q_{1}^{-1}(-q_{2}))^{t},& \text{otherwise}
+\end{cases}
+$$
+
+<code>
+<pre class="code language-c">Quaternion quat_slerp(Quaternion q1, Quaternion q2, float t){
+    t = t < 0 ? 0 : t;
+    t = t > 1 ? 1 : t;
+    if(quat_dot_product(q1, q2) < 0) q2 = quat_scale(q2, -1);
+    return quat_mul(q1, quat_pow(quat_mul(quat_inverse(q1), q2), t));
+}</pre>
+</code>
+
+<p>Here is another  demo showing the cube slerping from Euler angle \((0, -\frac{3\pi}{2}, 0)\) to \((0, 0, 0)\), this time taking the shortest path for the rotation:</p>
+
+<div style="text-align: center;">
+<div style="font-family: 'mono';">t = <span id="t-value2"></span></div>
+<button id="play-demo2" style="width: 60px;">Play</button> <input style="vertical-align: bottom;" type="range" min="0" max="1" value="0" autocomplete="off" step="0.001" id="slerp-slider2">
+<br>
+<br>
+<canvas style="border: 2px solid black;" id="canvas2"></canvas>
+</div>
 
 <h2 id="source-code"><a href="#source-code">Source code</a></h2>
 
@@ -406,8 +434,12 @@ while(1){
     <li><a href="https://eater.net/quaternions">Visualizing quaternions, an explorable video series</a></li>
 </ul>
 
-
 <br><br>
+
+<script src="cube.js"></script>
+<script src="math.js"></script>
+<script src="main.js"></script>
+
 <script src="../js/light.js"></script>
 <script>
 document.addEventListener("DOMContentLoaded", function(e){

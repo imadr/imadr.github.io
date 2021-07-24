@@ -7,34 +7,32 @@
 [data-theme="light"]{
     --color-muted: #5f5f5f;
     --color-bg-1: white;
-    --color-bg-2: #dfdfdf;
     --color-fg-1: black;
     --color-code-bg: #f3f3f3;
 }
 [data-theme="dark"]{
     --color-muted: #adadad;
     --color-bg-1: #1a1a1a;
-    --color-bg-2: #444;
     --color-fg-1: white;
     --color-code-bg: #2b2b2b;
 }
 table, td, th{
-    border: 1px solid var(--color-fg-1);
+    border: 1px solid var(--color-fg-1, black);
 }
 h1{
     margin-bottom: 40px;
     padding: 4px;
     padding-left: 10px;
     padding-right: 10px;
-    border: 3px solid var(--color-fg-1);
-    box-shadow: 1px 1px 0px 0px var(--color-fg-1),
-                2px 2px 0px 0px var(--color-fg-1),
-                3px 3px 0px 0px var(--color-fg-1),
-                4px 4px 0px 0px var(--color-fg-1),
-                5px 5px 0px 0px var(--color-fg-1);
+    border: 3px solid var(--color-fg-1, black);
+    box-shadow: 1px 1px 0px 0px var(--color-fg-1, black),
+                2px 2px 0px 0px var(--color-fg-1, black),
+                3px 3px 0px 0px var(--color-fg-1, black),
+                4px 4px 0px 0px var(--color-fg-1, black),
+                5px 5px 0px 0px var(--color-fg-1, black);
 }
 a{
-    color: var(--color-fg-1);
+    color: var(--color-fg-1, black);
     text-decoration: none;
 }
 a:hover{
@@ -49,29 +47,29 @@ a[href^="http://"]:after, a[href^="https://"]:after{
     font-size: 14px;
 }
 @font-face{
-    font-family: "IBM Plex Sans";
+    font-family: "sans";
     src: url("IBMPlexSans-Regular.woff2") format("woff2");
     font-display: swap;
 }
 @font-face{
-    font-family: "IBM Plex Sans";
+    font-family: "sans";
     src: url("IBMPlexSans-Bold.woff2") format("woff2");
     font-display: swap;
     font-weight: bold;
 }
 @font-face{
-    font-family: "IBM Plex Mono";
+    font-family: "mono";
     src: url("IBMPlexMono-Regular.woff2") format("woff2");
     font-display: swap;
 }
-pre, h1, h2, h3, #menu{
-    font-family: "IBM Plex Mono";
+pre, h1, #menu{
+    font-family: "mono";
 }
 pre{
     padding: 1em;
     margin-bottom: 0px;
-    background-color: var(--color-code-bg);
-    color: var(--color-fg-1);
+    background-color: var(--color-code-bg, #f3f3f3);
+    color: var(--color-fg-1, black);
     word-wrap: break-word;
     white-space: pre-wrap;
 }
@@ -80,22 +78,22 @@ pre{
     margin-bottom: 20px;
 }
 body{
-    font-family: "IBM Plex Sans", monospace;
+    font-family: "sans", monospace;
     font-weight: normal;
     margin-right: auto;
     margin-left: auto;
     margin-top: 2rem;
     max-width: 55rem;
     padding: 1rem;
-    color: var(--color-fg-1);
-    background-color: var(--color-bg-1);
+    color: var(--color-fg-1, black);
+    background-color: var(--color-bg-1, white);
 }
 h3, h2, h1{
     font-weight: normal;
 }
 h2{
-    border-bottom: 2px solid var(--color-fg-1);
-    font-family: "IBM Plex Sans";
+    border-bottom: 2px solid var(--color-fg-1, black);
+    font-family: "sans";
 }
 h2 > a:hover{
     text-decoration: none;
