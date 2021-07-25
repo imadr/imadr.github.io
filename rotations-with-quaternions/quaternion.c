@@ -119,7 +119,7 @@ Quaternion quat_pow(Quaternion q, float n){
     return quat_exp(quat_scale(quat_log(q), n));
 }
 
-float quat_dot_product(Quaternion q1, Quaternion q2){
+float quat_dot(Quaternion q1, Quaternion q2){
     return q1.x*q2.x + q1.y*q2.y + q1.z*q2.z + q1.w*q2.w;
 }
 
