@@ -45,5 +45,5 @@ Quaternion quat_difference(Quaternion a, Quaternion b);
 Quaternion quat_exp(Quaternion q);
 Quaternion quat_log(Quaternion q);
 Quaternion quat_pow(Quaternion q, float n);
-float quat_dot(Quaternion q1, Quaternion q2);
+float quat_dot_product(Quaternion q1, Quaternion q2);
 Quaternion quat_slerp(Quaternion q1, Quaternion q2, float t);
