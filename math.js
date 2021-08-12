@@ -129,8 +129,57 @@ function perspective_projection(fov, aspect_ratio, z_near, z_far){
     ];
 }
 
-function quat_id(){
-    return [0, 0, 0, 1];
+function lookat_matrix(camera_pos, target_pos, world_up){
+    let camera_direction = vec3_normalize(vec3_sub(target_pos, camera_pos));
+    let camera_right = vec3_normalize(vec3_cross(world_up, camera_direction));
+    let camera_up = vec3_cross(camera_direction, camera_right);
+    camera_direction = vec3_scale(camera_direction, -1);
+    return [
+        camera_right[0], camera_up[0], camera_direction[0], 0,
+        camera_right[1], camera_up[1], camera_direction[1], 0,
+        camera_right[2], camera_up[2], camera_direction[2], 0,
+        -vec3_dot(camera_right, camera_pos),
+        -vec3_dot(camera_up, camera_pos),
+        -vec3_dot(camera_direction, camera_pos), 1
+    ];
+}
+
+function vec2_magnitude(v){
+    return Math.sqrt(v[0]*v[0] + v[1]*v[1]);
+}
+
+function vec2_normalize(v){
+    let m = vec2_magnitude(v);
+    if(m == 0) return [0, 0];
+    return [v[0]/m, v[1]/m];
+}
+
+function vec2_add(a, b){
+    return [a[0]+b[0], a[1]+b[1]];
+}
+
+function vec2_sub(a, b){
+    return [a[0]-b[0], a[1]-b[1]];
+}
+
+function vec2_scale(v, s){
+    return [v[0]*s, v[1]*s];
+}
+
+function vec2_dot(a, b){
+    return a[0]*b[0] + a[1]*b[1];
+}
+
+function lerp(a, b, t){
+    t = t < 0 ? 0 : t;
+    t = t > 1 ? 1 : t;
+    return a+t*(b-a);
+}
+
+function vec2_lerp(a, b, t){
+    t = t < 0 ? 0 : t;
+    t = t > 1 ? 1 : t;
+    return vec2_add(vec2_scale(a, t), vec2_scale(b, 1-t));
 }
 
 function vec3_cross(a, b){
@@ -143,10 +192,6 @@ function vec3_cross(a, b){
 
 function vec3_magnitude(v){
     return Math.sqrt(v[0]*v[0] + v[1]*v[1] + v[2]*v[2]);
-}
-
-function vec4_magnitude(v){
-    return Math.sqrt(v[0]*v[0] + v[1]*v[1] + v[2]*v[2] + v[3]*v[3]);
 }
 
 function vec3_dot(a, b){
@@ -187,19 +232,12 @@ function vec3_scale(v, s){
     ];
 }
 
-function lookat_matrix(camera_pos, target_pos, world_up){
-    let camera_direction = vec3_normalize(vec3_sub(target_pos, camera_pos));
-    let camera_right = vec3_normalize(vec3_cross(world_up, camera_direction));
-    let camera_up = vec3_cross(camera_direction, camera_right);
-    camera_direction = vec3_scale(camera_direction, -1);
-    return [
-        camera_right[0], camera_up[0], camera_direction[0], 0,
-        camera_right[1], camera_up[1], camera_direction[1], 0,
-        camera_right[2], camera_up[2], camera_direction[2], 0,
-        -vec3_dot(camera_right, camera_pos),
-        -vec3_dot(camera_up, camera_pos),
-        -vec3_dot(camera_direction, camera_pos), 1
-    ];
+function vec4_magnitude(v){
+    return Math.sqrt(v[0]*v[0] + v[1]*v[1] + v[2]*v[2] + v[3]*v[3]);
+}
+
+function quat_id(){
+    return [0, 0, 0, 1];
 }
 
 function euler_to_quat(e){
@@ -215,10 +253,6 @@ function euler_to_quat(e){
         cx*cy*sz-sx*sy*cz,
         cx*cy*cz+sx*sy*sz
     ];
-}
-
-function rad(deg){
-    return deg*Math.PI/180;
 }
 
 function quat_mul(a, b){
@@ -310,4 +344,8 @@ function quat_slerp(q1, q2, t){
     t = t > 1 ? 1 : t;
     if(quat_dot_product(q1, q2) < 0) q2 = quat_scale(q2, -1);
     return quat_mul(q1, quat_pow(quat_mul(quat_inverse(q1), q2), t));
+}
+
+function rad(deg){
+    return deg*Math.PI/180;
 }

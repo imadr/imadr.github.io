@@ -58,6 +58,12 @@ a[href^="http://"]:after, a[href^="https://"]:after{
     font-weight: bold;
 }
 @font-face{
+    font-family: "sans";
+    src: url("IBMPlexSans-Italic.woff2") format("woff2");
+    font-display: swap;
+    font-style: italic;
+}
+@font-face{
     font-family: "mono";
     src: url("IBMPlexMono-Regular.woff2") format("woff2");
     font-display: swap;
@@ -91,7 +97,13 @@ body{
 h3, h2, h1{
     font-weight: normal;
 }
+h1{
+    font-size: 2em;
+}
 h2{
+    margin-bottom: 1em;
+    margin-top: 1em;
+    font-size: 1.5em;
     border-bottom: 2px solid var(--color-fg-1, black);
     font-family: "sans";
 }
@@ -120,10 +132,4 @@ p{
 hr{
     margin-top: 2em;
     margin-bottom: 2em;
-}
-h1{
-    font-size: 2em;
-}
-h2{
-    font-size: 1.5em;
 }

@@ -8,7 +8,7 @@ let gl2 = canvas2.getContext("webgl2");
 canvas2.width = 530;
 canvas2.height = 280;
 
-function some_vertex_buffer(gl){
+function cube_vertex_buffer(gl){
     let vertex_buffer = gl.createBuffer();
     gl.bindBuffer(gl.ARRAY_BUFFER, vertex_buffer);
     let vertices = cube_vertex.slice();
@@ -88,12 +88,6 @@ function draw(gl, camera, objects_to_draw){
     }
 }
 
-function set_shader_uniform(gl, shader, uniform, value){
-    if(shader.uniforms[uniform].type == gl.FLOAT_MAT4){
-        gl.uniformMatrix4fv(shader.uniforms[uniform].location, false, value);
-    }
-}
-
 let simple_vertex = `#version 300 es
 
 layout(location = 0) in vec3 position_attrib;
@@ -122,42 +116,6 @@ void main(){
     frag_color = vec4(color, 1);
 }`;
 
-function shader_type_to_txt(shader_type){
-    if(shader_type == gl.VERTEX_SHADER) return "vertex";
-    if(shader_type == gl.FRAGMENT_SHADER) return "fragment";
-}
-
-function compile_shader(gl, shader_source, shader_type){
-    let shader = gl.createShader(shader_type);
-    gl.shaderSource(shader, shader_source);
-    gl.compileShader(shader);
-    if(!gl.getShaderParameter(shader, gl.COMPILE_STATUS)){
-        console.log("[ERROR] Couldn't compile "+shader_type_to_txt(shader_type)
-                       +" shader: "+gl.getShaderInfoLog(shader));
-        gl.deleteShader(shader);
-        return null;
-    }
-    return shader;
-}
-
-function link_shader_program(gl, vertex_shader_source, fragment_shader_source){
-    let vertex_shader = compile_shader(gl, vertex_shader_source, gl.VERTEX_SHADER);
-    if(vertex_shader == null) return null;
-
-    let fragment_shader = compile_shader(gl, fragment_shader_source, gl.FRAGMENT_SHADER);
-    if(fragment_shader == null) return null;
-
-    let shader_program = gl.createProgram();
-    gl.attachShader(shader_program, vertex_shader);
-    gl.attachShader(shader_program, fragment_shader);
-    gl.linkProgram(shader_program);
-    if(!gl.getProgramParameter(shader_program, gl.LINK_STATUS)){
-        console.log("[ERROR] Couldn't link shader program: "+gl.getProgramInfoLog(shader_program));
-        return null;
-    }
-    return shader_program;
-}
-
 function init(gl, objects_to_draw){
     for(let i = 0; i < objects_to_draw.length; i++){
         let shader_program = link_shader_program(gl, simple_vertex, simple_fragment);
@@ -176,7 +134,7 @@ function init(gl, objects_to_draw){
         objects_to_draw[i].vao = vao;
         gl.bindVertexArray(vao);
 
-        let vertex_buffer = some_vertex_buffer(gl);
+        let vertex_buffer = cube_vertex_buffer(gl);
         objects_to_draw[i].vertex_count = vertex_buffer[1];
 
         gl.bindBuffer(gl.ARRAY_BUFFER, vertex_buffer[0]);

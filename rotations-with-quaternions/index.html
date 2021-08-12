@@ -3,6 +3,13 @@
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png">
+    <link rel="manifest" href="/site.webmanifest">
+    <link rel="mask-icon" href="/safari-pinned-tab.svg" color="#5bbad5">
+    <meta name="msapplication-TileColor" content="#da532c">
+    <meta name="theme-color" content="#ffffff">
     <title>Rotations with quaternions</title>
     <link rel="stylesheet" href="../css/style.css">
     <link rel="stylesheet" href="../css/highlight.css">
@@ -11,6 +18,11 @@
     <link rel="stylesheet" href="../css/katex.min.css">
     <script defer src="../js/katex.min.js"></script>
     <script defer src="../js/auto-render.min.js" onload="renderMathInElement(document.body);"></script>
+    <style>
+        canvas{
+            border: 2px solid black;
+        }
+    </style>
 </head>
 <body>
     <div id="menu"><span><a href="../index.html">Home</a></span> <span id="light">Dark Mode</span></div>
@@ -365,14 +377,14 @@ $$\textrm{slerp}(q_{1}, q_{2}, t) = q_{1}(q_{1}^{-1}q_{2})^{t}$$
 <button id="play-demo1" style="width: 60px;">Play</button> <input style="vertical-align: bottom;" type="range" min="0" max="1" value="0" autocomplete="off" step="0.001" id="slerp-slider1">
 <br>
 <br>
-<canvas style="border: 2px solid black;" id="canvas1"></canvas>
+<canvas id="canvas1"></canvas>
 </div>
 
 <p>Well that doesn't look quite right, the cube is doing a \(\frac{3\pi}{2}\) rotation clockwise on the Y axis, when a \(\frac{\pi}{2}\) counterclockwise rotation would have suffised. To fix that we will use the quaternion dot product.</p>
 
 <h2 id="quaternion-dot-product"><a href="#quaternion-dot-product">Quaternion dot product</a></h2>
 
-The quaternion <strong>dot product</strong> (not to be confused with quaternion multiplication) is analogous to the vector dot product, in the sense that it is a measure of how similar two quaternions are.
+<p>The quaternion <strong>dot product</strong> (not to be confused with quaternion multiplication) is analogous to the vector dot product, in the sense that it is a measure of how similar two quaternions are.</p>
 
 $$q_{1} = a+b\textrm{i}+c\textrm{j}+d\textrm{k}$$
 $$q_{2} = e+f\textrm{i}+g\textrm{j}+h\textrm{k}$$
@@ -414,7 +426,7 @@ $$
 <button id="play-demo2" style="width: 60px;">Play</button> <input style="vertical-align: bottom;" type="range" min="0" max="1" value="0" autocomplete="off" step="0.001" id="slerp-slider2">
 <br>
 <br>
-<canvas style="border: 2px solid black;" id="canvas2"></canvas>
+<canvas id="canvas2"></canvas>
 </div>
 
 <h2 id="source-code"><a href="#source-code">Source code</a></h2>
@@ -436,8 +448,9 @@ $$
 
 <br><br>
 
+<script src="../math.js"></script>
+<script src="../webgl_helper.js"></script>
 <script src="cube.js"></script>
-<script src="math.js"></script>
 <script src="main.js"></script>
 
 <script src="../js/light.js"></script>

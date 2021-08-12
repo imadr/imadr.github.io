@@ -1,5 +1,5 @@
-var theme_button = document.getElementById("light");
-var theme = localStorage.getItem("theme") == null ? "light" : localStorage.getItem("theme");
+let theme_button = document.getElementById("light");
+let theme = localStorage.getItem("theme") == null ? "light" : localStorage.getItem("theme");
 theme_button.innerHTML = theme == "light" ? "Dark Mode" : "Light Mode";
 document.body.setAttribute("data-theme", theme);
 

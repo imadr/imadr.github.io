@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png">
+    <link rel="manifest" href="/site.webmanifest">
+    <link rel="mask-icon" href="/safari-pinned-tab.svg" color="#5bbad5">
+    <meta name="msapplication-TileColor" content="#da532c">
+    <meta name="theme-color" content="#ffffff">
+    <title>Terrain generation</title>
+    <link rel="stylesheet" href="../css/style.css">
+    <link rel="stylesheet" href="../css/highlight.css">
+    <script src="../js/highlight.js"></script>
+</head>
+<body>
+    <div id="menu"><span><a href="../index.html">Home</a></span> <span id="light">Dark Mode</span></div>
+    <h1>Terrain generation</h1>
+
+    <p>Start by generating some perlin noise (press <strong>G</strong> to generate a seed):</p>
+    <label for="seed">Seed:</label> <input type="number" min="0" id="seed"><br><br>
+    <canvas id="canvas1"></canvas><br>
+
+    <p>Use fractal brownian motion to make it more noisy:</p>
+    <label for="octaves">Octaves:</label> <input type="number" min="0" id="octaves"><br><br>
+    <canvas id="canvas2"></canvas>
+
+    <p>Generate a 3D grid (hold and drag to rotate):</p>
+    <canvas style="border: 2px solid black;" id="canvas_gl_0"></canvas>
+
+    <p>Apply the noise texture as a heightmap for the grid:</p>
+    <label for="height_multiplier">Height multiplier:</label>
+    <input style="vertical-align: middle;" type="range" min="0" max="100" class="slider" id="height_multiplier"><br><br>
+    <canvas style="border: 2px solid black;" id="canvas_gl_1"></canvas>
+
+    <p>Color the terrain depending on the height:</p>
+    <canvas style="border: 2px solid black;" id="canvas_gl_2"></canvas>
+
+    <script src="../math.js"></script>
+    <script src="../webgl_helper.js"></script>
+    <script src="noise.js"></script>
+    <script src="main.js"></script>
+
+<script src="../js/light.js"></script>
+<script>
+document.addEventListener("DOMContentLoaded", function(e){
+    document.querySelectorAll(".code").forEach(function(block){
+        hljs.highlightBlock(block);
+    });
+});
+</script>
+</body>
+</html>

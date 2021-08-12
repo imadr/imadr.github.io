@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png">
+    <link rel="manifest" href="/site.webmanifest">
+    <link rel="mask-icon" href="/safari-pinned-tab.svg" color="#5bbad5">
+    <meta name="msapplication-TileColor" content="#da532c">
+    <meta name="theme-color" content="#ffffff">
+    <title>Raymarching in WebGL</title>
+    <link rel="stylesheet" href="../css/style.css">
+    <link rel="stylesheet" href="../css/highlight.css">
+    <script src="../js/highlight.js"></script>
+    <style>
+        canvas{
+            border: 2px solid black;
+        }
+    </style>
+</head>
+<body>
+    <div id="menu"><span><a href="../index.html">Home</a></span> <span id="light">Dark Mode</span></div>
+    <h1>Raymarching in WebGL</h1>
+    <p>
+        Raymaching is a rendering technique Let's implement raymarching with WebGL.
+    </p>
+    <h2 id="signed-distance-function"><a href="#signed-distance-function">Signed distance function</a></h2>
+
+    <p>In raymaching, we don't use 3D models to render our scene, instead we use a <strong>signed distance function</strong> also known as <strong>SDF</strong>.<br>
+    The SDF of an object is a function that, given a point in space as input, outputs the distance from that point to the closest point of the object.</p>
+    <h2 id="the-raymarching-algorithm"><a href="#the-raymarching-algorithm">The raymarching algorithm</a></h2>
+    This is the pseudo code for the algorihm:
+    <code><pre>function march(ray_origin, ray_direction){
+    total_distance = 0
+    for(i = 0; i < max_iterations; i++){
+        distance = sdf()
+        total_distance += distance
+
+        if(distance < small_number){
+            break
+        }
+        if(total_distance > big_number){
+            break
+        }
+    }
+    return total_distance
+}</pre></code>
+
+<br><br><br><br>
+<script src="../webgl_helper.js"></script>
+<canvas id="canvas1"></canvas>
+<script src="1.js"></script>
+<br>
+<canvas id="canvas2"></canvas>
+<script src="2.js"></script>
+<br>
+<canvas id="canvas3"></canvas>
+<script src="3.js"></script>
+<br>
+
+<script src="../js/light.js"></script>
+<script>
+document.addEventListener("DOMContentLoaded", function(e){
+    document.querySelectorAll(".code").forEach(function(block){
+        hljs.highlightBlock(block);
+    });
+});
+</script>
+</body>
+</html>
