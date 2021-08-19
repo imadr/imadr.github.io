@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>Japanese training</title>
+    <style>
+    body{
+        font-family: sans-serif;
+        text-align: center;
+    }
+    #center{
+        display: inline-block;
+        position: absolute;
+        top: 40%;
+        left: 50%;
+        transform: translateX(-50%) translateY(-50%);
+    }
+    #char{
+        display: inline-block;
+        font-size: 9em;
+        border: 4px solid black;
+        border-radius: 20px;
+        padding: 0.3em;
+        line-height: 1em;
+    }
+    #romaji{
+        margin-top: 1em;
+        border: 4px solid black;
+        border-radius: 5px;
+        width: 10em;
+        padding: 0.3em;
+        outline: none;
+        font-size: 2em;
+        text-align: center;
+    }
+    #score{
+        font-weight: bold;
+        font-size: 2em;
+        position: absolute;
+        top: 0.3em;
+        left: 0.3em;
+    }
+    #options{
+        font-weight: bold;
+        font-size: 1.1em;
+        position: absolute;
+        top: 0.3em;
+        right: 0.3em;
+        text-align: right;
+    }
+    </style>
+</head>
+<body>
+<div id="score"></div>
+<div id="options">
+    <input type="checkbox" id="hiragana"><label>Hiragana</label><br>
+    <input type="checkbox" id="dakuten"><label>Dakuten</label><br>
+    <input type="checkbox" id="combo"><label>Combo hiragana</label><br>
+    <input type="checkbox" id="katakana"><label>Katakana</label><br>
+</div>
+<div id="center">
+    <div id="char"></div><br>
+    <input placeholder="Romaji" type="text" id="romaji">
+</div>
+<script>
+let romaji = document.getElementById("romaji");
+let char = document.getElementById("char");
+let score_div = document.getElementById("score");
+let options_checkbox = [
+    document.getElementById("hiragana"),
+    document.getElementById("dakuten"),
+    document.getElementById("combo"),
+    document.getElementById("katakana"),
+];
+let options = [true, false, false, false];
+for(let i = 0; i < options.length; i++){
+    options_checkbox[i].checked = options[i];
+}
+let hiragana = [
+["あ", ["a"],] ["い", ["i"]], ["う", ["u"]], ["え", ["e"]], ["お", ["o"]],
+["か", ["ka"]], ["き", ["ki"]], ["く", ["ku"]], ["け", ["ke"]], ["こ", ["ko"]],
+["さ", ["sa"]], ["し", ["si", "shi"]], ["す", ["su"]], ["せ", ["se"]], ["そ", ["so"]],
+["た", ["ta"]], ["ち", ["chi"]], ["つ", ["tu"]], ["て", ["te"]], ["と", ["to"]],
+["な", ["na"]], ["に", ["ni"]], ["ぬ", ["nu"]], ["ね", ["ne"]], ["の", ["no"]],
+["は", ["ha"]], ["ひ", ["hi"]], ["ふ", ["hu", "fu"]], ["へ", ["he"]], ["ほ", ["ho"]],
+["ま", ["ma"]], ["み", ["mi"]], ["む", ["mu"]], ["め", ["me"]], ["も", ["mo"]],
+["や", ["ya"]], ["ゆ", ["yi"]], ["よ", ["yo"]],
+["ら", ["ra"]], ["り", ["ri"]], ["る", ["ro"]], ["れ", ["re"]], ["ろ", ["ro"]],
+["わ", ["wa"]], ["を", ["wo"]], ["ん", ["n"]],
+["が", ["ga"]], ["ぎ", ["gi"]], ["ぐ", ["gu"]], ["げ", ["ge"]], ["ご", ["go"]],
+["ざ", ["za"]], ["じ", ["ji"]], ["ず", ["zu"]], ["ぜ", ["ze"]], ["ぞ", ["zo"]],
+["だ", ["da"]], ["ぢ", ["di", "dzi"]], ["づ", ["du"]], ["で", ["de"]], ["ど", ["do"]],
+["ぱ", ["pa"]], ["ぴ", ["pi"]], ["ぷ", ["pu"]], ["ぺ", ["pe"]], ["ぽ", ["po"]],
+["ば", ["ba"]], ["び", ["bi"]], ["ぶ", ["bu"]], ["べ", ["be"]], ["ぼ", ["bo"]],
+
+];
+let current_char;
+function next_char(){
+    current_char = Math.floor(Math.random()*hiragana.length);
+    char.innerHTML = hiragana[current_char][0];
+}
+let score = 0;
+romaji.value = "";
+romaji.focus();
+romaji.onkeydown = function(e){
+    if(e.keyCode == 13){
+        if(hiragana[current_char][1].indexOf(romaji.value) > -1){
+            next_char();
+            romaji.value = "";
+            romaji.style.boxShadow = "none";
+            score++;
+        }
+        else{
+            romaji.value = "";
+            romaji.style.boxShadow = "0px 0px 12px #f009";
+            score--;
+        }
+        score_div.innerHTML = "Score : "+score;
+    }
+};
+score_div.innerHTML = "Score : "+score;
+next_char();
+</script>
+</body>
+</html>
