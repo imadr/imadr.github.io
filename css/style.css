@@ -48,14 +48,21 @@ a[href^="http://"]:after, a[href^="https://"]:after{
 }
 @font-face{
     font-family: "sans";
+    src: url("IBMPlexSans-Light.woff2") format("woff2");
+    font-display: swap;
+    font-weight: 300;
+}
+@font-face{
+    font-family: "sans";
     src: url("IBMPlexSans-Regular.woff2") format("woff2");
     font-display: swap;
+    font-weight: 400;
 }
 @font-face{
     font-family: "sans";
     src: url("IBMPlexSans-Bold.woff2") format("woff2");
     font-display: swap;
-    font-weight: bold;
+    font-weight: 700;
 }
 @font-face{
     font-family: "sans";
@@ -84,7 +91,7 @@ pre{
     margin-bottom: 20px;
 }
 body{
-    font-family: "sans", monospace;
+    font-family: "sans", sans-serif;
     font-weight: normal;
     margin-right: auto;
     margin-left: auto;
@@ -105,7 +112,7 @@ h2{
     margin-top: 1em;
     font-size: 1.5em;
     border-bottom: 2px solid var(--color-fg-1, black);
-    font-family: "sans";
+    font-family: "sans", sans-serif;
 }
 h2 > a:hover{
     text-decoration: none;
@@ -132,4 +139,7 @@ p{
 hr{
     margin-top: 2em;
     margin-bottom: 2em;
+}
+input{
+    font-family: "sans", sans-serif;
 }

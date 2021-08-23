@@ -14,17 +14,19 @@
     <link rel="stylesheet" href="../css/style.css">
     <style>
     body{
-        font-family: sans-serif;
-        text-align: center;
         background-color: var(--color-bg-1, white);
         color: var(--color-fg-1, black);
+        max-width: 100vw;
+        margin: 0;
+        padding: 1em;
     }
-    #center{
+    #game{
         display: inline-block;
         position: absolute;
         left: 50%;
         top: 10%;
         transform: translateX(-50%);
+        text-align: center;
     }
     #char{
         display: inline-block;
@@ -49,59 +51,136 @@
     #score{
         font-weight: bold;
         font-size: 2em;
-        position: absolute;
-        top: 0.3em;
-        left: 0.3em;
+        display: inline-block;
     }
     #options{
         font-weight: bold;
         font-size: 1.1em;
-        position: absolute;
-        top: 0.3em;
-        right: 0.3em;
+        float: right;
         text-align: left;
         user-select: none;
-    }
-    #light{
-        cursor: pointer;
     }
     #correction{
         font-weight: bold;
         font-size: 2em;
         margin-top: 20px;
     }
-    hr{
-        margin-top: 0.5em;
-        margin-bottom: 0.5em;
+    button{
+        font-family: "sans";
+        font-size: 16px;
+        font-weight: 300;
+        color: var(--color-fg-1);
+        background-color: var(--color-bg-1);
+        border: 2px solid var(--color-fg-1);
+        border-radius: 6px;
+        padding: 5px 15px 5px 15px;
+        cursor: pointer;
+        transition: background-color 100ms linear;
+        transition: color 100ms linear;
+        outline: none;
+        user-select: none;
+        display: block;
+        align-items: center;
+        font-weight: 600;
+
+        margin-right: 0;
+        margin-left: auto;
+        width: 100%;
+        margin-bottom: 9px;
+    }
+    button > svg{
+        margin-right: 8px;
+        height: 20px;
+        width: 20px;
+        vertical-align: text-top;
+    }
+    button:hover{
+        background-color: var(--color-fg-1);
+        color: var(--color-bg-1);
+    }
+    #fonts-list{
+        font-size: 2em;
     }
     </style>
 </head>
 <body>
 <div id="score"></div>
 <div id="options">
-    <span id="light">Dark Mode</span>
-    <hr>
-    <input onclick="change_check(this);" type="checkbox" id="hiragana"><label for="hiragana">Hiragana</label><br>
-    <input onclick="change_check(this);" type="checkbox" id="dakuten_hiragana"><label for="dakuten_hiragana">Dakuten hiragana</label><br>
-    <input onclick="change_check(this);" type="checkbox" id="combo_hiragana"><label for="combo_hiragana">Combination hiragana</label><br>
-    <input onclick="change_check(this);" type="checkbox" id="katakana"><label for="katakana">Katakana</label><br>
-    <input onclick="change_check(this);" type="checkbox" id="dakuten_katakana"><label for="dakuten_katakana">Dakuten katakana</label><br>
-    <input onclick="change_check(this);" type="checkbox" id="combo_katakana"><label for="combo_katakana">Combination katakana</label>
-    <hr>
-    Font: <br>
-    <input onclick="change_font(this.value);" type="radio" id="check-serif" value="serif" name="font"><label for="check-serif">Serif</label>
-    <input onclick="change_font(this.value);" type="radio" id="check-sans-serif" value="sans-serif" name="font"><label for="check-sans-serif">Sans serif</label>
+    <button id="light">Dark Mode</button>
+    <button id="chart_hiragana_open">ひ Hiragana chart</button>
+    <button>カ Katakana chart</button>
+    <div style="margin-top: 10px;">
+        Practice:<br>
+        <input onclick="change_check(this);" type="checkbox" id="hiragana"><label for="hiragana">Hiragana</label><br>
+        <input onclick="change_check(this);" type="checkbox" id="dakuten_hiragana"><label for="dakuten_hiragana">Dakuten hiragana</label><br>
+        <input onclick="change_check(this);" type="checkbox" id="combo_hiragana"><label for="combo_hiragana">Combination hiragana</label><br>
+        <input onclick="change_check(this);" type="checkbox" id="katakana"><label for="katakana">Katakana</label><br>
+        <input onclick="change_check(this);" type="checkbox" id="dakuten_katakana"><label for="dakuten_katakana">Dakuten katakana</label><br>
+        <input onclick="change_check(this);" type="checkbox" id="combo_katakana"><label for="combo_katakana">Combination katakana</label>
+    </div>
+    <div style="margin-top: 10px;">
+        Font:<br>
+        <div id="fonts-list"></div>
+    </div>
 </div>
-<div id="center">
+<div id="game">
     <div id="char"></div><br>
     <input placeholder="Romaji" type="text" id="romaji">
     <div id="correction"></div>
 </div>
+<div class="click" id="chart_close" style="display: none;">Back</div>
+<div id="hiragana_chart" style="display: none;">
+    <h1>Hiragana Chart</h1>
+    <div id="hiragana_chart_table"></div>
+</div>
 <script>
+(function(d){function c(c){b.style.fontFamily=c;e.appendChild(b);f=b.clientWidth;e.removeChild(b);return f}var f,e=d.body,b=d.createElement("span");b.innerHTML=Array(100).join("wi");b.style.cssText=["position:absolute","width:auto","font-size:128px","left:-99999px"].join(" !important;");var g=c("monospace"),h=c("serif"),k=c("sans-serif");window.font_available=function(b){return g!==c(b+",monospace")||k!==c(b+",sans-serif")||h!==c(b+",serif")}})(document);
+
+let fonts_list = [
+    "Meiryo",
+    "Noto Sans CJK JP",
+    "Noto Serif CJK JP",
+    "MS Gothic",
+    "SimSun",
+    "Microsoft YaHei",
+    "FangSong",
+    "Osaka"
+];
+let fonts_list_div = document.getElementById("fonts-list");
+for(let i = 0; i < fonts_list.length; i++){
+    let font = fonts_list[i]
+    if(font_available(font)){
+        let check = document.createElement("input");
+        check.type = "radio";
+        check.value = i;
+        check.name = "font";
+        check.id = "font-check-"+i;
+        (function(check, i){
+            check.onchange = function(e){
+                if(e.target.checked) change_font(i);
+            }
+        })(check, i);
+        let label = document.createElement("label");
+        label.innerHTML = "ふりがな";
+        label.htmlFor = "font-check-"+i;
+        label.style.fontFamily = font;
+        fonts_list_div.appendChild(check);
+        fonts_list_div.appendChild(label);
+        let br = document.createElement("br");
+        fonts_list_div.appendChild(br);
+    }
+}
+
+let theme_svg = [`<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="5"/><path d="M12 1v2M12 21v2M4.2 4.2l1.4 1.4M18.4 18.4l1.4 1.4M1 12h2M21 12h2M4.2 19.8l1.4-1.4M18.4 5.6l1.4-1.4"/></svg>`,
+    `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path></svg>`];
+
 let romaji = document.getElementById("romaji");
 let char = document.getElementById("char");
 let score_div = document.getElementById("score");
-let correction = document.getElementById("correction");
+let game_div = document.getElementById("game");
+let correction_div = document.getElementById("correction");
+let chart_close_div = document.getElementById("chart_close");
+let hiragana_chart_div = document.getElementById("hiragana_chart");
 let options_checkbox = [
     document.getElementById("hiragana"),
     document.getElementById("dakuten_hiragana"),
@@ -110,11 +189,21 @@ let options_checkbox = [
     document.getElementById("dakuten_katakana"),
     document.getElementById("combo_katakana"),
 ];
-let font = "sans-serif";
-document.getElementById("check-"+font).checked = true;
-let options = [true, false, false, false, false, false];
+let options_storage = localStorage.getItem("options");
+let options;
+try{
+    options = JSON.parse(localStorage.getItem("options"));
+} catch(e){}
+
+if(options == null){
+    options = {
+        // font: "sans-serif", @fix
+        checks: [true, false, false, false, false, false]
+    };
+}
+
 for(let i = 0; i < options_checkbox.length; i++){
-    if(i < options.length && options[i]){
+    if(i < options.checks.length && options.checks[i]){
         options_checkbox[i].checked = true;
     }
     else{
@@ -179,8 +268,8 @@ let previous_char;
 function next_char(){
     let array;
     let array_indices = [];
-    for(let i = 0; i < options.length; i++){
-        if(options[i]) array_indices.push(i);
+    for(let i = 0; i < options.checks.length; i++){
+        if(options.checks[i]) array_indices.push(i);
     }
     let array_n = array_indices[Math.floor(Math.random()*array_indices.length)];
     if(array_n === undefined) return;
@@ -192,6 +281,7 @@ function next_char(){
     current_array = array;
     char.innerHTML = array[current_char][0];
 }
+
 let score = 0;
 romaji.value = "";
 romaji.focus();
@@ -201,13 +291,13 @@ romaji.onkeydown = function(e){
             romaji.value = "";
             romaji.style.boxShadow = "none";
             score++;
-            correction.innerHTML = "";
+            correction_div.innerHTML = "";
         }
         else{
             romaji.value = "";
             romaji.style.boxShadow = "0px 0px 12px #f009";
             score--;
-            correction.innerHTML = current_array[current_char][0]+" is "+
+            correction_div.innerHTML = current_array[current_char][0]+" is "+
             (current_array[current_char][1]+"").toUpperCase();
         }
         next_char();
@@ -219,17 +309,44 @@ document.onkeydown = function(e){
     if(e.keyCode == 13) romaji.focus();
 }
 
-function change_font(e){
-    char.style.fontFamily = e;
+function change_font(i){
+    char.style.fontFamily = fonts_list[i];
+    // options.font = e; @fix
+    // localStorage.setItem("options", JSON.stringify(options));
 }
 
 function change_check(e){
-    options[options_checkbox.indexOf(e)] = e.checked;
+    options.checks[options_checkbox.indexOf(e)] = e.checked;
+    localStorage.setItem("options", JSON.stringify(options));
 }
 
 score_div.innerHTML = "Score: "+score;
 next_char();
+
+chart_close_div.onclick = function(){
+    score_div.style.display = "initial";
+    game_div.style.display = "initial";
+    chart_close_div.style.display = "none";
+    hiragana_chart_div.style.display = "none";
+}
+document.getElementById("chart_hiragana_open").onclick = function(){
+    score_div.style.display = "none";
+    game_div.style.display = "none";
+    chart_close_div.style.display = "inherit";
+    hiragana_chart_div.style.display = "inherit";
+}
+
+let theme_button = document.getElementById("light");
+let theme = localStorage.getItem("theme") == null ? "light" : localStorage.getItem("theme");
+theme_button.innerHTML = (theme == "light" ? theme_svg[1] : theme_svg[0])+"Switch theme";
+document.body.setAttribute("data-theme", theme);
+
+theme_button.onclick = function(){
+    theme = (theme == "light") ? "dark" : "light";
+    localStorage.setItem("theme", theme);
+    document.body.setAttribute("data-theme", theme);
+    this.innerHTML = (theme == "light" ? theme_svg[1] : theme_svg[0])+"Switch theme";
+}
 </script>
-<script src="../js/light.js"></script>
 </body>
 </html>
