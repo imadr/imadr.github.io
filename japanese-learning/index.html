@@ -292,21 +292,52 @@ for(let k = 0; k < 2; k++){
 let current_char;
 let current_array;
 let previous_char;
+let previous_array;
+let wrong_chars = [];
+
 function next_char(){
-    let array;
-    let array_indices = [];
-    for(let i = 0; i < options.checks.length; i++){
-        if(options.checks[i]) array_indices.push(i);
+    let wrongs_chars_checked = [];
+    for(let i = 0; i < wrong_chars.length; i++){
+        if(wrong_chars[i][2]){
+            wrongs_chars_checked.push([wrong_chars[i], i]);
+        }
     }
-    let array_n = array_indices[Math.floor(Math.random()*array_indices.length)];
-    if(array_n === undefined) return;
-    array = stuff[array_n];
-    do{
-        current_char = Math.floor(Math.random()*array.length);
-    } while(current_char == previous_char);
+    let done_wrong = false;
+    let roll = Math.floor(Math.random()*2);
+    let p = "";
+    for(let i = 0; i < wrong_chars.length; i++){
+        p += stuff[wrong_chars[i][0]][wrong_chars[i][1]][0];
+    }
+    console.log(p);
+    if(wrongs_chars_checked.length > 0 && Math.floor(Math.random()*3) == 1){
+        let picked_wrong = wrongs_chars_checked[Math.floor(Math.random()*wrongs_chars_checked.length)];
+        current_array = picked_wrong[0][0];
+        current_char = picked_wrong[0][1];
+        if(current_char != previous_char || current_array != previous_array){
+            wrong_chars.splice(picked_wrong[1], 1);
+            done_wrong = true;
+        }
+    }
+
+    if(!done_wrong){
+        let array;
+        let array_indices = [];
+        for(let i = 0; i < options.checks.length; i++){
+            if(options.checks[i]) array_indices.push(i);
+        }
+        current_array = array_indices[Math.floor(Math.random()*array_indices.length)];
+        if(current_array === undefined) return;
+        do{
+            current_char = Math.floor(Math.random()*stuff[current_array].length);
+        } while(current_char == previous_char && current_array == previous_array);
+    }
+
     previous_char = current_char;
-    current_array = array;
-    char_div.innerHTML = array[current_char][0];
+    previous_array = current_array;
+    char_div.innerHTML = stuff[current_array][current_char][0];
+    for(let i = 0; i < wrong_chars.length; i++){
+        wrong_chars[i][2] = true;
+    }
 }
 
 let score_ = 0;
@@ -314,7 +345,8 @@ romaji_input.value = "";
 romaji_input.focus();
 romaji_input.onkeydown = function(e){
     if(e.keyCode == 13){
-        if(current_array[current_char][1].indexOf(romaji_input.value.toLowerCase()) > -1){
+        let c = stuff[current_array][current_char];
+        if(c[1].indexOf(romaji_input.value.toLowerCase()) > -1){
             romaji_input.value = "";
             romaji_input.style.boxShadow = "none";
             score_++;
@@ -324,8 +356,8 @@ romaji_input.onkeydown = function(e){
             romaji_input.value = "";
             romaji_input.style.boxShadow = "0px 0px 12px #f009";
             score_--;
-            correction_div.innerHTML = current_array[current_char][0]+" is "+
-            (current_array[current_char][1]+"").toUpperCase();
+            wrong_chars.push([current_array, current_char, false])
+            correction_div.innerHTML = c[0]+" is "+(c[1]+"").toUpperCase();
         }
         next_char();
         score_div.innerHTML = "Score: "+score_;
