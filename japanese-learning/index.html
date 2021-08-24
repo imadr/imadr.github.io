@@ -303,12 +303,6 @@ function next_char(){
         }
     }
     let done_wrong = false;
-    let roll = Math.floor(Math.random()*2);
-    let p = "";
-    for(let i = 0; i < wrong_chars.length; i++){
-        p += stuff[wrong_chars[i][0]][wrong_chars[i][1]][0];
-    }
-    console.log(p);
     if(wrongs_chars_checked.length > 0 && Math.floor(Math.random()*3) == 1){
         let picked_wrong = wrongs_chars_checked[Math.floor(Math.random()*wrongs_chars_checked.length)];
         current_array = picked_wrong[0][0];
