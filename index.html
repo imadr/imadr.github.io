@@ -15,9 +15,14 @@
     <style>
         .row{
             display: flex;
+            flex-wrap: wrap;
+            flex-direction: row;
         }
         .col{
-            flex: 50%;
+            flex: 1;
+        }
+        .col:first-child{
+            margin-right: 10px;
         }
         ul{
             padding: 0;
@@ -33,13 +38,24 @@
         a[href^="http://"]:after, a[href^="https://"]:after{
             content: "";
         }
+        @media only screen and (max-width: 700px){
+            .row{
+                flex-direction: column;
+            }
+            .col:first-child{
+                margin-right: 0;
+            }
+            h2{
+                margin-top: 0.5em;
+            }
+        }
     </style>
 </head>
 <body>
 <div id="menu"><span><a href="index.html">Home</a></span> <span id="light">Dark Mode</span></div>
 <h1>imadr</h1>
 <div class="row">
-    <div class="col" style="margin-right: 10px;">
+    <div class="col">
         <h2>Articles</h2>
         <ul>
             <li><a href="rotations-with-quaternions/">Rotations with quaternions</a></li>

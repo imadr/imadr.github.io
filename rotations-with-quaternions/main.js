@@ -5,8 +5,20 @@ canvas1.height = 280;
 
 let canvas2 = document.getElementById("canvas2");
 let gl2 = canvas2.getContext("webgl2");
-canvas2.width = 530;
 canvas2.height = 280;
+
+window.addEventListener("resize", resize_canvas);
+
+function resize_canvas(){
+    let padding = parseFloat(window.getComputedStyle(document.body).getPropertyValue("padding-left"))
+    let width = parseFloat(window.getComputedStyle(document.body).width);
+    width -= padding*2;
+    width = Math.min(530, width);
+    canvas1.width = width;
+    canvas2.width = width;
+}
+
+resize_canvas();
 
 function cube_vertex_buffer(gl){
     let vertex_buffer = gl.createBuffer();

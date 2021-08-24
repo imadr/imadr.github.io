@@ -139,6 +139,12 @@
         font-weight: 800;
         font-size: 2em;
     }
+    #options-panel-button{
+        cursor: pointer;
+        float: right;
+        width: 3em;
+        display: none;
+    }
     @media only screen and (max-width: 900px){
         #options-panel{
             display: none;
@@ -150,6 +156,9 @@
             display: inline-block;
             font-size: 7em;
         }
+        #options-panel-button{
+            display: inline-block;
+        }
     }
     @media only screen and (max-width: 300px){
         #char{
@@ -160,6 +169,9 @@
 </head>
 <body>
 <div id="score"></div>
+<div id="options-panel-button">
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="3" y1="12" x2="21" y2="12"></line><line x1="3" y1="6" x2="21" y2="6"></line><line x1="3" y1="18" x2="21" y2="18"></line></svg>
+</div>
 <div id="options-panel">
     <button id="light">Dark Mode</button><br>
     <button id="hiragana-chart-button">ひ Hiragana chart</button><br>
@@ -194,6 +206,7 @@ let romaji_input = document.getElementById("romaji");
 let char_div = document.getElementById("char");
 let score_div = document.getElementById("score");
 let game_div = document.getElementById("game");
+let options_panel_div = document.getElementById("options-panel");
 let correction_div = document.getElementById("correction");
 let chart_close_div = document.getElementById("chart-close-button");
 let hiragana_chart_div = document.getElementById("hiragana-chart");
@@ -270,13 +283,13 @@ let stuff = [
 ["パ", ["pa"]], ["ピ", ["pi"]], ["プ", ["pu"]], ["ペ", ["pe"]], ["ポ", ["po"]],
 ["バ", ["ba"]], ["ビ", ["bi"]], ["ブ", ["bu"]], ["ベ", ["be"]], ["ボ", ["bo"]]],
 
-[["キャ", ["KYA"]], ["キュ", ["KYU"]], ["キョ", ["KYO"]], ["ギャ", ["GYA"]], ["ギュ", ["GYU"]],
-["ギョ", ["GYO"]], ["シャ", ["SHA"]], ["シュ", ["SHU"]], ["ショ", ["SHO"]], ["ジャ", ["JYA", "JA"]],
-["ジュ", ["JYU", "JU"]], ["ジョ", ["JYO", "JO"]], ["チャ", ["CHA"]], ["チュ", ["CHU"]], ["チョ", ["CHO"]],
-["ヂャ", ["DYA"]], ["ヂュ", ["DYU"]], ["ヂョ", ["DYO"]], ["ニャ", ["NYA"]], ["ニュ", ["NYU"]],
-["ニョ", ["NYO"]], ["ヒャ", ["HYA"]], ["ヒュ", ["HYU"]], ["ヒョ", ["HYO"]], ["ビャ", ["BYA"]],
-["ビュ", ["BYU"]], ["ビョ", ["BYO"]], ["ピャ", ["PYA"]], ["ピュ", ["PYU"]], ["ピョ", ["PYO"]],
-["ミャ", ["MYA"]], ["ミュ", ["MYU"]], ["ミョ", ["MYO"]], ["リャ", ["RYA"]], ["リュ", ["RYU"]], ["リョ", ["RYO"]]]
+[["キャ", ["kya"]], ["キュ", ["kyu"]], ["キョ", ["kyo"]], ["ギャ", ["gya"]], ["ギュ", ["gyu"]],
+["ギョ", ["gyo"]], ["シャ", ["sha"]], ["シュ", ["shu"]], ["ショ", ["sho"]], ["ジャ", ["jya", "ja"]],
+["ジュ", ["jyu", "ju"]], ["ジョ", ["jyo", "jo"]], ["チャ", ["cha"]], ["チュ", ["chu"]], ["チョ", ["cho"]],
+["ヂャ", ["dya"]], ["ヂュ", ["dyu"]], ["ヂョ", ["dyo"]], ["ニャ", ["nya"]], ["ニュ", ["nyu"]],
+["ニョ", ["nyo"]], ["ヒャ", ["hya"]], ["ヒュ", ["hyu"]], ["ヒョ", ["hyo"]], ["ビャ", ["bya"]],
+["ビュ", ["byu"]], ["ビョ", ["byo"]], ["ピャ", ["pya"]], ["ピュ", ["pyu"]], ["ピョ", ["pyo"]],
+["ミャ", ["mya"]], ["ミュ", ["myu"]], ["ミョ", ["myo"]], ["リャ", ["rya"]], ["リュ", ["ryu"]], ["リョ", ["ryo"]]]
 ];
 
 let titles = [
@@ -411,6 +424,7 @@ document.getElementById("katakana-chart-button").onclick = function(){
     hide_not_chart();
     katakana_chart_div.style.display = "initial";
 }
+
 document.getElementById("hiragana-chart-button").onclick = function(){
     hide_chart();
     hide_not_chart();
@@ -428,6 +442,13 @@ theme_button.onclick = function(){
     document.body.setAttribute("data-theme", theme);
     this.innerHTML = (theme == "light" ? theme_svg[1] : theme_svg[0])+"Switch theme";
 }
+
+document.getElementById("options-panel-button").onclick = function(){
+    score_div.style.display = "none";
+    game_div.style.display = "none";
+    options_panel_div.style.display = "block";
+};
+// document.getElementById("options-panel-button").click();
 </script>
 </body>
 </html>

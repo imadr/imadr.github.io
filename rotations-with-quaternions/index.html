@@ -214,14 +214,14 @@ $$M_{\textit{model}} = M_{\textit{scale}}.M_{\textit{rotate}}.M_{\textit{transla
 <p>We convert a quaternion to a rotation matrix like this:</p>
 
 $$q = (x, y, z, w)$$
-$$
+<div id="test123">$$
 M_{\textit{rotate}} = \begin{bmatrix}
 1-2yy-2zz && 2xy-2zw && 2xz+2yw && 0 \\
 2xy+2zw && 1-2xx-2zz && 2yz-2xw && 0 \\
 2xz-2yw && 2yz+2xw && 1-2xx-2yy && 0 \\
 0 && 0 && 0 && 1
 \end{bmatrix}
-$$
+$$</div>
 
 <p>Graphics APIs (like OpenGL) usually represent matrices in memory in a <strong>column-major notation</strong>, so we have to transpose the matrices in our code:</p>
 
