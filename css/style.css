@@ -124,6 +124,7 @@ p{
     font-size: 15px;
 }
 #menu{
+    background-color: var(--color-bg-1);
     user-select: none;
     -moz-user-select: none;
     -webkit-user-select: none;
