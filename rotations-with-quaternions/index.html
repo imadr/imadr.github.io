@@ -108,10 +108,12 @@ $$||q|| = \sqrt{x^{2}+y^{2}+z^{2}+w^{2}}$$
 $$q_{3}=q_{2}.q_{1}$$
 
 <p>Quaternion multiplication looks like this:</p>
+<div style="overflow: auto;">
 $$q_{1} = a+b\textrm{i}+c\textrm{j}+d\textrm{k}$$
 $$q_{2} = e+f\textrm{i}+g\textrm{j}+h\textrm{k}$$
 $$\begin{align*} q_{1}.q_{2} = (ae-bf-cg-dh)+(af+be+ch-dg)\textrm{i}+\\
 (ag-bh+ce+df)\textrm{j}+(ah+bg-cf+de)\textrm{k}\end{align*}$$
+</div>
 
 <code>
     <pre class="code language-c">Quaternion quat_mul(Quaternion a, Quaternion b){
@@ -362,7 +364,9 @@ $$q^{n} = \exp(n\log(q))$$
 
 <p>Arguably one of the most important advantages of quaternions, "Slerp" stands for <strong>spherical linear interpolation</strong>. It's a function that takes three parameters: a quaternion \(q_{1}\), a quaternion \(q_{2}\), and an interpolation parameter \(t\) that goes from \(0\) to \(1\). It gives us an intermediate rotation depending on the value of \(t\).</p>
 
+<div style="overflow: auto;">
 $$\textrm{slerp}(q_{1}, q_{2}, t) = q_{1}(q_{1}^{-1}q_{2})^{t}$$
+</div>
 
 <code>
 <pre class="code language-c">Quaternion quat_slerp(Quaternion q1, Quaternion q2, float t){
