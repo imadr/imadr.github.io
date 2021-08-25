@@ -1,45 +1,30 @@
 *{
     box-sizing: border-box;
 }
-:root{
-    --color-ext-url: rgb(79, 140, 201);
-}
-[data-theme="light"]{
-    --color-muted: #5f5f5f;
-    --color-bg-1: white;
-    --color-fg-1: black;
-    --color-code-bg: #f3f3f3;
-}
-[data-theme="dark"]{
-    --color-muted: #adadad;
-    --color-bg-1: #1a1a1a;
-    --color-fg-1: white;
-    --color-code-bg: #2b2b2b;
-}
 table, td, th{
-    border: 1px solid var(--color-fg-1, black);
+    border: 1px solid black;
 }
 h1{
     margin-bottom: 40px;
     padding: 4px;
     padding-left: 10px;
     padding-right: 10px;
-    border: 3px solid var(--color-fg-1, black);
-    box-shadow: 1px 1px 0px 0px var(--color-fg-1, black),
-                2px 2px 0px 0px var(--color-fg-1, black),
-                3px 3px 0px 0px var(--color-fg-1, black),
-                4px 4px 0px 0px var(--color-fg-1, black),
-                5px 5px 0px 0px var(--color-fg-1, black);
+    border: 3px solid black;
+    box-shadow: 1px 1px 0px 0px black,
+                2px 2px 0px 0px black,
+                3px 3px 0px 0px black,
+                4px 4px 0px 0px black,
+                5px 5px 0px 0px black;
 }
 a{
-    color: var(--color-fg-1, black);
+    color: black;
     text-decoration: none;
 }
 a:hover{
     text-decoration: underline;
 }
 a[href^="http://"], a[href^="https://"]{
-    color: var(--color-ext-url);
+    color: rgb(79, 140, 201);
 }
 a[href^="http://"]:after, a[href^="https://"]:after{
     font-family: "FontAwesome";
@@ -76,13 +61,13 @@ a[href^="http://"]:after, a[href^="https://"]:after{
     font-display: swap;
 }
 pre, h1, #menu{
-    font-family: "mono";
+    font-family: "mono", monospace;
 }
 pre{
     padding: 1em;
     margin-bottom: 0px;
-    background-color: var(--color-code-bg, #f3f3f3);
-    color: var(--color-fg-1, black);
+    background-color: #f3f3f3;
+    color: black;
     word-wrap: break-word;
     white-space: pre-wrap;
 }
@@ -98,8 +83,8 @@ body{
     margin-top: 2rem;
     max-width: 55rem;
     padding: 1rem;
-    color: var(--color-fg-1, black);
-    background-color: var(--color-bg-1, white);
+    color: black;
+    background-color: white;
 }
 h3, h2, h1{
     font-weight: normal;
@@ -111,10 +96,10 @@ h2{
     margin-bottom: 1em;
     margin-top: 1em;
     font-size: 1.5em;
-    border-bottom: 2px solid var(--color-fg-1, black);
     font-family: "sans", sans-serif;
+    border-bottom: 2px solid black;
 }
-h2 > a:hover{
+h2 > a:hover, #menu a{
     text-decoration: none;
 }
 p{
@@ -124,7 +109,6 @@ p{
     font-size: 15px;
 }
 #menu{
-    background-color: var(--color-bg-1);
     user-select: none;
     -moz-user-select: none;
     -webkit-user-select: none;
@@ -132,10 +116,11 @@ p{
     position: fixed;
     top: 5px;
     left: 5px;
+    background-color: white;
 }
 #menu span{
     cursor: pointer;
-    text-decoration: underline;
+    border-bottom: 2px solid black;
 }
 hr{
     margin-top: 2em;

@@ -1,0 +1,50 @@
+:root{
+    --color-ext-url: rgb(79, 140, 201);
+}
+[data-theme="light"]{
+    --color-muted: #5f5f5f;
+    --color-bg-1: white;
+    --color-fg-1: black;
+    --color-code-bg: #f3f3f3;
+}
+[data-theme="dark"]{
+    --color-muted: #adadad;
+    --color-bg-1: #1a1a1a;
+    --color-fg-1: white;
+    --color-code-bg: #2b2b2b;
+}
+body{
+    color: var(--color-fg-1);
+    background-color: var(--color-bg-1);
+}
+#menu{
+    background-color: var(--color-bg-1);
+}
+h2{
+    border-bottom: 2px solid var(--color-fg-1);
+}
+pre{
+    background-color: var(--color-code-bg);
+    color: var(--color-fg-1);
+}
+a[href^="http://"], a[href^="https://"]{
+    color: var(--color-ext-url);
+}
+h1{
+    box-shadow: 1px 1px 0px 0px var(--color-fg-1),
+                2px 2px 0px 0px var(--color-fg-1),
+                3px 3px 0px 0px var(--color-fg-1),
+                4px 4px 0px 0px var(--color-fg-1),
+                5px 5px 0px 0px var(--color-fg-1);
+    border: 3px solid var(--color-fg-1);
+}
+a{
+    color: var(--color-fg-1);
+}
+table, td, th{
+    border: 1px solid var(--color-fg-1);
+}
+#menu span{
+    cursor: pointer;
+    border-bottom: 2px solid var(--color-fg-1);
+}

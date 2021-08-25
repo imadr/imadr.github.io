@@ -13,10 +13,19 @@
     <title>Stuff</title>
     <link rel="stylesheet" href="css/style.css">
     <style>
+        .row:after{
+            content: "";
+            display: table;
+            clear: both;
+        }
         .row{
             display: flex;
             flex-wrap: wrap;
             flex-direction: row;
+        }
+        .col{
+            float: left;
+            width: 49%;
         }
         .col{
             flex: 1;
@@ -33,7 +42,8 @@
             font-size: 1.3em;
         }
         a[href^="http://"], a[href^="https://"]{
-            color: var(--color-fg-1, black);
+            color: black !important;
+            color: var(--color-fg-1) !important;
         }
         a[href^="http://"]:after, a[href^="https://"]:after{
             content: "";
@@ -45,6 +55,9 @@
             .col:first-child{
                 margin-right: 0;
             }
+            .col{
+                width: 100%;
+            }
             h2{
                 margin-top: 0.5em;
             }
@@ -52,7 +65,7 @@
     </style>
 </head>
 <body>
-<div id="menu"><span><a href="index.html">Home</a></span> <span id="light">Dark Mode</span></div>
+<div id="menu"><span><a href="index.html">Home</a></span></div>
 <h1>imadr</h1>
 <div class="row">
     <div class="col">
@@ -67,8 +80,7 @@
         <ul>
             <li><a href="japanese-learning/">Japanese kana learning</a></li>
         </ul>
-    </div>
-    <div class="col">
+    </div><div class="col">
         <h2>Contact</h2>
         <ul>
             <li><a href="mailto:imadr.codes@gmail.com">Email</a></li>
