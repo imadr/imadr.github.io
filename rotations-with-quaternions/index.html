@@ -138,6 +138,7 @@ $$\begin{align*} q_{1}.q_{2} = (ae-bf-cg-dh)+(af+be+ch-dg)\textrm{i}+\\
 
 <p>If we have an Euler angle rotation in the order ZYX (Yaw -> Pitch -> Roll, we can chose any order but must stay consistent), we can convert it to a quaternion like this:</p>
 
+<div style="overflow: auto;">
 $$
 q = \begin{bmatrix}
 \sin(x/2)\cos(y/2)\cos(z/2)-\cos(x/2)\sin(y/2)\sin(z/2) \\
@@ -146,6 +147,7 @@ q = \begin{bmatrix}
 \cos(x/2)\cos(y/2)\cos(z/2)+\sin(x/2)\sin(y/2)\sin(z/2)
 \end{bmatrix}
 $$
+</div>
 
 <code>
     <pre class="code language-c">typedef union{
@@ -214,7 +216,7 @@ $$M_{\textit{model}} = M_{\textit{scale}}.M_{\textit{rotate}}.M_{\textit{transla
 <p>We convert a quaternion to a rotation matrix like this:</p>
 
 $$q = (x, y, z, w)$$
-<div id="test123">$$
+<div style="overflow: auto;">$$
 M_{\textit{rotate}} = \begin{bmatrix}
 1-2yy-2zz && 2xy-2zw && 2xz+2yw && 0 \\
 2xy+2zw && 1-2xx-2zz && 2yz-2xw && 0 \\
