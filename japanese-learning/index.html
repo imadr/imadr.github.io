@@ -425,7 +425,8 @@ score_div.innerHTML = "Score: "+score_;
 next_char();
 
 let current_state = 0;
-let previous_state = 0;
+let options_panel_closed = true;
+
 function update_state(){
     score_div.style.display = current_state == 0 ? "initial" : "none";
     game_div.style.display = current_state == 0 ? "initial" : "none";
@@ -443,11 +444,15 @@ chart_close_div.onclick = function(){
 
 document.getElementById("katakana-chart-button").onclick = function(){
     current_state = 2;
+    options_panel_closed = true;
+    update_options_panel();
     update_state();
 }
 
 document.getElementById("hiragana-chart-button").onclick = function(){
     current_state = 1;
+    options_panel_closed = true;
+    update_options_panel();
     update_state();
 };
 
@@ -463,14 +468,16 @@ theme_button.onclick = function(){
     this.innerHTML = (theme == "light" ? theme_svg[1] : theme_svg[0])+"Switch theme";
 }
 
-let options_panel_closed = true;
-
 document.getElementById("options-panel-button").onclick = function(){
     options_panel_closed = !options_panel_closed;
+    update_options_panel();
     update_state();
+};
+
+function update_options_panel(){
     options_panel_div.style.display = options_panel_closed ? "none" : "block";
     options_panel_button_div.innerHTML = options_panel_closed ? menu_svg[0] : menu_svg[1];
-};
+}
 
 function check_resize(){
     if(window.innerWidth < 900){
@@ -488,7 +495,6 @@ function check_resize(){
 options_panel_button_div.innerHTML = menu_svg[0];
 window.addEventListener("resize", check_resize);
 check_resize();
-options_panel_button_div.click();
 </script>
 </body>
 </html>
