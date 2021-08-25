@@ -408,6 +408,7 @@ $$
 
 <p>With the dot product we check if two quaternions are on opposite hemispheres, if they are we interpolate between \(q_{1}\) and \(-q_{2}\) instead of \(q_{2}\):</p>
 
+<div style="overflow: auto;">
 $$
 \textrm{slerp}(q_{1}, q_{2}, t) =
 \begin{cases}
@@ -415,6 +416,7 @@ $$
     q_{1}(q_{1}^{-1}(-q_{2}))^{t},& \text{otherwise}
 \end{cases}
 $$
+</div>
 
 <code>
 <pre class="code language-c">Quaternion quat_slerp(Quaternion q1, Quaternion q2, float t){
