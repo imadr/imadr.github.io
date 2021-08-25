@@ -444,15 +444,19 @@ chart_close_div.onclick = function(){
 
 document.getElementById("katakana-chart-button").onclick = function(){
     current_state = 2;
-    options_panel_closed = true;
-    update_options_panel();
+    if(window.innerWidth < 900){
+        options_panel_closed = true;
+        update_options_panel();
+    }
     update_state();
 }
 
 document.getElementById("hiragana-chart-button").onclick = function(){
     current_state = 1;
-    options_panel_closed = true;
-    update_options_panel();
+    if(window.innerWidth < 900){
+        options_panel_closed = true;
+        update_options_panel();
+    }
     update_state();
 };
 
