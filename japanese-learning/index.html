@@ -477,6 +477,7 @@ document.getElementById("options-panel-button").onclick = function(){
 function update_options_panel(){
     options_panel_div.style.display = options_panel_closed ? "none" : "block";
     options_panel_button_div.innerHTML = options_panel_closed ? menu_svg[0] : menu_svg[1];
+    document.body.style.overflow = options_panel_closed ? "auto" : "hidden";
 }
 
 function check_resize(){
