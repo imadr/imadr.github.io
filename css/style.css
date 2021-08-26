@@ -21,10 +21,8 @@ a{
     text-decoration: none;
 }
 a:hover{
-    text-decoration: underline;
-}
-a[href^="http://"], a[href^="https://"]{
-    color: rgb(79, 140, 201);
+    color: white;
+    background-color: black;
 }
 a[href^="http://"]:after, a[href^="https://"]:after{
     font-family: "FontAwesome";
