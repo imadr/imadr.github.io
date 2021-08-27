@@ -10,33 +10,37 @@
     <link rel="mask-icon" href="/safari-pinned-tab.svg" color="#5bbad5">
     <meta name="msapplication-TileColor" content="#da532c">
     <meta name="theme-color" content="#ffffff">
-    <title>Terrain generation</title>
+    <title>Procedural terrain generation</title>
     <link rel="stylesheet" href="/css/style.css">
     <link rel="stylesheet" href="/css/highlight.css">
     <script src="/js/highlight.js"></script>
 </head>
 <body>
     <div id="menu"><span><a href="/index.html">Home</a></span></div>
-    <h1>Terrain generation</h1>
+    <h1>Procedural terrain generation</h1>
 
-    <p>Start by generating some perlin noise (press <strong>G</strong> to generate a seed):</p>
+    <p>Let's generate a terrain procedurally.<br>
+    First, start by generating some perlin noise (press <strong>G</strong> to randomize the seed):</p>
     <label for="seed">Seed:</label> <input type="number" min="0" id="seed"><br><br>
-    <canvas id="canvas1"></canvas><br>
+    <canvas id="canvas_noise_1"></canvas><br>
 
     <p>Use fractal brownian motion to make it more noisy:</p>
     <label for="octaves">Octaves:</label> <input type="number" min="0" id="octaves"><br><br>
-    <canvas id="canvas2"></canvas>
+    <canvas id="canvas_noise_2"></canvas>
+
+    <p>Compute the normals for the noise texture:</p>
+    <canvas id="canvas_gl_normal"></canvas>
 
     <p>Generate a 3D grid (hold and drag to rotate):</p>
-    <canvas style="border: 2px solid black;" id="canvas_gl_0"></canvas>
+    <canvas style="border: 2px solid black;" id="canvas_grid"></canvas>
 
     <p>Apply the noise texture as a heightmap for the grid:</p>
     <label for="height_multiplier">Height multiplier:</label>
     <input style="vertical-align: middle;" type="range" min="0" max="100" class="slider" id="height_multiplier"><br><br>
-    <canvas style="border: 2px solid black;" id="canvas_gl_1"></canvas>
+    <canvas style="border: 2px solid black;" id="canvas_terrain"></canvas>
 
     <p>Color the terrain depending on the height:</p>
-    <canvas style="border: 2px solid black;" id="canvas_gl_2"></canvas>
+    <canvas style="border: 2px solid black;" id="canvas_terrain_color"></canvas>
 
     <script src="/js/math.js"></script>
     <script src="/js/webgl_helper.js"></script>

@@ -3,26 +3,20 @@ let grid_size = [100, 100];
 
 let noise_texture;
 
-let canvas1 = document.getElementById("canvas1");
-canvas1.width = texture_size;
-canvas1.height = texture_size;
-let ctx1 = canvas1.getContext("2d");
+let canvas_noise_1 = document.getElementById("canvas_noise_1");
+canvas_noise_1.width = texture_size;
+canvas_noise_1.height = texture_size;
+let ctx_noise_1 = canvas_noise_1.getContext("2d");
 
-let canvas2 = document.getElementById("canvas2");
-canvas2.width = texture_size;
-canvas2.height = texture_size;
-let ctx2 = canvas2.getContext("2d");
+let canvas_noise_2 = document.getElementById("canvas_noise_2");
+canvas_noise_2.width = texture_size;
+canvas_noise_2.height = texture_size;
+let ctx_noise_2 = canvas_noise_2.getContext("2d");
 
-function xmur3(str){
-    for(var i = 0, h = 1779033703 ^ str.length; i < str.length; i++)
-        h = Math.imul(h ^ str.charCodeAt(i), 3432918353),
-        h = h << 13 | h >>> 19;
-    return function() {
-        h = Math.imul(h ^ h >>> 16, 2246822507);
-        h = Math.imul(h ^ h >>> 13, 3266489909);
-        return (h ^= h >>> 16) >>> 0;
-    }
-}
+let canvas_normal = document.getElementById("canvas_gl_normal");
+canvas_normal.width = texture_size;
+canvas_normal.height = texture_size;
+let gl_normal = canvas_normal.getContext("webgl2");
 
 let seed = Math.floor(Math.random()*10000)+"";
 let octaves = 4;
@@ -40,15 +34,15 @@ ocataves_input.onchange = update;
 height_multiplier_input.oninput = update;
 
 function draw_texture(){
-    for(let j = 0; j < canvas2.height; j++){
-        for(let i = 0; i < canvas2.width; i++){
+    for(let j = 0; j < canvas_noise_2.height; j++){
+        for(let i = 0; i < canvas_noise_2.width; i++){
             freq = 0.01;
             amplitude = 1;
             let col = noise(i*freq, j*freq, 0)*amplitude;
 
             col2 = Math.abs(col)*255;
-            ctx1.fillStyle = "rgb("+col2+", "+col2+", "+col2+")";
-            ctx1.fillRect(i, j, 1, 1);
+            ctx_noise_1.fillStyle = "rgb("+col2+", "+col2+", "+col2+")";
+            ctx_noise_1.fillRect(i, j, 1, 1);
 
             for(let k = 0; k < octaves; k++){
                 freq *= 2;
@@ -56,20 +50,21 @@ function draw_texture(){
                 col += noise(i*freq, j*freq, 0)*amplitude;
             }
             col = Math.abs(col)*255;
-            ctx2.fillStyle = "rgb("+col+", "+col+", "+col+")";
-            ctx2.fillRect(i, j, 1, 1);
+            ctx_noise_2.fillStyle = "rgb("+col+", "+col+", "+col+")";
+            ctx_noise_2.fillRect(i, j, 1, 1);
         }
     }
-    noise_texture = ctx2.getImageData(0, 0, canvas2.width, canvas2.height);
+    noise_texture = ctx_noise_2.getImageData(0, 0, canvas_noise_2.width, canvas_noise_2.height);
 }
 
-let canvas_count = 3;
+let canvas_id = ["canvas_grid", "canvas_terrain", "canvas_terrain_color"]
+let canvas_count = canvas_id.length;
 let canvas_s = [];
 let gl_s = [];
 let objects_to_draw_s = [];
 let shaders_files = [];
-for(let i = 0; i < canvas_count; i++){
-    let canvas = document.getElementById("canvas_gl_"+i);
+for(let i = 0; i < canvas_id.length; i++){
+    let canvas = document.getElementById(canvas_id[i]);
     canvas.width = 530;
     canvas.height = 280;
     let gl = canvas.getContext("webgl2");
@@ -266,6 +261,17 @@ function update(){
         draw_3d(i);
     }
 };
+
+function xmur3(str){
+    for(var i = 0, h = 1779033703 ^ str.length; i < str.length; i++)
+        h = Math.imul(h ^ str.charCodeAt(i), 3432918353),
+        h = h << 13 | h >>> 19;
+    return function() {
+        h = Math.imul(h ^ h >>> 16, 2246822507);
+        h = Math.imul(h ^ h >>> 13, 3266489909);
+        return (h ^= h >>> 16) >>> 0;
+    }
+}
 
 (async function(){
     for(let shader of shaders_files){
