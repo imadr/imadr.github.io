@@ -31,32 +31,37 @@ a[href^="http://"]:after, a[href^="https://"]:after{
 }
 @font-face{
     font-family: "sans";
-    src: url("IBMPlexSans-Light.woff2") format("woff2");
+    src: url("IBMPlexSans-Light-Latin1.woff2") format("woff2");
     font-display: swap;
     font-weight: 300;
+    unicode-range: U+0000, U+000D, U+0020-007E, U+00A0-00A3, U+00A4-00FF, U+0131, U+0152-0153, U+02C6, U+02DA, U+02DC, U+2013-2014, U+2018-201A, U+201C-201E, U+2020-2022, U+2026, U+2030, U+2039-203A, U+2044, U+2074, U+20AC, U+2122, U+2212, U+FB01-FB02;
 }
 @font-face{
     font-family: "sans";
-    src: url("IBMPlexSans-Regular.woff2") format("woff2");
+    src: url("IBMPlexSans-Regular-Latin1.woff2") format("woff2");
     font-display: swap;
     font-weight: 400;
+    unicode-range: U+0000, U+000D, U+0020-007E, U+00A0-00A3, U+00A4-00FF, U+0131, U+0152-0153, U+02C6, U+02DA, U+02DC, U+2013-2014, U+2018-201A, U+201C-201E, U+2020-2022, U+2026, U+2030, U+2039-203A, U+2044, U+2074, U+20AC, U+2122, U+2212, U+FB01-FB02;
 }
 @font-face{
     font-family: "sans";
-    src: url("IBMPlexSans-Bold.woff2") format("woff2");
+    src: url("IBMPlexSans-Bold-Latin1.woff2") format("woff2");
     font-display: swap;
     font-weight: 700;
+    unicode-range: U+0000, U+000D, U+0020-007E, U+00A0-00A3, U+00A4-00FF, U+0131, U+0152-0153, U+02C6, U+02DA, U+02DC, U+2013-2014, U+2018-201A, U+201C-201E, U+2020-2022, U+2026, U+2030, U+2039-203A, U+2044, U+2074, U+20AC, U+2122, U+2212, U+FB01-FB02;
 }
 @font-face{
     font-family: "sans";
-    src: url("IBMPlexSans-Italic.woff2") format("woff2");
+    src: url("IBMPlexSans-Italic-Latin1.woff2") format("woff2");
     font-display: swap;
     font-style: italic;
+    unicode-range: U+0000, U+000D, U+0020-007E, U+00A0-00A3, U+00A4-00FF, U+0131, U+0152-0153, U+02C6, U+02DA, U+02DC, U+2013-2014, U+2018-201A, U+201C-201E, U+2020-2022, U+2026, U+2030, U+2039-203A, U+2044, U+2074, U+20AC, U+2122, U+2212, U+FB01-FB02;
 }
 @font-face{
     font-family: "mono";
-    src: url("IBMPlexMono-Regular.woff2") format("woff2");
+    src: url("IBMPlexMono-Regular-Latin1.woff2") format("woff2");
     font-display: swap;
+    unicode-range: U+0000, U+000D, U+0020-007E, U+00A0-00A3, U+00A4-00FF, U+0131, U+0152-0153, U+02C6, U+02DA, U+02DC, U+2013-2014, U+2018-201A, U+201C-201E, U+2020-2022, U+2026, U+2030, U+2039-203A, U+2044, U+2074, U+20AC, U+2122, U+2212, U+FB01-FB02;
 }
 pre, h1, #menu{
     font-family: "mono", monospace;
