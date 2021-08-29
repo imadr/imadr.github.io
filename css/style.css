@@ -67,7 +67,7 @@ a[href^="http://"]:after, a[href^="https://"]:after{
     font-display: swap;
     unicode-range: U+0000, U+000D, U+0020-007E, U+00A0-00A3, U+00A4-00FF, U+0131, U+0152-0153, U+02C6, U+02DA, U+02DC, U+2013-2014, U+2018-201A, U+201C-201E, U+2020-2022, U+2026, U+2030, U+2039-203A, U+2044, U+2074, U+20AC, U+2122, U+2212, U+FB01-FB02;
 }
-pre, h1, #menu{
+pre, h1{
     font-family: "mono", monospace;
 }
 pre{
@@ -124,10 +124,16 @@ p{
     top: 5px;
     left: 5px;
     background-color: white;
+    font-family: "mono", monospace;
 }
-#menu span{
+#menu *{
+    font-family: "mono", monospace;
     cursor: pointer;
+    border: none;
     border-bottom: 2px solid black;
+    color: black;
+    background-color: white;
+    font-size: 1em;
 }
 hr{
     margin-top: 2em;

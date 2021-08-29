@@ -45,7 +45,8 @@ a:hover{
 table, td, th{
     border: 1px solid var(--color-fg-1);
 }
-#menu span{
-    cursor: pointer;
+#menu *{
+    color: var(--color-fg-1);
+    background-color: var(--color-bg-1);
     border-bottom: 2px solid var(--color-fg-1);
 }

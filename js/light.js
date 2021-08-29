@@ -4,7 +4,7 @@ css_file.type = "text/css";
 css_file.href = location.pathname == "/" ? "css/style-theme.css" : "../css/style-theme.css";
 document.head.appendChild(css_file);
 
-document.getElementById("menu").innerHTML += ` <span id="light">Dark Mode</span>`;
+document.getElementById("menu").innerHTML += ` <button id="light">Dark Mode</button>`;
 let theme_button = document.getElementById("light");
 let theme = localStorage.getItem("theme") == null ? "light" : localStorage.getItem("theme");
 theme_button.innerHTML = theme == "light" ? "Dark Mode" : "Light Mode";
