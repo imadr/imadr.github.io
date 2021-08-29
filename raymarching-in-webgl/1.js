@@ -67,6 +67,7 @@ function update(){
 }
 
 function set_shader_uniform(uniform, value){
+    if(!uniforms.hasOwnProperty(uniform)) return;
     switch(uniforms[uniform].type){
         case gl.FLOAT:
             gl.uniform1f(uniforms[uniform].location, value);

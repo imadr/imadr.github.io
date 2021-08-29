@@ -24,8 +24,12 @@ a:hover{
     color: white;
     background-color: black;
 }
+@font-face{
+    font-family: "icon";
+    src: url("icon.woff2") format("woff2");
+}
 a[href^="http://"]:after, a[href^="https://"]:after{
-    font-family: "FontAwesome";
+    font-family: "icon";
     content: " \f08e";
     font-size: 14px;
 }

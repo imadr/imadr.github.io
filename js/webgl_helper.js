@@ -29,6 +29,7 @@ function link_shader_program(gl, vertex_shader_source, fragment_shader_source){
 }
 
 function set_shader_uniform(gl, shader, uniform, value){
+    if(!shader.uniforms.hasOwnProperty(uniform)) return;
     switch(shader.uniforms[uniform].type){
         case gl.FLOAT:
             gl.uniform1f(shader.uniforms[uniform].location, value);

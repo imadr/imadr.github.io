@@ -57,7 +57,7 @@ function draw_texture(){
     noise_texture = ctx_noise_2.getImageData(0, 0, canvas_noise_2.width, canvas_noise_2.height);
 }
 
-let canvas_id = ["canvas_grid", "canvas_terrain", "canvas_terrain_color"]
+let canvas_id = ["canvas_grid", "canvas_terrain", "canvas_terrain_color"];
 let canvas_count = canvas_id.length;
 let canvas_s = [];
 let gl_s = [];
@@ -70,11 +70,10 @@ for(let i = 0; i < canvas_id.length; i++){
     let gl = canvas.getContext("webgl2");
     canvas_s.push(canvas);
     gl_s.push(gl);
-
     objects_to_draw_s[i] = [];
     objects_to_draw_s[i].push({
-        vertex_shader: i+"_vertex.glsl",
-        fragment_shader: i+"_fragment.glsl",
+        vertex_shader: canvas_id[i]+"_vertex.glsl",
+        fragment_shader: canvas_id[i]+"_fragment.glsl",
         transform: {
             position: [-grid_size[0]/2, 0, -grid_size[1]/2],
             scale: [1, 1, 1],
@@ -90,8 +89,8 @@ for(let i = 0; i < canvas_id.length; i++){
         lines: i == 0
     });
 
-    shaders_files.push([i, i+"_vertex.glsl"]);
-    shaders_files.push([i, i+"_fragment.glsl"]);
+    shaders_files.push([i, canvas_id[i]+"_vertex.glsl"]);
+    shaders_files.push([i, canvas_id[i]+"_fragment.glsl"]);
 }
 
 let main_camera = {
