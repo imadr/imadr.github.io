@@ -24,6 +24,10 @@ a:hover{
     color: white;
     background-color: black;
 }
+h2 > a:hover{
+    color: initial;
+    background-color: initial;
+}
 @font-face{
     font-family: "icon";
     src: url("icon.woff2") format("woff2");
