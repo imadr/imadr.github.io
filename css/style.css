@@ -4,18 +4,6 @@
 table, td, th{
     border: 1px solid black;
 }
-h1{
-    margin-bottom: 40px;
-    padding: 4px;
-    padding-left: 10px;
-    padding-right: 10px;
-    border: 3px solid black;
-    box-shadow: 1px 1px 0px 0px black,
-                2px 2px 0px 0px black,
-                3px 3px 0px 0px black,
-                4px 4px 0px 0px black,
-                5px 5px 0px 0px black;
-}
 a{
     color: black;
     text-decoration: none;
@@ -38,32 +26,28 @@ a[href^="http://"]:after, a[href^="https://"]:after{
     font-size: 14px;
 }
 @font-face{
-    font-family: "sans";
-    src: url("IBMPlexSans-Light-Latin1.woff2") format("woff2");
-    font-display: swap;
-    font-weight: 300;
-    unicode-range: U+0000, U+000D, U+0020-007E, U+00A0-00A3, U+00A4-00FF, U+0131, U+0152-0153, U+02C6, U+02DA, U+02DC, U+2013-2014, U+2018-201A, U+201C-201E, U+2020-2022, U+2026, U+2030, U+2039-203A, U+2044, U+2074, U+20AC, U+2122, U+2212, U+FB01-FB02;
-}
-@font-face{
-    font-family: "sans";
-    src: url("IBMPlexSans-Regular-Latin1.woff2") format("woff2");
-    font-display: swap;
+    font-family: "serif";
+    font-style: normal;
     font-weight: 400;
-    unicode-range: U+0000, U+000D, U+0020-007E, U+00A0-00A3, U+00A4-00FF, U+0131, U+0152-0153, U+02C6, U+02DA, U+02DC, U+2013-2014, U+2018-201A, U+201C-201E, U+2020-2022, U+2026, U+2030, U+2039-203A, U+2044, U+2074, U+20AC, U+2122, U+2212, U+FB01-FB02;
+    src: url("source-serif-pro-v11-latin-regular.eot");
+    src: local(""),
+        url("source-serif-pro-v11-latin-regular.eot?#iefix") format("embedded-opentype"),
+        url("source-serif-pro-v11-latin-regular.woff2") format("woff2"),
+        url("source-serif-pro-v11-latin-regular.woff") format("woff"),
+        url("source-serif-pro-v11-latin-regular.ttf") format("truetype"),
+        url("source-serif-pro-v11-latin-regular.svg#SourceSerifPro") format("svg");
 }
 @font-face{
-    font-family: "sans";
-    src: url("IBMPlexSans-Bold-Latin1.woff2") format("woff2");
-    font-display: swap;
+    font-family: "serif";
+    font-style: normal;
     font-weight: 700;
-    unicode-range: U+0000, U+000D, U+0020-007E, U+00A0-00A3, U+00A4-00FF, U+0131, U+0152-0153, U+02C6, U+02DA, U+02DC, U+2013-2014, U+2018-201A, U+201C-201E, U+2020-2022, U+2026, U+2030, U+2039-203A, U+2044, U+2074, U+20AC, U+2122, U+2212, U+FB01-FB02;
-}
-@font-face{
-    font-family: "sans";
-    src: url("IBMPlexSans-Italic-Latin1.woff2") format("woff2");
-    font-display: swap;
-    font-style: italic;
-    unicode-range: U+0000, U+000D, U+0020-007E, U+00A0-00A3, U+00A4-00FF, U+0131, U+0152-0153, U+02C6, U+02DA, U+02DC, U+2013-2014, U+2018-201A, U+201C-201E, U+2020-2022, U+2026, U+2030, U+2039-203A, U+2044, U+2074, U+20AC, U+2122, U+2212, U+FB01-FB02;
+    src: url("source-serif-pro-v11-latin-700.eot");
+    src: local(""),
+        url("source-serif-pro-v11-latin-700.eot?#iefix") format("embedded-opentype"),
+        url("source-serif-pro-v11-latin-700.woff2") format("woff2"),
+        url("source-serif-pro-v11-latin-700.woff") format("woff"),
+        url("source-serif-pro-v11-latin-700.ttf") format("truetype"),
+        url("source-serif-pro-v11-latin-700.svg#SourceSerifPro") format("svg");
 }
 @font-face{
     font-family: "mono";
@@ -71,7 +55,7 @@ a[href^="http://"]:after, a[href^="https://"]:after{
     font-display: swap;
     unicode-range: U+0000, U+000D, U+0020-007E, U+00A0-00A3, U+00A4-00FF, U+0131, U+0152-0153, U+02C6, U+02DA, U+02DC, U+2013-2014, U+2018-201A, U+201C-201E, U+2020-2022, U+2026, U+2030, U+2039-203A, U+2044, U+2074, U+20AC, U+2122, U+2212, U+FB01-FB02;
 }
-pre, h1{
+pre{
     font-family: "mono", monospace;
 }
 pre{
@@ -87,7 +71,7 @@ pre{
     margin-bottom: 20px;
 }
 body{
-    font-family: "sans", sans-serif;
+    font-family: "serif";
     font-weight: normal;
     margin-right: auto;
     margin-left: auto;
@@ -97,17 +81,18 @@ body{
     color: black;
     background-color: white;
 }
-h3, h2, h1{
+h3, h2{
     font-weight: normal;
 }
 h1{
+    font-weight: bold;
     font-size: 2em;
+    border-bottom: 2px solid black;
 }
 h2{
     margin-bottom: 1em;
     margin-top: 1em;
     font-size: 1.5em;
-    font-family: "sans", sans-serif;
     border-bottom: 2px solid black;
 }
 h2 > a:hover, #menu a{
@@ -144,5 +129,5 @@ hr{
     margin-bottom: 2em;
 }
 input{
-    font-family: "sans", sans-serif;
+    font-family: "serif";
 }

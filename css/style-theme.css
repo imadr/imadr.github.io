@@ -20,20 +20,12 @@ body{
 #menu{
     background-color: var(--color-bg-1);
 }
-h2{
+h1, h2{
     border-bottom: 2px solid var(--color-fg-1);
 }
 pre{
     background-color: var(--color-code-bg);
     color: var(--color-fg-1);
-}
-h1{
-    box-shadow: 1px 1px 0px 0px var(--color-fg-1),
-                2px 2px 0px 0px var(--color-fg-1),
-                3px 3px 0px 0px var(--color-fg-1),
-                4px 4px 0px 0px var(--color-fg-1),
-                5px 5px 0px 0px var(--color-fg-1);
-    border: 3px solid var(--color-fg-1);
 }
 a{
     color: var(--color-fg-1);
