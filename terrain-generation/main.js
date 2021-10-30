@@ -1,7 +1,7 @@
 let texture_size = 128;
 let grid_size = [100, 100];
 
-let noise_texture;
+let noise_texture, normal_texture;
 
 let canvas_noise_1 = document.getElementById("canvas_noise_1");
 canvas_noise_1.width = texture_size;
@@ -16,7 +16,7 @@ let ctx_noise_2 = canvas_noise_2.getContext("2d");
 let canvas_normal = document.getElementById("canvas_gl_normal");
 canvas_normal.width = texture_size;
 canvas_normal.height = texture_size;
-let gl_normal = canvas_normal.getContext("webgl2");
+let ctx_normal = canvas_normal.getContext("2d");
 
 let seed = Math.floor(Math.random()*10000)+"";
 let octaves = 4;
@@ -34,8 +34,9 @@ ocataves_input.onchange = update;
 height_multiplier_input.oninput = update;
 
 function draw_texture(){
-    for(let j = 0; j < canvas_noise_2.height; j++){
-        for(let i = 0; i < canvas_noise_2.width; i++){
+    let noise_ = [];
+    for(let j = 0; j < texture_size; j++){
+        for(let i = 0; i < texture_size; i++){
             freq = 0.01;
             amplitude = 1;
             let col = noise(i*freq, j*freq, 0)*amplitude;
@@ -49,12 +50,39 @@ function draw_texture(){
                 amplitude /= 2;
                 col += noise(i*freq, j*freq, 0)*amplitude;
             }
+            noise_.push(Math.abs(col));
             col = Math.abs(col)*255;
             ctx_noise_2.fillStyle = "rgb("+col+", "+col+", "+col+")";
             ctx_noise_2.fillRect(i, j, 1, 1);
         }
     }
-    noise_texture = ctx_noise_2.getImageData(0, 0, canvas_noise_2.width, canvas_noise_2.height);
+
+
+    noise_texture = ctx_noise_2.getImageData(0, 0, texture_size, texture_size);
+
+    for(let j = 0; j < texture_size; j++){
+        for(let i = 0; i < texture_size; i++){
+            let t = 0;
+            if(j > 0) t = noise_[((j-1)*texture_size+i)];
+            let b = 0;
+            if(j < texture_size-1) b = noise_[((j+1)*texture_size+i)];
+            let r = 0;
+            if(i < texture_size-1) r = noise_[(j*texture_size+(i+1))];
+            let l = 0;
+            if(i > 0) l = noise_[(j*texture_size+(i-1))];
+            let h = [2/255, r-l, 0];
+            let v = [0, b-t, 2/255];
+            let n = vec3_normalize(vec3_cross(v, h));
+
+            n = vec3_add(vec3_scale(n, 0.5), [0.5, 0.5, 0.5]);
+            n = vec3_scale(n, 255);
+
+            ctx_normal.fillStyle = "rgb("+n[0]+", "+n[1]+", "+n[2]+")";
+            ctx_normal.fillRect(i, j, 1, 1);
+
+        }
+    }
+    normal_texture = ctx_normal.getImageData(0, 0, texture_size, texture_size);
 }
 
 let canvas_id = ["canvas_grid", "canvas_terrain", "canvas_terrain_color"];
@@ -86,6 +114,7 @@ for(let i = 0; i < canvas_id.length; i++){
         draw_count: null,
         vao: null,
         texture: null,
+        normal: null,
         lines: i == 0
     });
 
@@ -153,11 +182,12 @@ function init(id){
             shaders[objects_to_draw[i].vertex_shader],
             shaders[objects_to_draw[i].fragment_shader]);
         objects_to_draw[i].shader.program = shader_program;
+        gl.useProgram(objects_to_draw[i].shader.program);
+
         let n_uniforms = gl.getProgramParameter(shader_program, gl.ACTIVE_UNIFORMS);
 
         for(let j = 0; j < n_uniforms; j++){
             let uniform = gl.getActiveUniform(shader_program, j);
-            if(uniform.type == gl.SAMPLER_2D) continue;
             objects_to_draw[i].shader.uniforms[uniform["name"]] = {
                 type: uniform["type"],
                 location: gl.getUniformLocation(shader_program, uniform["name"])
@@ -174,20 +204,31 @@ function init(id){
         gl.bindBuffer(gl.ARRAY_BUFFER, vertex_buffer[0]);
         gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, vertex_buffer[1]);
         let position_attrib_location = gl.getAttribLocation(shader_program, "position_attrib");
-        let normal_attrib_location = gl.getAttribLocation(shader_program, "normal_attrib");
         gl.enableVertexAttribArray(position_attrib_location);
         gl.vertexAttribPointer(position_attrib_location, 3, gl.FLOAT, false,
                                 6*Float32Array.BYTES_PER_ELEMENT, 0);
-        gl.vertexAttribPointer(normal_attrib_location, 3, gl.FLOAT, false,
-                                6*Float32Array.BYTES_PER_ELEMENT, 3*Float32Array.BYTES_PER_ELEMENT);
 
-        let texture = gl.createTexture();
-        gl.activeTexture(gl.TEXTURE0);
-        gl.bindTexture(gl.TEXTURE_2D, texture);
-        gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, noise_texture.width, noise_texture.height,
-                    0, gl.RGBA, gl.UNSIGNED_BYTE, noise_texture.data);
-        gl.generateMipmap(gl.TEXTURE_2D);
-        objects_to_draw[i].texture = texture;
+        if(objects_to_draw[i].shader.uniforms["texture"] != null){
+            gl.uniform1i(objects_to_draw[i].shader.uniforms["texture"].location, 0);
+            let texture = gl.createTexture();
+            gl.activeTexture(gl.TEXTURE0);
+            gl.bindTexture(gl.TEXTURE_2D, texture);
+            gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, texture_size, texture_size,
+                        0, gl.RGBA, gl.UNSIGNED_BYTE, noise_texture.data);
+            gl.generateMipmap(gl.TEXTURE_2D);
+            objects_to_draw[i].texture = texture;
+        }
+
+        if(objects_to_draw[i].shader.uniforms["normal"] != null){
+            gl.uniform1i(objects_to_draw[i].shader.uniforms["normal"].location, 1);
+            let normal = gl.createTexture();
+            gl.activeTexture(gl.TEXTURE1);
+            gl.bindTexture(gl.TEXTURE_2D, normal);
+            gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, texture_size, texture_size,
+                        0, gl.RGBA, gl.UNSIGNED_BYTE, normal_texture.data);
+            gl.generateMipmap(gl.TEXTURE_2D);
+            objects_to_draw[i].normal = normal;
+        }
     }
 }
 
@@ -231,9 +272,7 @@ function draw_3d(id){
             set_shader_uniform(gl, objects_to_draw[i].shader, "height_multiplier", height_multiplier);
         }
 
-        if(objects_to_draw[i].texture != null){
-            gl.bindTexture(gl.TEXTURE_2D, objects_to_draw[i].texture);
-        }
+
         gl.bindVertexArray(objects_to_draw[i].vao);
         let draw_type = gl.TRIANGLES;
         if(objects_to_draw[i].lines) draw_type = gl.LINE_STRIP;
@@ -253,24 +292,23 @@ function update(){
         let texture = gl.createTexture();
         gl.activeTexture(gl.TEXTURE0);
         gl.bindTexture(gl.TEXTURE_2D, texture);
-        gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, noise_texture.width, noise_texture.height,
+        gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, texture_size, texture_size,
                     0, gl.RGBA, gl.UNSIGNED_BYTE, noise_texture.data);
         gl.generateMipmap(gl.TEXTURE_2D);
         objects_to_draw_s[i][0].texture = texture;
+
+
+        let normal = gl.createTexture();
+        gl.activeTexture(gl.TEXTURE1);
+        gl.bindTexture(gl.TEXTURE_2D, normal);
+        gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, texture_size, texture_size,
+                    0, gl.RGBA, gl.UNSIGNED_BYTE, normal_texture.data);
+        gl.generateMipmap(gl.TEXTURE_2D);
+        objects_to_draw_s[i][0].normal = normal;
+
         draw_3d(i);
     }
 };
-
-function xmur3(str){
-    for(var i = 0, h = 1779033703 ^ str.length; i < str.length; i++)
-        h = Math.imul(h ^ str.charCodeAt(i), 3432918353),
-        h = h << 13 | h >>> 19;
-    return function() {
-        h = Math.imul(h ^ h >>> 16, 2246822507);
-        h = Math.imul(h ^ h >>> 13, 3266489909);
-        return (h ^= h >>> 16) >>> 0;
-    }
-}
 
 (async function(){
     for(let shader of shaders_files){
