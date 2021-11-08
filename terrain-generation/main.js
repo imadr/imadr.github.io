@@ -1,4 +1,4 @@
-let texture_size = 128;
+let texture_size = 150;
 let grid_size = [100, 100];
 
 let noise_texture, normal_texture;
@@ -21,17 +21,21 @@ let ctx_normal = canvas_normal.getContext("2d");
 let seed = Math.floor(Math.random()*10000)+"";
 let octaves = 4;
 let height_multiplier = 20;
+let normal_strength = 8;
 let seed_input = document.getElementById("seed");
 let ocataves_input = document.getElementById("octaves");
 let height_multiplier_input = document.getElementById("height_multiplier");
+let normal_strength_input = document.getElementById("normal_strength");
 let rand = xmur3(seed);
 let noise = get_noise_function(generate_permutation_table(rand));
 seed_input.value = seed;
 ocataves_input.value = octaves;
 height_multiplier_input.value = height_multiplier;
+normal_strength_input.value = normal_strength;
 seed_input.onchange = update;
 ocataves_input.onchange = update;
 height_multiplier_input.oninput = update;
+normal_strength_input.oninput = update;
 
 function draw_texture(){
     let noise_ = [];
@@ -62,17 +66,28 @@ function draw_texture(){
 
     for(let j = 0; j < texture_size; j++){
         for(let i = 0; i < texture_size; i++){
-            let t = 0;
+            let t = noise_[j*texture_size+i];
             if(j > 0) t = noise_[((j-1)*texture_size+i)];
-            let b = 0;
+            let tl = noise_[j*texture_size+i];
+            if(j > 0 && i > 0) tl = noise_[((j-1)*texture_size+(i-1))];
+            let tr = noise_[j*texture_size+i];
+            if(j > 0 && i < texture_size-1) tr = noise_[((j-1)*texture_size+(i+1))];
+            let b = noise_[j*texture_size+i];
             if(j < texture_size-1) b = noise_[((j+1)*texture_size+i)];
-            let r = 0;
+            let r = noise_[j*texture_size+i];
             if(i < texture_size-1) r = noise_[(j*texture_size+(i+1))];
-            let l = 0;
+            let l = noise_[j*texture_size+i];
             if(i > 0) l = noise_[(j*texture_size+(i-1))];
-            let h = [2/255, r-l, 0];
-            let v = [0, b-t, 2/255];
-            let n = vec3_normalize(vec3_cross(v, h));
+            let bl = noise_[j*texture_size+i];
+            if(j < texture_size-1 && i > 0) bl = noise_[((j+1)*texture_size+(i-1))];
+            let br = noise_[j*texture_size+i];
+            if(j < texture_size-1 && i < texture_size-1) br = noise_[((j+1)*texture_size+(i+1))];
+
+            let dx = (tr+2*r+br)-(tl+2*l+bl);
+            let dy = (bl+2*b+br)-(tl+2*t+tr);
+            let dz = 1/normal_strength;
+
+            let n = vec3_normalize([dx, dy, dz]);
 
             n = vec3_add(vec3_scale(n, 0.5), [0.5, 0.5, 0.5]);
             n = vec3_scale(n, 255);
@@ -216,6 +231,8 @@ function init(id){
             gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, texture_size, texture_size,
                         0, gl.RGBA, gl.UNSIGNED_BYTE, noise_texture.data);
             gl.generateMipmap(gl.TEXTURE_2D);
+            gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
+            gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
             objects_to_draw[i].texture = texture;
         }
 
@@ -226,6 +243,8 @@ function init(id){
             gl.bindTexture(gl.TEXTURE_2D, normal);
             gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, texture_size, texture_size,
                         0, gl.RGBA, gl.UNSIGNED_BYTE, normal_texture.data);
+            gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
+            gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
             gl.generateMipmap(gl.TEXTURE_2D);
             objects_to_draw[i].normal = normal;
         }
@@ -284,6 +303,7 @@ function update(){
     seed = seed_input.value+"";
     octaves = parseInt(ocataves_input.value);
     height_multiplier = parseFloat(height_multiplier_input.value);
+    normal_strength = parseFloat(normal_strength_input.value);
     rand = xmur3(seed);
     noise = get_noise_function(generate_permutation_table(rand));
     draw_texture();
@@ -295,6 +315,8 @@ function update(){
         gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, texture_size, texture_size,
                     0, gl.RGBA, gl.UNSIGNED_BYTE, noise_texture.data);
         gl.generateMipmap(gl.TEXTURE_2D);
+        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
+        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
         objects_to_draw_s[i][0].texture = texture;
 
 
@@ -304,6 +326,8 @@ function update(){
         gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, texture_size, texture_size,
                     0, gl.RGBA, gl.UNSIGNED_BYTE, normal_texture.data);
         gl.generateMipmap(gl.TEXTURE_2D);
+        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
+        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
         objects_to_draw_s[i][0].normal = normal;
 
         draw_3d(i);

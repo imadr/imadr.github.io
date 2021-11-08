@@ -28,7 +28,9 @@
     <label for="octaves">Octaves:</label> <input type="number" min="0" id="octaves"><br><br>
     <canvas id="canvas_noise_2"></canvas>
 
-    <p>Compute the normals for the noise texture:</p>
+    <p>Compute the normals for the noise texture using a Sobel filter:</p>
+    <label for="normal_strength">Normal strength:</label>
+    <input style="vertical-align: middle;" type="range" min="0.0" max="20.0" step="0.1" class="slider" id="normal_strength"><br><br>
     <canvas id="canvas_gl_normal"></canvas>
 
     <p>Generate a 3D grid (hold and drag to rotate):</p>
@@ -39,8 +41,11 @@
     <input style="vertical-align: middle;" type="range" min="0" max="100" class="slider" id="height_multiplier"><br><br>
     <canvas style="border: 2px solid black;" id="canvas_terrain"></canvas>
 
-    <p>Color the terrain depending on the height:</p>
+    <p>Color the terrain depending on the height and slope:</p>
     <canvas style="border: 2px solid black;" id="canvas_terrain_color"></canvas>
+
+    <p>Calculate lighting with the normals:</p>
+    <canvas style="border: 2px solid black;" id="canvas_terrain_light"></canvas>
 
     <script src="/js/math.js"></script>
     <script src="/js/webgl_helper.js"></script>
