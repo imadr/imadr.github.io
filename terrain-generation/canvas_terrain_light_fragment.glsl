@@ -6,10 +6,12 @@ out vec4 frag_color;
 uniform sampler2D heightmap;
 uniform sampler2D normal;
 uniform float height_multiplier;
+uniform vec3 light_direction;
 
 in vec3 position;
 
 #define PI 3.1415926535897932384626433832795
+#define light_direction vec3(3, -5, -1)
 
 void main(){
     float height = texture(heightmap, position.xz/100.).r;
@@ -35,5 +37,13 @@ void main(){
         color = vec3(1); // snow
     }
 
-    frag_color = vec4(color, 1);
+    vec3 light_color = vec3(1);
+    float ambient_strength = 0.3;
+
+    vec3 diffuse = max(dot(normal, normalize(-light_direction)), 0.0)*light_color;
+    vec3 ambient = ambient_strength*light_color;
+
+    vec3 result = color*(ambient+diffuse);
+
+    frag_color = vec4(result, 1);
 }

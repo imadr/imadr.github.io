@@ -37,6 +37,9 @@ function set_shader_uniform(gl, shader, uniform, value){
         case gl.FLOAT_VEC2:
             gl.uniform2fv(shader.uniforms[uniform].location, value);
             break;
+        case gl.FLOAT_VEC3:
+            gl.uniform3fv(shader.uniforms[uniform].location, value);
+            break;
         case gl.FLOAT_MAT4:
             gl.uniformMatrix4fv(shader.uniforms[uniform].location, false, value);
             break;

@@ -37,6 +37,7 @@ ocataves_input.onchange = update;
 height_multiplier_input.oninput = update;
 normal_strength_input.oninput = update;
 
+
 function draw_texture(){
     let noise_ = [];
     for(let j = 0; j < texture_size; j++){
@@ -56,11 +57,11 @@ function draw_texture(){
             }
             noise_.push(Math.abs(col));
             col = Math.abs(col)*255;
+
             ctx_noise_2.fillStyle = "rgb("+col+", "+col+", "+col+")";
             ctx_noise_2.fillRect(i, j, 1, 1);
         }
     }
-
 
     noise_texture = ctx_noise_2.getImageData(0, 0, texture_size, texture_size);
 
@@ -100,7 +101,7 @@ function draw_texture(){
     normal_texture = ctx_normal.getImageData(0, 0, texture_size, texture_size);
 }
 
-let canvas_id = ["canvas_grid", "canvas_terrain", "canvas_terrain_color"];
+let canvas_id = ["canvas_grid", "canvas_terrain", "canvas_terrain_color", "canvas_terrain_light"];
 let canvas_count = canvas_id.length;
 let canvas_s = [];
 let gl_s = [];
@@ -291,7 +292,6 @@ function draw_3d(id){
             set_shader_uniform(gl, objects_to_draw[i].shader, "height_multiplier", height_multiplier);
         }
 
-
         gl.bindVertexArray(objects_to_draw[i].vao);
         let draw_type = gl.TRIANGLES;
         if(objects_to_draw[i].lines) draw_type = gl.LINE_STRIP;
@@ -370,9 +370,15 @@ document.addEventListener("mousemove", function(e){
         draw_3d(dragging);
     }
 });
+
+let light_move_speed = 10;
+let light_direction = [ -15, -16, 9 ];
 document.addEventListener("keydown", function(e){
-    if(e.keyCode == 71){
-        seed_input.value = Math.floor(Math.random()*10000)+"";
-        update();
+    switch(e.keyCode){
+        case 71:
+            seed_input.value = Math.floor(Math.random()*10000)+"";
+            break;
     }
+    console.log(light_direction);
+    update();
 });
