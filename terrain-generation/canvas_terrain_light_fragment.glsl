@@ -30,9 +30,6 @@ void main(){
     if(height < 0.07){
         color = vec3(0.949, 0.839, 0.450); // sand
     }
-    if(height < 0.03){
-        color = vec3(0.066, 0.533, 0.733); // water
-    }
     if(height > 0.4 && slope < PI/4.){
         color = vec3(1); // snow
     }

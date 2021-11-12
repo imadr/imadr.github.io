@@ -138,6 +138,27 @@ for(let i = 0; i < canvas_id.length; i++){
     shaders_files.push([i, canvas_id[i]+"_fragment.glsl"]);
 }
 
+objects_to_draw_s[3].push({
+    vertex_shader: "water_vertex.glsl",
+    fragment_shader: "water_fragment.glsl",
+    transform: {
+        position: [-grid_size[0]/2, 1, -grid_size[1]/2],
+        scale: [1, 1, 1],
+        rotation: quat_id()
+    },
+    shader: {
+        program: null,
+        uniforms: {}
+    },
+    draw_count: null,
+    vao: null,
+    texture: null,
+    normal: null,
+    lines: 0
+});
+shaders_files.push([3, "water_vertex.glsl"]);
+shaders_files.push([3, "water_fragment.glsl"]);
+
 let main_camera = {
     fov: 60,
     near_plane: 0.1,
@@ -257,10 +278,13 @@ function draw_3d(id){
     let camera = main_camera;
     let objects_to_draw = objects_to_draw_s[id];
 
-    gl.enable(gl.DEPTH_TEST);
     gl.viewport(0, 0, gl.canvas.width, gl.canvas.height);
     gl.clearColor(1, 1, 1, 1);
     gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
+
+    gl.enable(gl.DEPTH_TEST);
+    gl.enable(gl.BLEND);
+    gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
 
     let aspect_ratio = gl.canvas.width/gl.canvas.height;
     let p = perspective_projection(rad(camera.fov),
@@ -367,18 +391,20 @@ document.addEventListener("mousemove", function(e){
         objects_to_draw_s[dragging][0].transform.rotation = quat_mul(
             objects_to_draw_s[dragging][0].transform.rotation,
             euler_to_quat([0, -x/100, 0]));
+        if(objects_to_draw_s[dragging].length >= 2){
+            objects_to_draw_s[dragging][1].transform.rotation = quat_mul(
+                objects_to_draw_s[dragging][1].transform.rotation,
+                euler_to_quat([0, -x/100, 0]));
+        }
         draw_3d(dragging);
     }
 });
 
-let light_move_speed = 10;
-let light_direction = [ -15, -16, 9 ];
 document.addEventListener("keydown", function(e){
     switch(e.keyCode){
         case 71:
             seed_input.value = Math.floor(Math.random()*10000)+"";
             break;
     }
-    console.log(light_direction);
     update();
 });
