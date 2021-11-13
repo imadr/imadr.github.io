@@ -12,7 +12,7 @@ in vec3 position;
 
 void main(){
     float height = texture(heightmap, position.xz/100.).r;
-    if(height > 0.07) height = 0.07;
+    if(height > 0.07) discard;
     height *= 8.;
     frag_color = vec4(mix(color1, color2, 1.-height), 1.);
 }
