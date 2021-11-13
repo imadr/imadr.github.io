@@ -35,11 +35,11 @@ ocataves_input.value = octaves;
 height_multiplier_input.value = height_multiplier;
 height_addend_input.value = height_addend;
 normal_strength_input.value = normal_strength;
-seed_input.onchange = update;
-ocataves_input.onchange = update;
-height_multiplier_input.oninput = update;
-height_addend_input.oninput = update;
-normal_strength_input.oninput = update;
+seed_input.onchange = function(){ update(false); };
+ocataves_input.onchange = function(){ update(false); };
+height_multiplier_input.oninput = function(){ update(false); };
+height_addend_input.oninput = function(){ update(false); };
+normal_strength_input.oninput = function(){ update(false); };
 
 function draw_texture(){
     let noise_ = [];
@@ -104,7 +104,13 @@ function draw_texture(){
     normal_texture = ctx_normal.getImageData(0, 0, texture_size, texture_size);
 }
 
-let canvas_id = ["canvas_grid", "canvas_terrain", "canvas_terrain_color", "canvas_terrain_light"];
+let canvas_id = [
+    "canvas_grid",
+    "canvas_terrain",
+    "canvas_color",
+    "canvas_light",
+    "canvas_water",
+];
 let canvas_count = canvas_id.length;
 let canvas_s = [];
 let gl_s = [];
@@ -141,7 +147,7 @@ for(let i = 0; i < canvas_id.length; i++){
     shaders_files.push([i, canvas_id[i]+"_fragment.glsl"]);
 }
 
-objects_to_draw_s[3].push({
+objects_to_draw_s[4].push({
     vertex_shader: "water_vertex.glsl",
     fragment_shader: "water_fragment.glsl",
     transform: {
@@ -159,8 +165,8 @@ objects_to_draw_s[3].push({
     normal: null,
     lines: 0
 });
-shaders_files.push([3, "water_vertex.glsl"]);
-shaders_files.push([3, "water_fragment.glsl"]);
+shaders_files.push([4, "water_vertex.glsl"]);
+shaders_files.push([4, "water_fragment.glsl"]);
 
 let main_camera = {
     fov: 60,
@@ -331,38 +337,40 @@ function draw_3d(id){
     }
 }
 
-function update(){
+function update(new_noise){
     seed = seed_input.value+"";
     octaves = parseInt(ocataves_input.value);
     height_multiplier = parseFloat(height_multiplier_input.value);
     height_addend = parseFloat(height_addend_input.value);
     normal_strength = parseFloat(normal_strength_input.value);
-    rand = xmur3(seed);
-    noise = get_noise_function(generate_permutation_table(rand));
-    draw_texture();
+    if(new_noise){
+        rand = xmur3(seed);
+        noise = get_noise_function(generate_permutation_table(rand));
+        draw_texture();
+    }
     for(let i = 0; i < canvas_count; i++){
-        let gl = gl_s[i];
-        let texture = gl.createTexture();
-        gl.activeTexture(gl.TEXTURE0);
-        gl.bindTexture(gl.TEXTURE_2D, texture);
-        gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, texture_size, texture_size,
-                    0, gl.RGBA, gl.UNSIGNED_BYTE, noise_texture.data);
-        gl.generateMipmap(gl.TEXTURE_2D);
-        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
-        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
-        objects_to_draw_s[i][0].texture = texture;
+        if(new_noise){
+            let gl = gl_s[i];
+            let texture = gl.createTexture();
+            gl.activeTexture(gl.TEXTURE0);
+            gl.bindTexture(gl.TEXTURE_2D, texture);
+            gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, texture_size, texture_size,
+                        0, gl.RGBA, gl.UNSIGNED_BYTE, noise_texture.data);
+            gl.generateMipmap(gl.TEXTURE_2D);
+            gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
+            gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+            objects_to_draw_s[i][0].texture = texture;
 
-
-        let normal = gl.createTexture();
-        gl.activeTexture(gl.TEXTURE1);
-        gl.bindTexture(gl.TEXTURE_2D, normal);
-        gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, texture_size, texture_size,
-                    0, gl.RGBA, gl.UNSIGNED_BYTE, normal_texture.data);
-        gl.generateMipmap(gl.TEXTURE_2D);
-        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
-        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
-        objects_to_draw_s[i][0].normal = normal;
-
+            let normal = gl.createTexture();
+            gl.activeTexture(gl.TEXTURE1);
+            gl.bindTexture(gl.TEXTURE_2D, normal);
+            gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, texture_size, texture_size,
+                        0, gl.RGBA, gl.UNSIGNED_BYTE, normal_texture.data);
+            gl.generateMipmap(gl.TEXTURE_2D);
+            gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
+            gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+            objects_to_draw_s[i][0].normal = normal;
+        }
         draw_3d(i);
     }
 };
@@ -379,7 +387,7 @@ function update(){
     for(let i = 0; i < canvas_count; i++){
         init(i);
     }
-    update();
+    update(true);
 })();
 
 let dragging = -1;
@@ -413,7 +421,15 @@ document.addEventListener("keydown", function(e){
     switch(e.keyCode){
         case 71:
             seed_input.value = Math.floor(Math.random()*10000)+"";
-            update();
+            update(true);
+            break;
+        case 83:
+            height_addend_input.value--;
+            update(false);
+            break;
+        case 87:
+            height_addend_input.value++;
+            update(false);
             break;
     }
 });
