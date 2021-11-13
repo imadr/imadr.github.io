@@ -6,13 +6,14 @@ out vec4 frag_color;
 uniform sampler2D heightmap;
 uniform sampler2D normal;
 uniform float height_multiplier;
+uniform float height_addend;
 
 in vec3 position;
 
 #define PI 3.1415926535897932384626433832795
 
 void main(){
-    float height = texture(heightmap, position.xz/100.).r;
+    float height = texture(heightmap, position.xz/100.).r*height_multiplier+height_addend;
     vec3 normal_texture = texture(normal, position.xz/100.).xzy;
     vec3 normal = normal_texture*2.0-1.0;
 
@@ -25,10 +26,10 @@ void main(){
         color = vec3(0.341, 0.207, 0.078); // high slope mountain
     }
 
-    if(height < 0.07){
+    if(height < 1.4){
         color = vec3(0.949, 0.839, 0.450); // sand
     }
-    if(height > 0.4 && slope < PI/4.){
+    if(height > 9. && slope < PI/4.){
         color = vec3(1); // snow
     }
 

@@ -4,6 +4,7 @@ precision highp float;
 out vec4 frag_color;
 
 uniform sampler2D heightmap;
+uniform float height_multiplier;
 
 in vec3 position;
 

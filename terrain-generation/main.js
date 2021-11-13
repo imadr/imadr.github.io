@@ -21,22 +21,25 @@ let ctx_normal = canvas_normal.getContext("2d");
 let seed = Math.floor(Math.random()*10000)+"";
 let octaves = 4;
 let height_multiplier = 20;
+let height_addend = 0;
 let normal_strength = 8;
 let seed_input = document.getElementById("seed");
 let ocataves_input = document.getElementById("octaves");
 let height_multiplier_input = document.getElementById("height_multiplier");
+let height_addend_input = document.getElementById("height_addend");
 let normal_strength_input = document.getElementById("normal_strength");
 let rand = xmur3(seed);
 let noise = get_noise_function(generate_permutation_table(rand));
 seed_input.value = seed;
 ocataves_input.value = octaves;
 height_multiplier_input.value = height_multiplier;
+height_addend_input.value = height_addend;
 normal_strength_input.value = normal_strength;
 seed_input.onchange = update;
 ocataves_input.onchange = update;
 height_multiplier_input.oninput = update;
+height_addend_input.oninput = update;
 normal_strength_input.oninput = update;
-
 
 function draw_texture(){
     let noise_ = [];
@@ -317,6 +320,9 @@ function draw_3d(id){
         if("height_multiplier" in objects_to_draw[i].shader.uniforms){
             set_shader_uniform(gl, objects_to_draw[i].shader, "height_multiplier", height_multiplier);
         }
+        if("height_addend" in objects_to_draw[i].shader.uniforms){
+            set_shader_uniform(gl, objects_to_draw[i].shader, "height_addend", height_addend);
+        }
 
         gl.bindVertexArray(objects_to_draw[i].vao);
         let draw_type = gl.TRIANGLES;
@@ -329,6 +335,7 @@ function update(){
     seed = seed_input.value+"";
     octaves = parseInt(ocataves_input.value);
     height_multiplier = parseFloat(height_multiplier_input.value);
+    height_addend = parseFloat(height_addend_input.value);
     normal_strength = parseFloat(normal_strength_input.value);
     rand = xmur3(seed);
     noise = get_noise_function(generate_permutation_table(rand));
