@@ -35,11 +35,11 @@ ocataves_input.value = octaves;
 height_multiplier_input.value = height_multiplier;
 height_addend_input.value = height_addend;
 normal_strength_input.value = normal_strength;
-seed_input.onchange = function(){ update(false); };
-ocataves_input.onchange = function(){ update(false); };
+seed_input.onchange = function(){ update(true); };
+ocataves_input.onchange = function(){ update(true); };
 height_multiplier_input.oninput = function(){ update(false); };
 height_addend_input.oninput = function(){ update(false); };
-normal_strength_input.oninput = function(){ update(false); };
+normal_strength_input.oninput = function(){ update(true); };
 
 function draw_texture(){
     let noise_ = [];

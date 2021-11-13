@@ -16,6 +16,7 @@ in vec3 position;
 
 void main(){
     float height = texture(heightmap, position.xz/100.).r*height_multiplier+height_addend;
+    if(height < 1.) discard;
     vec3 normal_texture = texture(normal, position.xz/100.).xzy;
     vec3 normal = normal_texture*2.0-1.0;
 
