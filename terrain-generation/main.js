@@ -284,7 +284,6 @@ function draw_3d(id){
 
     gl.enable(gl.DEPTH_TEST);
     gl.enable(gl.BLEND);
-    gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
 
     let aspect_ratio = gl.canvas.width/gl.canvas.height;
     let p = perspective_projection(rad(camera.fov),
@@ -303,6 +302,9 @@ function draw_3d(id){
     let v = lookat_matrix(camera.position, vec3_add(camera.position, forward), [0, 1, 0]);
 
     for(let i = 0; i < objects_to_draw.length; i++){
+        gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
+        if(i == 1) gl.blendFunc(gl.SRC_ALPHA, gl.SRC_COLOR);
+
         gl.useProgram(objects_to_draw[i].shader.program);
 
         let m = mat4_identity();
@@ -404,7 +406,7 @@ document.addEventListener("keydown", function(e){
     switch(e.keyCode){
         case 71:
             seed_input.value = Math.floor(Math.random()*10000)+"";
+            update();
             break;
     }
-    update();
 });
