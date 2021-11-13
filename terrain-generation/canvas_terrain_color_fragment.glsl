@@ -19,14 +19,14 @@ void main(){
 
     vec3 color = vec3(0.431, 0.258, 0.090); // normal slope mountain
     float slope = abs(acos(dot(normal, vec3(0, 1, 0))));
-    if(slope < PI/3.8){
+    if(slope < PI/3.8 || height < 3.){
         color = vec3(0.278, 0.839, 0); // grass
     }
     if(slope > PI/2.8){
         color = vec3(0.341, 0.207, 0.078); // high slope mountain
     }
 
-    if(height < 1.4){
+    if(height < 1.6){
         color = vec3(0.949, 0.839, 0.450); // sand
     }
     if(height > 9. && slope < PI/4.){
