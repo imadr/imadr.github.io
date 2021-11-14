@@ -38,6 +38,16 @@ let objects = [
             scale: [50, 50],
             rotation: 0
         }, img_asset_id: 3, mesh_object_id: 4},
+        {type: OBJECT_RENDERABLE, transform: {
+            position: [2, 0, 0],
+            scale: [1, 1, 1],
+            rotation: quat_id()
+        }, mesh_object_id: 1},
+                {type: OBJECT_RENDERABLE, transform: {
+            position: [2, 0, 2],
+            scale: [1, 1, 1],
+            rotation: quat_id()
+        }, mesh_object_id: 1},
 ];
 
 let renderables = [];
@@ -157,7 +167,7 @@ window.onclick = function(){
 }
 
 let pointer_locked = false;
-window.addEventListener("pointerlockchange", function(e){
+document.addEventListener("pointerlockchange", function(e){
     if(document.pointerLockElement === canvas){
         pointer_locked = true;
     }
@@ -178,10 +188,16 @@ window.addEventListener("mousemove", function(e){
     if(!pointer_locked) return;
     let move_x = e.movementX;
     let move_y = e.movementY;
-    if(Math.abs(move_x) <= 1) move_x = 0;
-    if(Math.abs(move_y) <= 1) move_y = 0;
+    if(navigator.userAgent.toLowerCase().indexOf("firefox") > -1){
+        if(move_x == -1) move_x = 0;
+        if(move_y == -1) move_y = 0;
+    }
     objects[5].transform2D.position[0] += move_x;
     objects[5].transform2D.position[1] += move_y;
+    if(objects[5].transform2D.position[0] <= 0) main_camera.position[0] -= camera_move_speed;
+    if(objects[5].transform2D.position[0] >= canvas.width) main_camera.position[0] += camera_move_speed;
+    if(objects[5].transform2D.position[1] <= 0) main_camera.position[2] += camera_move_speed;
+    if(objects[5].transform2D.position[1] >= canvas.height) main_camera.position[2] -= camera_move_speed;
     objects[5].transform2D.position[0] = Math.max(0, objects[5].transform2D.position[0]);
     objects[5].transform2D.position[0] = Math.min(canvas.width, objects[5].transform2D.position[0]);
     objects[5].transform2D.position[1] = Math.max(0, objects[5].transform2D.position[1]);
