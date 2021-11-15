@@ -19,27 +19,53 @@ let Shader = class{
 };
 
 let Mesh = class{
-    constructor(gl, vertices, shader){
+    constructor(gl, vertices, shader, attribs, attribs_n){
         this.shader = shader;
-        this.draw_count = vertices.length/3;
+        this.draw_count = vertices.length/attribs_n;
+        this.vao = gl.createVertexArray();
+        gl.bindVertexArray(this.vao);
+
         let vertex_buffer = gl.createBuffer();
         gl.bindBuffer(gl.ARRAY_BUFFER, vertex_buffer);
         gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(vertices), gl.STATIC_DRAW);
-        this.vao = gl.createVertexArray();
-        gl.bindVertexArray(this.vao);
-        gl.bindBuffer(gl.ARRAY_BUFFER, vertex_buffer);
+
         let position_attrib_location = gl.getAttribLocation(shader.program, "position_attrib");
         gl.enableVertexAttribArray(position_attrib_location);
-        gl.vertexAttribPointer(position_attrib_location, 3, gl.FLOAT, false,
-                                3*Float32Array.BYTES_PER_ELEMENT, 0);
+        gl.vertexAttribPointer(position_attrib_location, attribs[0], gl.FLOAT, false,
+                                attribs_n*Float32Array.BYTES_PER_ELEMENT, 0);
+        if(attribs.length <= 1) return;
+
+        let texcoord_attrib_location = gl.getAttribLocation(shader.program, "texcoord_attrib");
+        gl.enableVertexAttribArray(texcoord_attrib_location);
+        gl.vertexAttribPointer(texcoord_attrib_location, attribs[1], gl.FLOAT, false,
+                                attribs_n*Float32Array.BYTES_PER_ELEMENT,
+                                attribs[0]*Float32Array.BYTES_PER_ELEMENT);
+    }
+}
+
+let Texture = class{
+    constructor(gl, img){
+        let texture = gl.createTexture();
+        gl.activeTexture(gl.TEXTURE0);
+        gl.bindTexture(gl.TEXTURE_2D, texture);
+        gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, img.width, img.height,
+                    0, gl.RGBA, gl.UNSIGNED_BYTE, img.data);
+        gl.generateMipmap(gl.TEXTURE_2D);
+        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.REPEAT);
+        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.REPEAT);
+        this.texture = texture;
     }
 }
 
 let Renderable = class{
-    constructor(gl, transform, mesh){
+    constructor(gl, transform, mesh, texture){
         this.gl = gl;
         this.transform = transform;
         this.mesh = mesh;
+        if(this.mesh.shader.uniforms["tex"]){
+            gl.uniform1i(this.mesh.shader.uniforms["tex"].location, 0);
+            this.texture = texture;
+        }
     }
 
     draw(v, p){
@@ -51,26 +77,22 @@ let Renderable = class{
         let mvp = mat4_identity();
         mvp = mat4_mat4_mul(m, mat4_mat4_mul(v, p));
         set_shader_uniform(gl, this.mesh.shader, "mvp", mvp);
+        gl.activeTexture(gl.TEXTURE0);
+        gl.bindTexture(gl.TEXTURE_2D, this.texture.texture);
         gl.bindVertexArray(this.mesh.vao);
         gl.drawArrays(gl.TRIANGLES, 0, this.mesh.draw_count);
     }
 }
 
 let Renderable2D = class{
-    constructor(gl, transform2D, mesh, img){
+    constructor(gl, transform2D, mesh, texture){
         this.gl = gl;
         this.transform2D = transform2D;
         this.mesh = mesh;
-        if(this.mesh.shader.uniforms["tex"]) gl.uniform1i(this.mesh.shader.uniforms["tex"].location, 0);
-        let texture = gl.createTexture();
-        gl.activeTexture(gl.TEXTURE0);
-        gl.bindTexture(gl.TEXTURE_2D, texture);
-        gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, img.width, img.height,
-                    0, gl.RGBA, gl.UNSIGNED_BYTE, img.data);
-        gl.generateMipmap(gl.TEXTURE_2D);
-        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
-        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
-        this.texture = texture;
+        if(this.mesh.shader.uniforms["tex"]){
+            gl.uniform1i(this.mesh.shader.uniforms["tex"].location, 0);
+            this.texture = texture;
+        }
     }
 
     draw(width, height){
@@ -82,6 +104,8 @@ let Renderable2D = class{
         m = mat3_mat3_mul(translate_2d(this.transform2D.position), m);
         m = mat3_mat3_mul(scale_2d(this.transform2D.scale), m);
         set_shader_uniform(gl, this.mesh.shader, "m", m);
+        gl.activeTexture(gl.TEXTURE0);
+        gl.bindTexture(gl.TEXTURE_2D, this.texture.texture);
         gl.bindVertexArray(this.mesh.vao);
         gl.drawArrays(gl.TRIANGLES, 0, this.mesh.draw_count);
     }

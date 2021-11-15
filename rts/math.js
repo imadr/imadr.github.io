@@ -206,6 +206,12 @@ function vec2_lerp(a, b, t){
     return vec2_add(vec2_scale(a, t), vec2_scale(b, 1-t));
 }
 
+function vec3_lerp(a, b, t){
+    t = t < 0 ? 0 : t;
+    t = t > 1 ? 1 : t;
+    return vec3_add(vec3_scale(a, t), vec3_scale(b, 1-t));
+}
+
 function vec3_cross(a, b){
     return [
         a[1]*b[2]-a[2]*b[1],
