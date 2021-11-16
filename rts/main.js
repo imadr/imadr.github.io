@@ -22,32 +22,37 @@ let main_camera = {
 let assets = [
     {path: "assets/shaders/test_vertex.glsl", type: ASSET_VERTEX_SHADER, content: null},
     {path: "assets/shaders/test_fragment.glsl", type: ASSET_FRAGMENT_SHADER, content: null},
-    {path: "assets/meshes/plane.json", type: ASSET_MESH, content: null},
+    {path: "assets/meshes/ground.obj", type: ASSET_MESH, content: null},
     {path: "assets/img/cursor.png", type: ASSET_IMG, content: null},
     {path: "assets/shaders/ui_vertex.glsl", type: ASSET_VERTEX_SHADER, content: null},
     {path: "assets/shaders/ui_fragment.glsl", type: ASSET_FRAGMENT_SHADER, content: null},
-    {path: "assets/meshes/plane_2d.json", type: ASSET_MESH, content: null},
+    {path: "assets/meshes/plane2d.obj", type: ASSET_MESH, content: null},
     {path: "assets/img/grass.png", type: ASSET_IMG, content: null},
+    {path: "assets/meshes/cube.obj", type: ASSET_MESH, content: null},
+    {path: "assets/img/cube.png", type: ASSET_IMG, content: null},
 ];
 
 let objects = [
     {type: OBJECT_SHADER, vertex_asset_id: 0, fragment_asset_id: 1},
-    {type: OBJECT_MESH, mesh_asset_id: 2, shader_object_id: 0, attribs: [3, 2], attribs_n: 5},
+    {type: OBJECT_MESH, mesh_asset_id: 2, shader_object_id: 0},
     {type: OBJECT_TEXTURE, img_asset_id: 3},
     {type: OBJECT_SHADER, vertex_asset_id: 4, fragment_asset_id: 5},
-    {type: OBJECT_MESH, mesh_asset_id: 6, shader_object_id: 3, attribs: [3], attribs_n: 3},
+    {type: OBJECT_MESH, mesh_asset_id: 6, shader_object_id: 3},
     {type: OBJECT_TEXTURE, img_asset_id: 7},
+    {type: OBJECT_MESH, mesh_asset_id: 8, shader_object_id: 0},
+    {type: OBJECT_TEXTURE, img_asset_id: 9},
 ];
 
 objects.push({type: OBJECT_RENDERABLE2D, transform2D: {
             position: [0, 0],
-            scale: [50, 50],
+            scale: [25, 25],
             rotation: 0
         }, mesh_object_id: 4, texture_object_id: 2});
 let cursor_object = objects[objects.length-1];
 
-for(let i = 0; i < 10; i++){
-    for(let j = 0; j < 10; j++){
+for(let i = -14; i < 23; i++){
+    for(let j = -14; j < 28; j++){
+        if(i == 2 && j == 1) continue;
         objects.push({type: OBJECT_RENDERABLE, transform: {
             position: [i, 0, j],
             scale: [1, 1, 1],
@@ -56,15 +61,23 @@ for(let i = 0; i < 10; i++){
     }
 }
 
+objects.push({type: OBJECT_RENDERABLE, transform: {
+    position: [0, 0, 0],
+    scale: [1, 1, 1],
+    rotation: quat_id()
+}, mesh_object_id: 6, texture_object_id: 7});
+
 let renderables = [];
 let renderables_2d = [];
+let last_used_resources = [null, null, null];
 
-window.onload = (async function(){
+(async function(){
     // load assets
     for(let asset of assets){
         let res = await fetch(asset.path);
         if(asset.type == ASSET_MESH){
-            asset.content = await res.json();
+            let text = await res.text();
+            asset.content = parse_obj(text);
         }
         else if(asset.type == ASSET_IMG){
             let blob = await res.blob();
@@ -88,11 +101,11 @@ window.onload = (async function(){
         if(object.type == OBJECT_SHADER){
             objects[i] = new Shader(gl,
                 assets[object.vertex_asset_id].content,
-                assets[object.fragment_asset_id].content);
+                assets[object.fragment_asset_id].content, i);
         }
         else if(object.type == OBJECT_MESH){
             objects[i] = new Mesh(gl, assets[object.mesh_asset_id].content,
-                objects[object.shader_object_id], object.attribs, object.attribs_n);
+                objects[object.shader_object_id]);
         }
         else if(object.type == OBJECT_TEXTURE){
             objects[i] = new Texture(gl, assets[object.img_asset_id].content);
@@ -113,7 +126,10 @@ window.onload = (async function(){
 })();
 
 function handle_input(){
-    if(keyboard["w"]) main_camera.position[2] += camera_move_speed;
+    if(keyboard["w"]){
+        main_camera.position[2] += camera_move_speed;
+        console.log(main_camera.position)
+    }
     if(keyboard["s"]) main_camera.position[2] -= camera_move_speed;
     if(keyboard["d"]) main_camera.position[0] += camera_move_speed;
     if(keyboard["a"]) main_camera.position[0] -= camera_move_speed;
@@ -125,34 +141,19 @@ function handle_input(){
     cursor_object.transform2D.position[1] = Math.max(0, cursor_object.transform2D.position[1]);
     cursor_object.transform2D.position[1] = Math.min(canvas.height, cursor_object.transform2D.position[1]);
 
-    if(mouse_pos[0] <= 2) main_camera.position[0] -= camera_move_speed;
-    if(mouse_pos[0] >= canvas.width-2) main_camera.position[0] += camera_move_speed;
-    if(mouse_pos[1] <= 2) main_camera.position[2] += camera_move_speed;
-    if(mouse_pos[1] >= canvas.height-2) main_camera.position[2] -= camera_move_speed;
+    // if(mouse_pos[0] <= 2) main_camera.position[0] -= camera_move_speed;
+    // if(mouse_pos[0] >= canvas.width-2) main_camera.position[0] += camera_move_speed;
+    // if(mouse_pos[1] <= 2) main_camera.position[2] += camera_move_speed;
+    // if(mouse_pos[1] >= canvas.height-2) main_camera.position[2] -= camera_move_speed;
 }
 
 let fps = document.getElementById("fps");
-let fps_average = [];
-let fps_cursor = -1;
-let fps_count = 50;
+
 function update(){
     let time = performance.now()
     handle_input();
     draw();
-
-    if(fps_cursor < fps_count){
-        if(fps_average.length < fps_count) fps_average.push(0);
-        fps_cursor++;
-    }
-    else{
-        fps_cursor = 0;
-    }
-    fps_average[fps_cursor] = Math.round(1000/(performance.now()-time));
-    let fps_ = 0;
-    for(let i = 0; i < fps_average.length; i++){
-        fps_ += fps_average[i];
-    }
-    fps.innerHTML = Math.round(fps_/fps_count)+" fps";
+    fps.innerHTML = Math.round(1000/(performance.now()-time))+" fps";
     window.requestAnimationFrame(update);
 }
 
@@ -162,6 +163,8 @@ function draw(){
     gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
     gl.enable(gl.DEPTH_TEST);
     gl.enable(gl.BLEND);
+    gl.enable(gl.CULL_FACE);
+    gl.cullFace(gl.FRONT);
     gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
 
     let aspect_ratio = gl.canvas.width/gl.canvas.height;
@@ -180,13 +183,13 @@ function draw(){
     let v = lookat_matrix(main_camera.position, vec3_add(main_camera.position, forward), [0, 1, 0]);
     for(let i = 0; i < renderables.length; i++){
         let renderable = objects[renderables[i]];
-        renderable.draw(v, p);
+        last_used_resources = renderable.draw(v, p, last_used_resources);
     }
 
     gl.disable(gl.DEPTH_TEST);
     for(let i = 0; i < renderables_2d.length; i++){
         let renderable_2d = objects[renderables_2d[i]];
-        renderable_2d.draw(canvas.width, canvas.height);
+        last_used_resources = renderable_2d.draw(canvas.width, canvas.height, last_used_resources);
     }
 }
 
@@ -216,6 +219,10 @@ window.addEventListener("mousemove", function(e){
 
 window.addEventListener("mouseout", function(e){
     mouse_pos = [e.clientX, e.clientY];
+});
+
+document.addEventListener("blur", function(e){
+    keyboard = {};
 });
 
 window.addEventListener("wheel", function(e){
