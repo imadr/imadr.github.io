@@ -22,7 +22,7 @@
     <h1>Procedural terrain generation</h1>
 
     <p>Let's generate a terrain procedurally.<br>
-    First, start by generating some perlin noise (press <strong>G</strong> to randomize the seed):</p>
+    First, we start by generating some perlin noise. We use the MurmurHash hash function to generate random numbers with a given seed (press <strong>G</strong> to randomize the seed):</p>
     <label for="seed">Seed:</label> <input type="number" min="0" id="seed"><br><br>
     <canvas id="canvas_noise_1"></canvas><br>
 
@@ -48,15 +48,12 @@
     <p>Color the terrain depending on the height and slope:</p>
     <canvas style="border: 2px solid black;" id="canvas_color"></canvas>
 
-    <p>Calculate lighting with the normals:</p>
+    <p>Calculate diffuse lighting with the normals:</p>
     <canvas style="border: 2px solid black;" id="canvas_light"></canvas>
 
-    <p>Add water (press <strong>W</strong> and <strong>S</strong> to <strong>raise</strong> and <strong>lower</strong> the water's level):</p>
+    <p>Add water and tile the terrain (press <strong>W</strong> and <strong>S</strong> to <strong>raise</strong> and <strong>lower</strong> the water's level):</p>
     <canvas style="border: 2px solid black;" id="canvas_water"></canvas>
 
-<!--     <p>Infinite terrain:</p>
-    <canvas style="border: 2px solid black;" id="canvas_infinite"></canvas>
- -->
     <script src="/js/math.js"></script>
     <script src="/js/webgl_helper.js"></script>
     <script src="noise.js"></script>
