@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png">
+    <link rel="manifest" href="/site.webmanifest">
+    <link rel="mask-icon" href="/safari-pinned-tab.svg" color="#5bbad5">
+    <meta name="msapplication-TileColor" content="#da532c">
+    <meta name="theme-color" content="#ffffff">
+    <title>Making a software renderer</title>
+    <link rel="stylesheet" href="/css/style.css">
+    <link rel="stylesheet" href="/css/highlight.css">
+    <script src="/js/highlight.js"></script>
+    <style>
+        /*canvas{
+            border: 2px solid black;
+        }*/
+    </style>
+</head>
+<body>
+    <div id="menu"><span><a href="/index.html">Home</a></span></div>
+    <h1>Making a software renderer</h1>
+    <p>Lorem ipsum dolor sit amet, consectetur adipisicing elit, sed do eiusmod
+    tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam,
+    quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo
+    consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse
+    cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non
+    proident, sunt in culpa qui officia deserunt mollit anim id est laborum.</p>
+
+<div id="fps"></div>
+    <canvas id="line-canvas"></canvas>
+
+    <script src="1.js"></script>
+
+<script src="/js/light.js"></script>
+<script>
+document.addEventListener("DOMContentLoaded", function(e){
+    document.querySelectorAll(".code").forEach(function(block){
+        hljs.highlightBlock(block);
+    });
+});
+</script>
+</body>
+</html>

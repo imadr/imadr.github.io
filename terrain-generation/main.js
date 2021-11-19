@@ -120,7 +120,7 @@ for(let i = 0; i < canvas_id.length; i++){
     let canvas = document.getElementById(canvas_id[i]);
     canvas.width = 530;
     canvas.height = 280;
-    let gl = canvas.getContext("webgl2");
+    let gl = canvas.getContext("webgl2", {preserveDrawingBuffer: true});
     canvas_s.push(canvas);
     gl_s.push(gl);
     objects_to_draw_s[i] = [];
