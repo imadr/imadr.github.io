@@ -30,7 +30,7 @@
     <label for="octaves">Octaves:</label> <input type="number" min="0" id="octaves"><br><br>
     <canvas id="canvas_noise_2"></canvas>
 
-    <p>Compute the normals for the noise texture using a Sobel filter:</p>
+    <p>Compute the normals from the noise texture using a Sobel filter:</p>
     <label for="normal_strength">Normal strength:</label>
     <input style="vertical-align: middle;" type="range" min="0.0" max="20.0" step="0.1" class="slider" id="normal_strength"><br><br>
     <canvas id="canvas_gl_normal"></canvas>
@@ -51,7 +51,7 @@
     <p>Calculate diffuse lighting with the normals:</p>
     <canvas style="border: 2px solid black;" id="canvas_light"></canvas>
 
-    <p>Add water and tile the terrain (press <strong>W</strong> and <strong>S</strong> to <strong>raise</strong> and <strong>lower</strong> the water's level):</p>
+    <p>Add water and tile the terrain (press <strong>W</strong> and <strong>S</strong> to <strong>lower</strong> and <strong>raise</strong> the water's level):</p>
     <canvas style="border: 2px solid black;" id="canvas_water"></canvas>
 
     <script src="/js/math.js"></script>
