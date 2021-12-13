@@ -57,18 +57,18 @@ function mat4_mat4_mul(a, b){
 
 function mat3_vec3_mul(m, v){
     return [
-        a[0]*b[0]+a[1]*b[3]+a[2]*b[6],
-        a[0]*b[1]+a[1]*b[4]+a[2]*b[7],
-        a[0]*b[2]+a[1]*b[5]+a[2]*b[8]
+        v[0]*m[0]+v[1]*m[3]+v[2]*m[6],
+        v[0]*m[1]+v[1]*m[4]+v[2]*m[7],
+        v[0]*m[2]+v[1]*m[5]+v[2]*m[8]
     ];
 }
 
 function mat4_vec4_mul(m, v){
     return [
-        a[0]*b[0]+a[1]*b[4]+a[2]*b[8]+a[3]*b[12],
-        a[0]*b[1]+a[1]*b[5]+a[2]*b[9]+a[3]*b[13],
-        a[0]*b[2]+a[1]*b[6]+a[2]*b[10]+a[3]*b[14],
-        a[0]*b[3]+a[1]*b[7]+a[2]*b[11]+a[3]*b[15]
+        v[0]*m[0]+v[1]*m[4]+v[2]*m[8]+v[3]*m[12],
+        v[0]*m[1]+v[1]*m[5]+v[2]*m[9]+v[3]*m[13],
+        v[0]*m[2]+v[1]*m[6]+v[2]*m[10]+v[3]*m[14],
+        v[0]*m[3]+v[1]*m[7]+v[2]*m[11]+v[3]*m[15]
     ];
 }
 
@@ -234,6 +234,52 @@ function vec3_scale(v, s){
 
 function vec4_magnitude(v){
     return Math.sqrt(v[0]*v[0] + v[1]*v[1] + v[2]*v[2] + v[3]*v[3]);
+}
+
+function vec4_normalize(v){
+    let m = vec4_magnitude(v);
+    if(m == 0) return [0, 0, 0, 0];
+    return [
+        v[0]/m,
+        v[1]/m,
+        v[2]/m
+    ];
+}
+
+function vec4_add(a, b){
+    return [
+        a[0]+b[0],
+        a[1]+b[1],
+        a[2]+b[2],
+        a[3]+b[3],
+    ];
+}
+
+function vec4_sub(a, b){
+    return [
+        a[0]-b[0],
+        a[1]-b[1],
+        a[2]-b[2],
+        a[3]-b[3],
+    ];
+}
+
+function vec4_scale(v, s){
+    return [
+        v[0]*s,
+        v[1]*s,
+        v[2]*s,
+        v[3]*s,
+    ];
+}
+
+function vec4_hadamard(a, b){
+    return [
+        a[0]*b[0],
+        a[1]*b[1],
+        a[2]*b[2],
+        a[3]*b[3],
+    ];
 }
 
 function quat_id(){
