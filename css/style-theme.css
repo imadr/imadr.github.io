@@ -11,7 +11,7 @@
     --color-muted: #adadad;
     --color-bg-1: #1a1a1a;
     --color-fg-1: white;
-    --color-code-bg: #2b2b2b;
+    --color-code-bg: #303841;
 }
 body{
     color: var(--color-fg-1);
@@ -27,16 +27,8 @@ pre{
     background-color: var(--color-code-bg);
     color: var(--color-fg-1);
 }
-a{
+h2 > a{
     color: var(--color-fg-1);
-}
-a:hover{
-    color: var(--color-bg-1);
-    background-color: var(--color-fg-1);
-}
-h2 > a:hover{
-    color: initial;
-    background-color: initial;
 }
 table, td, th{
     border: 1px solid var(--color-fg-1);

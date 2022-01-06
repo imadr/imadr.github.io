@@ -13,76 +13,41 @@
     <title>imadr</title>
     <link rel="stylesheet" href="/css/style.css">
     <style>
-        .row:after{
-            content: "";
-            display: table;
-            clear: both;
+        h1{
+            font-size: 2.5em;
         }
-        .row{
-            display: flex;
-            flex-wrap: wrap;
-            flex-direction: row;
-        }
-        .col{
-            float: left;
-            width: 49%;
-        }
-        .col{
-            flex: 1;
-        }
-        .col:first-child{
-            margin-right: 10px;
-        }
-        ul{
-            padding: 0;
-            list-style: none;
-        }
-        li{
-            margin-bottom: 10px;
-            font-size: 1.3em;
-        }
-        @media only screen and (max-width: 700px){
-            .row{
-                flex-direction: column;
-            }
-            .col:first-child{
-                margin-right: 0;
-            }
-            .col{
-                width: 100%;
-            }
-            h2{
-                margin-top: 0.5em;
-            }
+        h1, h2{
+            border: none !important;
         }
     </style>
 </head>
 <body>
 <div id="menu"><span><a href="index.html">Home</a></span></div>
-<h1>imadr</h1>
-<div class="row">
-    <div class="col">
-        <h2>Articles</h2>
-        <ul>
-            <li><a href="raymarching-in-webgl/">Raymarching in WebGL</a></li>
-            <li><a href="terrain-generation/">Procedural terrain generation</a></li>
-            <li><a href="rotations-with-quaternions/">Rotations with quaternions</a></li>
-            <li><a href="cross-platform-window-in-c/">Cross-platform window in C</a></li>
-            <li><a href="websites/">Cool websites</a></li>
-            <li><a href="hello/">Hello world!</a></li>
-        </ul>
-        <h2>Random stuff</h2>
-        <ul>
-            <li><a href="japanese-learning/">Japanese kana learning</a></li>
-        </ul>
-    </div><div class="col">
-        <h2>Contact</h2>
-        <ul>
-            <li><a href="mailto:imadr.codes@gmail.com">Email</a></li>
-            <li><a href="https://github.com/imadr">Github</a></li>
-        </ul>
-    </div>
-</div>
+<h1>imadr.me</h1>
+<p>
+    Hi, my name is Imad, welcome to my website.<br>
+    I like graphics programming and game development.<br>
+    You can contact me by <a href="mailto:imadr.codes@gmail.com">email</a>. You can also find me on <a href="https://github.com/imadr">Github</a> and <a href="https://twitter.com/imadr_">Twitter</a>.
+</p>
+
+<h2>Articles</h2>
+<ul>
+    <li><a href="raymarching-in-webgl/">Raymarching in WebGL</a></li>
+    <li><a href="terrain-generation/">Procedural terrain generation</a></li>
+    <li><a href="rotations-with-quaternions/">Rotations with quaternions</a></li>
+    <li><a href="cross-platform-window-in-c/">Cross-platform window in C</a></li>
+    <li><a href="websites/">Cool websites</a></li>
+</ul>
+
+<h2>Projects</h2>
+<ul>
+    <li><a href="https://github.com/imadr/game">Game engine written in C</a></li>
+</ul>
+
+<h2>Other stuff</h2>
+<ul>
+    <li><a href="japanese-learning/">Japanese kana learning</a></li>
+</ul>
 <script src="js/light.js"></script>
 </body>
 </html>
