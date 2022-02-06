@@ -209,7 +209,7 @@ function draw_ctx_raymarching2(){
                 closest_point = tmp_closest_point;
             }
         }
-        if(dist <= 3) break;
+        if(dist <= 1) break;
         draw_circle(ctx_raymarching2, current_point, dist, false);
     }
 }
