@@ -1,23 +1,6 @@
-let canvas_circle_sdf = document.getElementById("canvas-circle-sdf");
-let ctx_circle_sdf = canvas_circle_sdf.getContext("2d");
-let canvas_square_sdf = document.getElementById("canvas-square-sdf");
-let ctx_square_sdf = canvas_square_sdf.getContext("2d");
-let canvas_raymarching1 = document.getElementById("canvas-raymarching1");
-let ctx_raymarching1 = canvas_raymarching1.getContext("2d");
-let canvas_raymarching2 = document.getElementById("canvas-raymarching2");
-let ctx_raymarching2 = canvas_raymarching2.getContext("2d");
-
-let cursor_position = [];
-for(let i = 0; i < 4; i++){
-    cursor_position.push([400, 150]);
-}
-
-let raymarching_step = parseFloat(document.getElementById("raymarching-step").value);
-document.getElementById("raymarching-step").onchange = function(){
-    raymarching_step = parseFloat(document.getElementById("raymarching-step").value);
-}
-
-function draw_arrow(ctx, from, to){
+function draw_arrow(ctx, from, to, color){
+    ctx.fillStyle = color;
+    ctx.strokeStyle = color;
     let head = 17;
     let dx = to[0]-from[0];
     let dy = to[1]-from[1];
@@ -38,21 +21,26 @@ function draw_arrow(ctx, from, to){
     ctx.fill();
 }
 
-function draw_line(ctx, from, to){
+function draw_line(ctx, from, to, color){
+    ctx.strokeStyle = color;
     ctx.beginPath();
     ctx.moveTo(from[0], from[1]);
     ctx.lineTo(to[0], to[1]);
     ctx.stroke();
 }
 
-function draw_circle(ctx, center, radius, fill){
+function draw_circle(ctx, center, radius, fill, color){
+    ctx.fillStyle = color;
+    ctx.strokeStyle = color;
     ctx.beginPath();
     ctx.arc(center[0], center[1], radius, 0, 2*Math.PI);
     if(!fill) ctx.stroke();
     if(fill) ctx.fill();
 }
 
-function draw_rect(ctx, pos, size, stroke){
+function draw_rect(ctx, pos, size, fill, color){
+    ctx.fillStyle = color;
+    ctx.strokeStyle = color;
     ctx.beginPath();
     ctx.rect(
         pos[0],
@@ -60,7 +48,8 @@ function draw_rect(ctx, pos, size, stroke){
         size[0],
         size[1],
     );
-    ctx.stroke();
+    if(!fill) ctx.stroke();
+    if(fill) ctx.fill();
 }
 
 function point_rect_dist(point, rect_pos, rect_size){
@@ -100,152 +89,73 @@ function point_circle_dist(point, circle_pos, circle_radius){
     return [closest_point, distance(circle_pos, point)-circle_radius];
 }
 
-function draw_ctx_circle_sdf(){
-    ctx_circle_sdf.clearRect(0, 0, canvas_circle_sdf.width, canvas_circle_sdf.height);
+function draw_canvas_circle_sdf(ctx, i){
+    draw_rect(ctx, [0, 0], [ctx.canvas.width, ctx.canvas.height], true, "#fff");
     let radius = 60;
-    let center = [canvas_circle_sdf.width/2, canvas_circle_sdf.height/2];
-    let cursor = cursor_position[0];
-
-
+    let center = [ctx.canvas.width/2, ctx.canvas.height/2];
+    let cursor = cursor_position[i];
     let [closest_point, min_dist] = point_circle_dist(cursor, center, radius);
 
-    ctx_circle_sdf.lineWidth = 4;
+    ctx.lineWidth = 4;
 
-    ctx_circle_sdf.strokeStyle = "#29c643";
-    ctx_circle_sdf.fillStyle = "#29c643";
+    draw_arrow(ctx, center, closest_point, "#29c643");
+    draw_arrow(ctx, cursor, closest_point, "#ea3333");
+    draw_circle(ctx, center, radius, false, "#000");
+    draw_circle(ctx, center, 5, true, "#29c643");
+    draw_circle(ctx, cursor, 6, true, "#2c66c9");
 
-    draw_arrow(ctx_circle_sdf, center, closest_point);
-
-    ctx_circle_sdf.fillStyle = "#ea3333";
-    ctx_circle_sdf.strokeStyle = "#ea3333";
-    draw_arrow(ctx_circle_sdf, cursor, closest_point);
-
-    ctx_circle_sdf.strokeStyle = "#000";
-    draw_circle(ctx_circle_sdf, center, radius, false);
-
-    ctx_circle_sdf.fillStyle = "#000";
-    draw_circle(ctx_circle_sdf, center, 5, true);
-    draw_circle(ctx_circle_sdf, cursor, 5, true);
     document.querySelector("#circle-distance").innerHTML = Math.round(min_dist);
     document.querySelector("#radius").innerHTML = radius;
 }
 
-function draw_ctx_square_sdf(){
-    ctx_square_sdf.clearRect(0, 0, canvas_square_sdf.width, canvas_square_sdf.height);
-    ctx_square_sdf.lineWidth = 4;
-    ctx_square_sdf.strokeStyle = "#000";
+function draw_canvas_square_sdf(ctx, i){
+    draw_rect(ctx, [0, 0], [ctx.canvas.width, ctx.canvas.height], true, "#fff");
+    ctx.lineWidth = 4;
 
     let rect_size = [100, 100];
     let rect_pos = [
-        canvas_circle_sdf.width/2-rect_size[0]/2,
-        canvas_circle_sdf.height/2-rect_size[1]/2
+        ctx.canvas.width/2-rect_size[0]/2,
+        ctx.canvas.height/2-rect_size[1]/2
     ];
 
-    draw_rect(ctx_square_sdf, rect_pos, rect_size, true);
+    draw_rect(ctx, rect_pos, rect_size, false, "#000");
 
-    let cursor = cursor_position[1];
-
-    ctx_square_sdf.fillStyle = "#ea3333";
-    ctx_square_sdf.strokeStyle = "#ea3333";
+    let cursor = cursor_position[i];
 
     let [closest_point, min_dist] = point_rect_dist(cursor, rect_pos, rect_size);
     document.querySelector("#square-distance").innerHTML = Math.round(min_dist);
-    draw_arrow(ctx_square_sdf, cursor, closest_point);
+    draw_arrow(ctx, cursor, closest_point, "#ea3333");
 
-    ctx_square_sdf.fillStyle = "#000";
-    draw_circle(ctx_square_sdf, cursor, 5, true);
+    draw_circle(ctx, cursor, 6, true, "#2c66c9");
 }
 
-function draw_ctx_raymarching2(){
-    ctx_raymarching2.clearRect(0, 0, canvas_raymarching2.width, canvas_raymarching2.height);
-    let cursor = cursor_position[3];
-    ctx_raymarching2.strokeStyle = "#000";
-    ctx_raymarching2.fillStyle = "#000";
-    ctx_raymarching2.lineWidth = 4;
+function draw_canvas_shapes_sdf(ctx, i){
+    draw_rect(ctx, [0, 0], [ctx.canvas.width, ctx.canvas.height], true, "#fff");
+    let cursor = cursor_position[i];
+
+    ctx.lineWidth = 4;
 
     let shapes = [];
 
     let rect_size = [100, 100];
     let rect_pos = [470, 150];
     shapes.push(["rect", rect_size, rect_pos]);
-    draw_rect(ctx_raymarching2, rect_pos, rect_size, true);
-
-    let circle_radius = 50;
-    let circle_pos = [360, 60];
-    shapes.push(["circle", circle_pos, circle_radius]);
-    draw_circle(ctx_raymarching2, circle_pos, circle_radius, false);
-
-    circle_radius = 80;
-    circle_pos = [250, 250];
-    shapes.push(["circle", circle_pos, circle_radius]);
-    draw_circle(ctx_raymarching2, circle_pos, circle_radius, false);
-
-    let camera = [30, canvas_raymarching2.height/2];
-    draw_circle(ctx_raymarching2, camera, 8, true);
-
-    draw_circle(ctx_raymarching2, cursor, 5, true);
-
-    draw_line(ctx_raymarching2, camera, cursor);
-
-    ctx_raymarching2.strokeStyle = "#ea3333";
-    ctx_raymarching2.lineWidth = 2;
-
-    for(let t = 0; t < 1; t += raymarching_step){
-        let current_point = vec2_lerp(camera, cursor, t)
-
-        let dist = Number.POSITIVE_INFINITY;
-        let closest_point;
-
-        for(let shape of shapes){
-            let tmp_closest_point, tmp_dist;
-            if(shape[0] == "circle"){
-                [tmp_closest_point, tmp_dist] = point_circle_dist(current_point, shape[1], shape[2]);
-            }
-            else if(shape[0] == "rect"){
-                [tmp_closest_point, tmp_dist] = point_rect_dist(current_point, shape[2], shape[1]);
-            }
-            if(tmp_dist < dist){
-                dist = tmp_dist;
-                closest_point = tmp_closest_point;
-            }
-        }
-        if(dist <= 1) break;
-        draw_circle(ctx_raymarching2, current_point, dist, false);
-    }
-}
-
-function draw_ctx_raymarching1(){
-    ctx_raymarching1.clearRect(0, 0, canvas_raymarching1.width, canvas_raymarching1.height);
-    let cursor = cursor_position[2];
-    ctx_raymarching1.strokeStyle = "#000";
-    ctx_raymarching1.fillStyle = "#000";
-    ctx_raymarching1.lineWidth = 4;
-
-    let shapes = [];
-
-    let rect_size = [100, 100];
-    let rect_pos = [470, 150];
-    shapes.push(["rect", rect_size, rect_pos]);
-    draw_rect(ctx_raymarching1, rect_pos, rect_size, true);
+    draw_rect(ctx, rect_pos, rect_size, false, "#000");
 
     rect_size = [90, 150];
     rect_pos = [40, 30];
     shapes.push(["rect", rect_size, rect_pos]);
-    draw_rect(ctx_raymarching1, rect_pos, rect_size, true);
+    draw_rect(ctx, rect_pos, rect_size, false, "#000");
 
     let circle_radius = 50;
     let circle_pos = [360, 60];
     shapes.push(["circle", circle_pos, circle_radius]);
-    draw_circle(ctx_raymarching1, circle_pos, circle_radius, false);
+    draw_circle(ctx, circle_pos, circle_radius, false, "#000");
 
     circle_radius = 80;
     circle_pos = [250, 250];
     shapes.push(["circle", circle_pos, circle_radius]);
-    draw_circle(ctx_raymarching1, circle_pos, circle_radius, false);
-
-    draw_circle(ctx_raymarching1, cursor, 5, true);
-
-    ctx_raymarching1.strokeStyle = "#ea3333";
+    draw_circle(ctx, circle_pos, circle_radius, false, "#000");
 
     let dist = Number.POSITIVE_INFINITY;
     let closest_point;
@@ -263,17 +173,144 @@ function draw_ctx_raymarching1(){
         }
     }
     if(dist < 0) return;
-    draw_circle(ctx_raymarching1, cursor, dist, false);
+
+    draw_circle(ctx, cursor, dist, false, "#ea3333");
+    draw_arrow(ctx, cursor, closest_point, "#ea3333");
+    draw_circle(ctx, cursor, 6, true, "#2c66c9");
 }
 
-let canvas_draw_function = [
-    draw_ctx_circle_sdf,
-    draw_ctx_square_sdf,
-    draw_ctx_raymarching1,
-    draw_ctx_raymarching2,
+function draw_canvas_raymarching_1(ctx, i){
+    draw_rect(ctx, [0, 0], [ctx.canvas.width, ctx.canvas.height], true, "#fff");
+    let cursor = cursor_position[i];
+
+    ctx.lineWidth = 4;
+
+    let shapes = [];
+
+    let rect_size = [100, 100];
+    let rect_pos = [470, 150];
+    shapes.push(["rect", rect_size, rect_pos]);
+    draw_rect(ctx, rect_pos, rect_size, false, "#000");
+
+    let circle_radius = 50;
+    let circle_pos = [360, 60];
+    shapes.push(["circle", circle_pos, circle_radius]);
+    draw_circle(ctx, circle_pos, circle_radius, false, "#000");
+
+    circle_radius = 80;
+    circle_pos = [250, 250];
+    shapes.push(["circle", circle_pos, circle_radius]);
+    draw_circle(ctx, circle_pos, circle_radius, false, "#000");
+
+    let camera = [30, ctx.canvas.height/2];
+    draw_circle(ctx, camera, 8, true, "#000");
+
+    ctx.lineWidth = 3;
+
+    let current_point = camera;
+    let path = vec2_normalize(vec2_sub(cursor, camera));
+    let dist_sum = 0;
+    for(let t = 0; t < 100; t++){
+        let dist = Number.POSITIVE_INFINITY;
+        let closest_point;
+
+        for(let shape of shapes){
+            let tmp_closest_point, tmp_dist;
+            if(shape[0] == "circle"){
+                [tmp_closest_point, tmp_dist] = point_circle_dist(current_point, shape[1], shape[2]);
+            }
+            else if(shape[0] == "rect"){
+                [tmp_closest_point, tmp_dist] = point_rect_dist(current_point, shape[2], shape[1]);
+            }
+            if(tmp_dist < dist){
+                dist = tmp_dist;
+                closest_point = tmp_closest_point;
+            }
+        }
+        if(dist <= 3) break;
+        if(dist >= 500) break;
+        draw_circle(ctx, current_point, dist, false, "#ea3333");
+        dist_sum += dist;
+        current_point = vec2_add(camera, vec2_scale(path, dist_sum));
+    }
+
+    ctx.lineWidth = 3;
+    draw_line(ctx, camera, current_point, "#000");
+    draw_circle(ctx, cursor, 6, true, "#2c66c9");
+}
+
+function draw_canvas_raymarching_2(ctx, i){
+    draw_rect(ctx, [0, 0], [ctx.canvas.width, ctx.canvas.height], true, "#fff");
+    ctx.fillStyle = "#fff";
+    ctx.fillRect(0, 0, ctx.canvas.width, ctx.canvas.height);
+    let camera = [30, ctx.canvas.height/2];
+    let near_plane = parseInt(document.getElementById("near-plan").value);
+    let fov = rad(parseInt(document.getElementById("fov").value));
+    let view_length = near_plane*Math.tan(fov);
+    let nb_rays = parseInt(document.getElementById("nb-rays").value);
+    let raymarching_max_steps = 50;
+
+    let circle_pos = [410, ctx.canvas.height/2];
+    let circle_radius = 100;
+
+    draw_circle(ctx, camera, 8, true, "#000");
+    let ray_spacing = view_length*2/(nb_rays-1);
+    ctx.lineWidth = 1;
+    for(let i = 0; i < nb_rays; i++){
+        let ray_point = [camera[0]+near_plane, (ctx.canvas.height/2)-view_length+i*ray_spacing];
+        draw_line(ctx, camera, ray_point, "#000");
+        let ray = vec2_normalize(vec2_sub(ray_point, camera));
+        let current_point = ray_point;
+        for(let t = 0; t < raymarching_max_steps; t++){
+            let [closest_point, dist] = point_circle_dist(current_point, circle_pos, circle_radius);
+            draw_circle(ctx, current_point, dist, false, "#ea3333");
+            let new_point = vec2_add(current_point, vec2_scale(ray, dist));
+            draw_line(ctx, current_point, new_point, "#000");
+            draw_circle(ctx, new_point, 5, true, "#000");
+            current_point = new_point;
+            if(dist <= 3) break;
+            if(dist >= 500) break;
+        }
+    }
+
+    ctx.lineWidth = 4;
+    draw_circle(ctx, circle_pos, circle_radius, false, "#000");
+    draw_line(ctx,
+        [camera[0]+near_plane, ctx.canvas.height/2-view_length],
+        [camera[0]+near_plane, ctx.canvas.height/2+view_length], "#000");
+}
+
+let canvases_id = [
+    "canvas-circle-sdf",
+    "canvas-square-sdf",
+    "canvas-shapes-sdf",
+    "canvas-raymarching-1",
+    "canvas-raymarching-2",
 ];
 
-document.querySelectorAll("canvas").forEach(function(canvas, i){
+let canvases = [];
+let ctxs = [];
+let canvas_draw_function = [];
+for(let canvas_id of canvases_id){
+    let canvas = document.getElementById(canvas_id);
+    canvases.push(canvas);
+    ctxs.push(canvas.getContext("2d"));
+    canvas_draw_function.push(window["draw_"+canvas_id.replaceAll("-", "_")])
+}
+
+let cursor_position = [];
+for(let i = 0; i < canvas_draw_function.length; i++){
+    cursor_position.push([400, 150]);
+}
+
+document.getElementById("near-plan").oninput =
+document.getElementById("fov").oninput =
+document.getElementById("nb-rays").oninput =
+function(){
+    draw_canvas_raymarching_2(ctxs[4], 4);
+}
+
+canvases.forEach(function(canvas, i){
     canvas.width = 600;
     canvas.height = 300;
 
@@ -283,8 +320,8 @@ document.querySelectorAll("canvas").forEach(function(canvas, i){
             let x = e.clientX-rect.left;
             let y = e.clientY-rect.top;
             cursor_position[i] = [x, y];
-            canvas_draw_function[i]();
+            canvas_draw_function[i](ctxs[i], i);
         });
     })(i, canvas);
-    canvas_draw_function[i]();
+    canvas_draw_function[i](ctxs[i], i);
 });

@@ -17,6 +17,8 @@
     <style>
         canvas{
             border: 2px solid black;
+        }
+        canvas:not(#canvas-raymarching-2){
             cursor: none;
         }
         .red{
@@ -24,6 +26,9 @@
         }
         .green{
             background-color: #29c643;
+        }
+        .blue{
+            background-color: #2c66c9;
         }
         .rounded-bg{
             border-radius: 3px;
@@ -37,20 +42,38 @@
 <body>
     <div id="menu"><span><a href="/index.html">Home</a></span></div>
     <h1>Raymarching explained interactively</h1>
-    <!-- <iframe width="640" height="360" frameborder="0" src="https://www.shadertoy.com/embed/NsjXzV?gui=true&t=10&paused=true&muted=false" allowfullscreen></iframe> -->
+
+    <p>
+        Raymarching is a rendering technique popular in the <a href="https://en.wikipedia.org/wiki/Demoscene">demoscene</a> (My all-time favorite demo being <a href="https://www.youtube.com/watch?v=JZ6ZzJeWgpY">"fermi paradox" by mercury</a>)
+    </p>
     <h2 id="signed-distance-function"><a href="#signed-distance-function">Signed distance function</a></h2>
 
-    <p>Signed distance <span id="circle-distance" class="rounded-bg red"></span> radius <span id="radius" class="rounded-bg green"></span></p>
+    <p>
+        To calculate the distance between a point in the plan and a circle, we first calculate the euclidian distance between the point and the center of the circle, then substract the radius of the circle.<br><br>
+        The distance between our <span class="rounded-bg blue">cursor</span> and a circle width radius <span id="radius" class="rounded-bg green"></span> is <span id="circle-distance" class="rounded-bg red"></span> :<br>
+    </p>
     <canvas id="canvas-circle-sdf"></canvas>
+    <p>Notice that when the cursor is inside the circle, the distance is negative—hence "signed" distance function. This will become useful later on.</p>
 
     <p>Signed distance <span id="square-distance" class="rounded-bg red"></span></p>
 
     <canvas id="canvas-square-sdf"></canvas>
 
-    <canvas id="canvas-raymarching1"></canvas>
+    <p>If we have a scene with multiple objects, the closets point to our cursor is the <strong>minimum</strong> of all the SDFs of the shapes:</p>
+    <canvas id="canvas-shapes-sdf"></canvas>
+
+    <h2 id="the-raymarching-algorithm"><a href="#the-raymarching-algorithm">The Raymarching algorithm</a></h2>
+
+    <canvas id="canvas-raymarching-1"></canvas>
     <br>
-    Raymarching step: <input style="vertical-align: middle;" type="range" min="0.01" max="0.2" step="0.01" id="raymarching-step" autocomplete="off"><br><br>
-    <canvas id="canvas-raymarching2"></canvas>
+    Near plane: <input style="vertical-align: middle;" type="range" value="60" min="10" max="100" step="1" id="near-plan" autocomplete="off"><br>
+    Field of view: <input style="vertical-align: middle;" type="range" value="30" min="5" max="80" step="1" id="fov" autocomplete="off"><br>
+    Number of rays: <input style="vertical-align: middle;" type="range" value="20" min="2" max="100" step="1" id="nb-rays" autocomplete="off"><br>
+
+    <canvas id="canvas-raymarching-2"></canvas>
+
+
+    <!-- <iframe width="640" height="360" frameborder="0" src="https://www.shadertoy.com/embed/NsjXzV?gui=true&t=10&paused=true&muted=false" allowfullscreen></iframe> -->
     <!-- <p>In raymaching, we don't use 3D models to render our scene, instead we use a <strong>signed distance function</strong> also known as <strong>SDF</strong>.<br>
     The SDF of an object is a function that, given a point in space as input, outputs the distance from that point to the closest point of the object.</p>
     <h2 id="the-raymarching-algorithm"><a href="#the-raymarching-algorithm">The raymarching algorithm</a></h2>
