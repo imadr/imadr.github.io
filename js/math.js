@@ -173,13 +173,13 @@ function vec2_dot(a, b){
 function lerp(a, b, t){
     t = t < 0 ? 0 : t;
     t = t > 1 ? 1 : t;
-    return a+t*(b-a);
+    return b*t+a*(1-t);
 }
 
 function vec2_lerp(a, b, t){
     t = t < 0 ? 0 : t;
     t = t > 1 ? 1 : t;
-    return vec2_add(vec2_scale(a, t), vec2_scale(b, 1-t));
+    return vec2_add(vec2_scale(b, t), vec2_scale(a, 1-t));
 }
 
 function vec3_cross(a, b){
@@ -192,6 +192,12 @@ function vec3_cross(a, b){
 
 function vec3_magnitude(v){
     return Math.sqrt(v[0]*v[0] + v[1]*v[1] + v[2]*v[2]);
+}
+
+function vec3_lerp(a, b, t){
+    t = t < 0 ? 0 : t;
+    t = t > 1 ? 1 : t;
+    return vec3_add(vec3_scale(b, t), vec3_scale(a, 1-t));
 }
 
 function vec3_dot(a, b){
@@ -262,6 +268,12 @@ function vec4_sub(a, b){
         a[2]-b[2],
         a[3]-b[3],
     ];
+}
+
+function vec4_lerp(a, b, t){
+    t = t < 0 ? 0 : t;
+    t = t > 1 ? 1 : t;
+    return vec4_add(vec4_scale(b, t), vec4_scale(a, 1-t));
 }
 
 function vec4_scale(v, s){
@@ -407,4 +419,10 @@ function xmur3(str){
         h = Math.imul(h ^ h >>> 13, 3266489909);
         return (h ^= h >>> 16) >>> 0;
     }
+}
+
+function distance(a, b){
+    if(a.length == 2) return vec2_magnitude(vec2_sub(a, b));
+    if(a.length == 3) return vec3_magnitude(vec3_sub(a, b));
+    if(a.length == 4) return vec4_magnitude(vec4_sub(a, b));
 }
