@@ -43,9 +43,25 @@
     <div id="menu"><span><a href="/index.html">Home</a></span></div>
     <h1>Raymarching explained interactively</h1>
 
+    <!-- <p>
+        In this interactive tutorial, I will explain how raymarching works<br><br>
+        You may be familiar with the ,<br>
+     -->
+    <h2 id="introduction"><a href="#introduction">Introduction</a></h2>
     <p>
-        Raymarching is a rendering technique popular in the <a href="https://en.wikipedia.org/wiki/Demoscene">demoscene</a> (My all-time favorite demo being <a href="https://www.youtube.com/watch?v=JZ6ZzJeWgpY">"fermi paradox" by mercury</a>)
+        You may be familiar with the <a href="https://en.wikipedia.org/wiki/Demoscene">demos</a>: those cool, often small sized 3D animations with music.
+        My all-time favorite demo is <a href="https://www.youtube.com/watch?v=JZ6ZzJeWgpY">"fermi paradox" by mercury</a>. This youtube video weights tens of megabytes, but the demo executable itself is only 64 kilobytes. To get such a small size several techniques are used, among which there is procedural generation and extreme data compression, but that's not the only trick.<br>
     </p>
+    <p>
+        What is most impressive about most of these demos is that there is <strong>no 3D geometry whatsoever</strong>. The planets, the mountains and the seas are all generated in real time with mathematical functions in a program called the <strong>fragment shader</strong>.
+    </p>
+    <p>
+        A fragment shader is a program that is executed in the graphics card. Usually in 3D applications like video games, two types of shaders are used: the <strong>vertex shader</strong>, which is executed once every frame for each point of each 3D model in the scene, and the fragment shader, which is executed for each pixel of the screen.
+    </p>
+    <p>
+        <strong>Raymarching</strong> is the rendering technique that allows us to bypass using 3D models and instead use a clever combination of mathematical equations to render 3D geometry. In this interactive tutorial, we will see how this technique works, and we will implement our own raymarcher in WebGL.
+    </p>
+
     <h2 id="signed-distance-function"><a href="#signed-distance-function">Signed distance function</a></h2>
 
     <p>
