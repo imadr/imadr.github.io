@@ -43,8 +43,8 @@ function draw_rect(ctx, pos, size, fill, color){
     ctx.strokeStyle = color;
     ctx.beginPath();
     ctx.rect(
-        pos[0],
-        pos[1],
+        pos[0]-size[0]/2,
+        pos[1]-size[1]/2,
         size[0],
         size[1],
     );
@@ -53,22 +53,33 @@ function draw_rect(ctx, pos, size, fill, color){
 }
 
 function point_rect_dist(point, rect_pos, rect_size){
+    let dist = vec2_magnitude([
+        Math.max(Math.abs(point[0]-rect_pos[0])-rect_size[0]/2, 0),
+        Math.max(Math.abs(point[1]-rect_pos[1])-rect_size[1]/2, 0),
+    ]);
+
     let points = [];
-    let cond1 = point[1] >= rect_pos[1] && point[1] <= rect_pos[1]+rect_size[1];
-    let cond2 = point[0] >= rect_pos[0] && point[0] <= rect_pos[0]+rect_size[0];
+    let cond1 = point[1] >= rect_pos[1]-rect_size[1]/2 && point[1] <= rect_pos[1]+rect_size[1]/2;
+    let cond2 = point[0] >= rect_pos[0]-rect_size[0]/2 && point[0] <= rect_pos[0]+rect_size[0]/2;
     if(cond1){
-        points = points.concat([[rect_pos[0], point[1]],
-                       [rect_pos[0]+rect_size[0], point[1]]]);
+        points = points.concat([
+            [rect_pos[0]-rect_size[0]/2, point[1]],
+            [rect_pos[0]+rect_size[0]/2, point[1]]
+        ]);
     }
     if(cond2){
-        points = points.concat([[point[0], rect_pos[1]],
-                       [point[0], rect_pos[1]+rect_size[1]]]);
+        points = points.concat([
+            [point[0], rect_pos[1]-rect_size[1]/2],
+            [point[0], rect_pos[1]+rect_size[1]/2]
+        ]);
     }
 
-    points = points.concat([rect_pos,
-        [rect_pos[0]+rect_size[0], rect_pos[1]],
-        [rect_pos[0], rect_pos[1]+rect_size[1]],
-        [rect_pos[0]+rect_size[0], rect_pos[1]+rect_size[1]]]);
+    points = points.concat([
+        [rect_pos[0]-rect_size[0]/2, rect_pos[1]-rect_size[1]/2],
+        [rect_pos[0]+rect_size[0]/2, rect_pos[1]-rect_size[1]/2],
+        [rect_pos[0]-rect_size[0]/2, rect_pos[1]+rect_size[1]/2],
+        [rect_pos[0]+rect_size[0]/2, rect_pos[1]+rect_size[1]/2],
+    ]);
 
     let closest_point;
     let min_dist = Number.POSITIVE_INFINITY;
@@ -80,7 +91,8 @@ function point_rect_dist(point, rect_pos, rect_size){
         }
     }
     if(cond1 && cond2) min_dist *= -1;
-    return [closest_point, min_dist];
+
+    return [closest_point, dist];
 }
 
 function point_circle_dist(point, circle_pos, circle_radius){
@@ -89,61 +101,245 @@ function point_circle_dist(point, circle_pos, circle_radius){
     return [closest_point, distance(circle_pos, point)-circle_radius];
 }
 
-function draw_canvas_circle_sdf(ctx, i){
-    draw_rect(ctx, [0, 0], [ctx.canvas.width, ctx.canvas.height], true, "#fff");
-    let radius = 60;
-    let center = [ctx.canvas.width/2, ctx.canvas.height/2];
-    let cursor = cursor_position[i];
-    let [closest_point, min_dist] = point_circle_dist(cursor, center, radius);
+function update_draggables($, draggables){
+    if($.set_to_null) $.dragging = null;
+    let found_draggable = false;
+    if($.dragging == null){
+        for(let draggable of draggables){
+            if(distance($.mouse_pos, $[draggable]) < 15){
+                document.body.style.cursor = "move";
+                found_draggable = true;
+                if($.mouse_state == 1){
+                    $.dragging = draggable;
+                    $.set_to_null = false;
+                }
+            }
+        }
+    }
+    else{
+        $[$.dragging] = $.mouse_pos;
+        document.body.style.cursor = "move";
+    }
+
+    if($.mouse_state == 0){
+        $.set_to_null = true;
+        if(!found_draggable) document.body.style.cursor = "initial";
+    }
+}
+
+function draw_text(ctx, txt, pos, font, color){
+    ctx.strokeStyle = color;
+    ctx.fillStyle = color;
+    ctx.font = font;
+    ctx.textAlign = "center";
+    ctx.textBaseline = "middle";
+    ctx.fillText(txt, pos[0], pos[1]);
+}
+
+function draw_canvas_euclidean_distance(ctx, $){
+    draw_rect(ctx, [ctx.canvas.width/2, ctx.canvas.height/2], [ctx.canvas.width, ctx.canvas.height], true, "#fff");
+
+    if($.dragging == undefined) $.dragging = null;
+    if($.point1 == undefined) $.point1 = [122, 38];
+    if($.point2 == undefined) $.point2 = [390, 202];
+    let draggables = ["point1", "point2"];
+    update_draggables($, draggables);
+
+    let point3 = [$.point2[0], $.point1[1]];
+    let right_angle_size = 15;
+    let add_y = -right_angle_size;
+    let add_x = right_angle_size;
+    if($.point1[0] < $.point2[0]) add_x *= -1;
+    if($.point1[1] < $.point2[1]) add_y *= -1;
+    let right_angle_1 = [point3[0], point3[1]+add_y];
+    let right_angle_2 = [point3[0]+add_x, point3[1]+add_y];
+    let right_angle_3 = [point3[0]+add_x, point3[1]];
+
+    ctx.lineWidth = 5;
+
+    draw_line(ctx, $.point1, $.point2, "#ea3333");
+
+    ctx.lineWidth = 3;
+    ctx.strokeStyle = "#000";
+    ctx.beginPath();
+    ctx.moveTo($.point1[0], $.point1[1]);
+    ctx.lineTo(point3[0], point3[1]);
+    ctx.lineTo($.point2[0], $.point2[1]);
+    ctx.stroke();
+
+    ctx.strokeStyle = "#000";
+    ctx.beginPath();
+    ctx.moveTo(right_angle_1[0], right_angle_1[1]);
+    ctx.lineTo(right_angle_2[0], right_angle_2[1]);
+    ctx.lineTo(right_angle_3[0], right_angle_3[1]);
+    ctx.stroke();
+
+    draw_circle(ctx, $.point1, 8, true, "#2c66c9");
+    draw_circle(ctx, $.point2, 8, true, "#29c643");
+
+    draw_text(ctx, "P1", [$.point1[0]+add_x*1.5, $.point1[1]], "bold 18px mono", "#000");
+    draw_text(ctx, "P2", [$.point2[0]-add_x*1.5, $.point2[1]], "bold 18px mono", "#000");
+
+    let pos = vec2_lerp($.point2, $.point1, 0.5);
+    ctx.save();
+    ctx.lineWidth = 2;
+    ctx.translate(pos[0], pos[1]);
+    if($.point1[0] < $.point2[0]){
+        ctx.rotate(Math.atan2($.point2[1]-$.point1[1], $.point2[0]-$.point1[0]));
+    }
+    else{
+        ctx.rotate(Math.atan2($.point1[1]-$.point2[1], $.point1[0]-$.point2[0]));
+    }
+    ctx.translate(-pos[0], -pos[1]);
+    ctx.beginPath();
+    let y_offset = 15;
+    if($.point1[1] > $.point2[1]) y_offset = -30;
+    if($.point1[1] > $.point2[1]) y_offset = -30;
+    add_x = 0;
+    add_y = 15;
+    if($.point1[1] > $.point2[1]) add_y = -30;
+    ctx.moveTo(pos[0]+110+add_x, pos[1]+add_y);
+    ctx.lineTo(pos[0]-105+add_x, pos[1]+add_y);
+    ctx.lineTo(pos[0]-108+add_x, pos[1]+add_y+18);
+    ctx.lineTo(pos[0]-112+add_x, pos[1]+add_y+10);
+    ctx.stroke();
+    draw_text(ctx, " (P1.x-P2.x)\u00B2+(P1.y-P2.y)\u00B2", [pos[0]+add_x, pos[1]+12+add_y], "bold 14px mono", "#000");
+    ctx.restore();
+
+    document.querySelector("#euclidean-distance").innerHTML = Math.round(distance($.point1, $.point2));
+}
+
+function draw_canvas_circle_sdf(ctx, $){
+    draw_rect(ctx, [ctx.canvas.width/2, ctx.canvas.height/2], [ctx.canvas.width, ctx.canvas.height], true, "#fff");
+
+    if($.dragging == undefined) $.dragging = null;
+    if($.center == undefined) $.center = [271, 112];
+    if($.point == undefined) $.point = [439, 158];
+
+    let draggables = ["center", "point"];
+    update_draggables($, draggables);
+
+    let radius = 70;
+    let [closest_point, min_dist] = point_circle_dist($.point, $.center, radius);
 
     ctx.lineWidth = 4;
 
-    draw_arrow(ctx, center, closest_point, "#29c643");
-    draw_arrow(ctx, cursor, closest_point, "#ea3333");
-    draw_circle(ctx, center, radius, false, "#000");
-    draw_circle(ctx, center, 5, true, "#29c643");
-    draw_circle(ctx, cursor, 6, true, "#2c66c9");
+    draw_arrow(ctx, $.center, closest_point, "#dba017");
+    draw_arrow(ctx, $.point, closest_point, "#ea3333");
+    draw_circle(ctx, $.center, radius, false, "#000");
+    draw_circle(ctx, $.center, 6, true, "#29c643");
+    draw_circle(ctx, $.point, 6, true, "#2c66c9");
+
+    let add_x = 15;
+    if($.point[0] < $.center[0]) add_x *= -1;
+    draw_text(ctx, "P", [$.point[0]+add_x, $.point[1]], "bold 18px mono", "#000");
+    draw_text(ctx, "C", [$.center[0]+10, $.center[1]-10], "bold 18px mono", "#000");
 
     document.querySelector("#circle-distance").innerHTML = Math.round(min_dist);
-    document.querySelector("#radius").innerHTML = radius;
 }
 
-function draw_canvas_square_sdf(ctx, i){
-    draw_rect(ctx, [0, 0], [ctx.canvas.width, ctx.canvas.height], true, "#fff");
-    ctx.lineWidth = 4;
+function draw_canvas_rect_sdf(ctx, $){
+    draw_rect(ctx, [ctx.canvas.width/2, ctx.canvas.height/2], [ctx.canvas.width, ctx.canvas.height], true, "#fff");
 
-    let rect_size = [100, 100];
-    let rect_pos = [
-        ctx.canvas.width/2-rect_size[0]/2,
-        ctx.canvas.height/2-rect_size[1]/2
+    if($.dragging == undefined) $.dragging = null;
+    if($.point == undefined) $.point = [419, 178];
+    let draggables = ["point"];
+
+    let rect_pos, rect_size;
+
+    if($["corner_0"] == undefined){
+        rect_size = [100, 100];
+        rect_pos = [
+            ctx.canvas.width/2,
+            ctx.canvas.height/2
+        ];
+        $["corner_"+0] = [rect_pos[0]-rect_size[0]/2, rect_pos[1]-rect_size[1]/2];
+        $["corner_"+1] = [rect_pos[0]+rect_size[0]/2, rect_pos[1]-rect_size[1]/2];
+        $["corner_"+2] = [rect_pos[0]-rect_size[0]/2, rect_pos[1]+rect_size[1]/2];
+        $["corner_"+3] = [rect_pos[0]+rect_size[0]/2, rect_pos[1]+rect_size[1]/2];
+    }
+
+    for(let i = 0; i < 4; i++){
+        draggables.push("corner_"+i);
+    }
+    update_draggables($, draggables);
+
+    if($.dragging == "corner_0"){
+        $.corner_1[1] = $.corner_0[1];
+        $.corner_2[0] = $.corner_0[0];
+    }
+    if($.dragging == "corner_1"){
+        $.corner_0[1] = $.corner_1[1];
+        $.corner_3[0] = $.corner_1[0];
+    }
+    if($.dragging == "corner_2"){
+        $.corner_0[0] = $.corner_2[0];
+        $.corner_3[1] = $.corner_2[1];
+    }
+    if($.dragging == "corner_3"){
+        $.corner_1[0] = $.corner_3[0];
+        $.corner_2[1] = $.corner_3[1];
+    }
+
+    rect_size = [
+        Math.abs($.corner_0[0]-$.corner_1[0]),
+        Math.abs($.corner_0[1]-$.corner_2[1])
+    ];
+    rect_pos = [
+        Math.min($.corner_0[0], $.corner_1[0])+rect_size[0]/2,
+        Math.min($.corner_0[1], $.corner_2[1])+rect_size[1]/2,
     ];
 
+    ctx.lineWidth = 4;
+
     draw_rect(ctx, rect_pos, rect_size, false, "#000");
+    let top_left = vec2_sub(rect_pos, vec2_scale(rect_size, 0.5));
+    draw_line(ctx, top_left, vec2_add(top_left, [rect_size[0], 0]), "#dba017");
+    draw_line(ctx, top_left, vec2_add(top_left, [0, rect_size[1]]), "#dba017");
+    for(let i = 0; i < 4; i++){
+        draw_circle(ctx, $["corner_"+i], 5, true, "#000");
+    }
 
-    let cursor = cursor_position[i];
+    let [closest_point, min_dist] = point_rect_dist($.point, rect_pos, rect_size);
+    document.querySelector("#rect-distance").innerHTML = Math.round(min_dist);
 
-    let [closest_point, min_dist] = point_rect_dist(cursor, rect_pos, rect_size);
-    document.querySelector("#square-distance").innerHTML = Math.round(min_dist);
-    draw_arrow(ctx, cursor, closest_point, "#ea3333");
+    draw_arrow(ctx, $.point, closest_point, "#ea3333");
+    draw_circle(ctx, $.point, 6, true, "#2c66c9");
 
-    draw_circle(ctx, cursor, 6, true, "#2c66c9");
+    draw_circle(ctx, rect_pos, 6, true, "#29c643");
+    // ctx.lineWidth = 3.7;
+    // let cross_size = 6;
+    // draw_line(ctx, [rect_pos[0]-cross_size, rect_pos[1]-cross_size],
+    //                [rect_pos[0]+cross_size, rect_pos[1]+cross_size], "#29c643")
+    // draw_line(ctx, [rect_pos[0]-cross_size, rect_pos[1]+cross_size],
+    //                [rect_pos[0]+cross_size, rect_pos[1]-cross_size], "#29c643")
+
+    draw_text(ctx, "C", [rect_pos[0]-15, rect_pos[1]], "bold 18px mono", "#000");
+
+    let add_x = 17;
+    if($.point[0] < rect_pos[0]) add_x *= -1;
+    draw_text(ctx, "P", [$.point[0]+add_x, $.point[1]], "bold 18px mono", "#000");
 }
 
-function draw_canvas_shapes_sdf(ctx, i){
-    draw_rect(ctx, [0, 0], [ctx.canvas.width, ctx.canvas.height], true, "#fff");
-    let cursor = cursor_position[i];
+function draw_canvas_shapes_sdf(ctx, $){
+    draw_rect(ctx, [ctx.canvas.width/2, ctx.canvas.height/2], [ctx.canvas.width, ctx.canvas.height], true, "#fff");
+
+    if($.dragging == undefined) $.dragging = null;
+    if($.point == undefined) $.point = [439, 158];
+    let draggables = ["point"];
+    update_draggables($, draggables);
 
     ctx.lineWidth = 4;
 
     let shapes = [];
 
     let rect_size = [100, 100];
-    let rect_pos = [470, 150];
+    let rect_pos = [530, 190];
     shapes.push(["rect", rect_size, rect_pos]);
     draw_rect(ctx, rect_pos, rect_size, false, "#000");
 
     rect_size = [90, 150];
-    rect_pos = [40, 30];
+    rect_pos = [50, 90];
     shapes.push(["rect", rect_size, rect_pos]);
     draw_rect(ctx, rect_pos, rect_size, false, "#000");
 
@@ -153,7 +349,7 @@ function draw_canvas_shapes_sdf(ctx, i){
     draw_circle(ctx, circle_pos, circle_radius, false, "#000");
 
     circle_radius = 80;
-    circle_pos = [250, 250];
+    circle_pos = [250, 215];
     shapes.push(["circle", circle_pos, circle_radius]);
     draw_circle(ctx, circle_pos, circle_radius, false, "#000");
 
@@ -162,26 +358,30 @@ function draw_canvas_shapes_sdf(ctx, i){
     for(let shape of shapes){
         let tmp_closest_point, tmp_dist;
         if(shape[0] == "circle"){
-            [tmp_closest_point, tmp_dist] = point_circle_dist(cursor, shape[1], shape[2]);
+            [tmp_closest_point, tmp_dist] = point_circle_dist($.point, shape[1], shape[2]);
         }
         else if(shape[0] == "rect"){
-            [tmp_closest_point, tmp_dist] = point_rect_dist(cursor, shape[2], shape[1]);
+            [tmp_closest_point, tmp_dist] = point_rect_dist($.point, shape[2], shape[1]);
         }
         if(tmp_dist < dist){
             dist = tmp_dist;
             closest_point = tmp_closest_point;
         }
     }
+    draw_arrow(ctx, $.point, closest_point, "#ea3333");
+    draw_circle(ctx, $.point, 6, true, "#2c66c9");
+    draw_text(ctx, "P", [$.point[0]-14, $.point[1]], "bold 18px mono", "#000");
     if(dist < 0) return;
-
-    draw_circle(ctx, cursor, dist, false, "#ea3333");
-    draw_arrow(ctx, cursor, closest_point, "#ea3333");
-    draw_circle(ctx, cursor, 6, true, "#2c66c9");
+    draw_circle(ctx, $.point, dist, false, "#ea3333");
 }
 
-function draw_canvas_raymarching_1(ctx, i){
-    draw_rect(ctx, [0, 0], [ctx.canvas.width, ctx.canvas.height], true, "#fff");
-    let cursor = cursor_position[i];
+function draw_canvas_raymarching_1(ctx, $){
+    draw_rect(ctx, [ctx.canvas.width/2, ctx.canvas.height/2], [ctx.canvas.width, ctx.canvas.height], true, "#fff");
+
+    if($.dragging == undefined) $.dragging = null;
+    if($.point == undefined) $.point = [439, 158];
+    let draggables = ["point"];
+    update_draggables($, draggables);
 
     ctx.lineWidth = 4;
 
@@ -203,12 +403,11 @@ function draw_canvas_raymarching_1(ctx, i){
     draw_circle(ctx, circle_pos, circle_radius, false, "#000");
 
     let camera = [30, ctx.canvas.height/2];
-    draw_circle(ctx, camera, 8, true, "#000");
 
     ctx.lineWidth = 3;
 
     let current_point = camera;
-    let path = vec2_normalize(vec2_sub(cursor, camera));
+    let path = vec2_normalize(vec2_sub($.point, camera));
     let dist_sum = 0;
     for(let t = 0; t < 100; t++){
         let dist = Number.POSITIVE_INFINITY;
@@ -236,11 +435,12 @@ function draw_canvas_raymarching_1(ctx, i){
 
     ctx.lineWidth = 3;
     draw_line(ctx, camera, current_point, "#000");
-    draw_circle(ctx, cursor, 6, true, "#2c66c9");
+    draw_circle(ctx, $.point, 6, true, "#2c66c9");
+    draw_circle(ctx, camera, 8, true, "#29c643");
 }
 
-function draw_canvas_raymarching_2(ctx, i){
-    draw_rect(ctx, [0, 0], [ctx.canvas.width, ctx.canvas.height], true, "#fff");
+function draw_canvas_raymarching_2(ctx, $){
+    draw_rect(ctx, [ctx.canvas.width/2, ctx.canvas.height/2], [ctx.canvas.width, ctx.canvas.height], true, "#fff");
     ctx.fillStyle = "#fff";
     ctx.fillRect(0, 0, ctx.canvas.width, ctx.canvas.height);
     let camera = [30, ctx.canvas.height/2];
@@ -263,7 +463,7 @@ function draw_canvas_raymarching_2(ctx, i){
         let current_point = ray_point;
         for(let t = 0; t < raymarching_max_steps; t++){
             let [closest_point, dist] = point_circle_dist(current_point, circle_pos, circle_radius);
-            draw_circle(ctx, current_point, dist, false, "#ea3333");
+            // draw_circle(ctx, current_point, dist, false, "#ea3333");
             let new_point = vec2_add(current_point, vec2_scale(ray, dist));
             draw_line(ctx, current_point, new_point, "#000");
             draw_circle(ctx, new_point, 5, true, "#000");
@@ -281,8 +481,9 @@ function draw_canvas_raymarching_2(ctx, i){
 }
 
 let canvases_id = [
+    "canvas-euclidean-distance",
     "canvas-circle-sdf",
-    "canvas-square-sdf",
+    "canvas-rect-sdf",
     "canvas-shapes-sdf",
     "canvas-raymarching-1",
     "canvas-raymarching-2",
@@ -291,26 +492,23 @@ let canvases_id = [
 let canvases = [];
 let ctxs = [];
 let canvas_draw_function = [];
+let canvas_vars = [];
 for(let canvas_id of canvases_id){
     let canvas = document.getElementById(canvas_id);
     canvases.push(canvas);
     ctxs.push(canvas.getContext("2d"));
+    canvas_vars.push({mouse_pos: [0, 0], mouse_state: 0});
     canvas_draw_function.push(window["draw_"+canvas_id.replaceAll("-", "_")])
-}
-
-let cursor_position = [];
-for(let i = 0; i < canvas_draw_function.length; i++){
-    cursor_position.push([400, 150]);
 }
 
 document.getElementById("near-plan").oninput =
 document.getElementById("fov").oninput =
 document.getElementById("nb-rays").oninput =
 function(){
-    draw_canvas_raymarching_2(ctxs[4], 4);
+    draw_canvas_raymarching_2(ctxs[5], canvas_vars[5], [0, 0], 0);
 }
 
-canvases.forEach(function(canvas, i){
+for(let [i, canvas] of canvases.entries()){
     canvas.width = 600;
     canvas.height = 300;
 
@@ -319,9 +517,208 @@ canvases.forEach(function(canvas, i){
             let rect = e.target.getBoundingClientRect();
             let x = e.clientX-rect.left;
             let y = e.clientY-rect.top;
-            cursor_position[i] = [x, y];
-            canvas_draw_function[i](ctxs[i], i);
+            canvas_vars[i].mouse_pos = [x, y];
+            canvas_draw_function[i](ctxs[i], canvas_vars[i], [x, y], e.buttons);
+        });
+        canvas.addEventListener("mousedown", function(e){
+            canvas_vars[i].mouse_state = 1;
+        });
+        canvas.addEventListener("mouseup", function(e){
+            canvas_vars[i].mouse_state = 0;
         });
     })(i, canvas);
-    canvas_draw_function[i](ctxs[i], i);
-});
+    canvas_draw_function[i](ctxs[i], canvas_vars[i], [400, 150], 0);
+}
+
+///////////////////////////
+
+
+let default_vertex_shader = `#version 300 es
+
+layout(location = 0) in vec3 position_attrib;
+
+out vec3 position;
+
+void main(){
+    gl_Position = vec4(position_attrib, 1);
+    position = position_attrib;
+}`;
+
+let default_vertices = [
+    -1, 1, 0,
+    1, -1, 0,
+    -1, -1, 0,
+
+    -1, 1, 0,
+    1, 1, 0,
+    1, -1, 0
+];
+
+function init_3d(canvas_id, fragment_shader){
+    let canvas = document.getElementById(canvas_id);
+    let gl = canvas.getContext("webgl2");
+    canvas.width = 600;
+    canvas.height = 300;
+
+    let vao, vbo;
+
+    let shader_program = link_shader_program(gl, default_vertex_shader, fragment_shader);
+    let n_uniforms = gl.getProgramParameter(shader_program, gl.ACTIVE_UNIFORMS);
+    let shader = {
+        program: shader_program,
+        uniforms: {}
+    };
+
+    for(let i = 0; i < n_uniforms; i++){
+        let uniform = gl.getActiveUniform(shader_program, i);
+        shader.uniforms[uniform["name"]] = {
+            type: uniform["type"],
+            location: gl.getUniformLocation(shader_program, uniform["name"])
+        };
+    }
+
+    vao = gl.createVertexArray();
+    gl.bindVertexArray(vao);
+    vbo = gl.createBuffer();
+    gl.bindBuffer(gl.ARRAY_BUFFER, vbo);
+    gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(default_vertices), gl.STATIC_DRAW);
+    let position_attrib_location = gl.getAttribLocation(shader_program, "position_attrib");
+    gl.enableVertexAttribArray(position_attrib_location);
+    gl.vertexAttribPointer(position_attrib_location, 3, gl.FLOAT, false, 3*Float32Array.BYTES_PER_ELEMENT, 0);
+    return [gl, vao, shader];
+}
+
+function draw_3d(gl, vao, shader){
+    gl.viewport(0, 0, gl.canvas.width, gl.canvas.height);
+    gl.useProgram(shader.program);
+    set_shader_uniform(gl, shader, "aspect_ratio", gl.canvas.height/gl.canvas.width);
+    gl.bindVertexArray(vao);
+    gl.drawArrays(gl.TRIANGLES, 0, default_vertices.length/3);
+}
+
+let gl_canvases_id = [
+   "canvas-webgl-1",
+   "canvas-webgl-2",
+   "canvas-webgl-3",
+];
+
+let fragment_shaders = [
+    `#version 300 es
+    precision highp float;
+
+    in vec3 position;
+
+    uniform float aspect_ratio;
+
+    out vec4 frag_color;
+
+    void main(){
+        vec2 uv = vec2(position.x, position.y*aspect_ratio);
+        frag_color = vec4(uv.x, uv.y, 0, 1);
+    }`,
+
+    `#version 300 es
+    precision highp float;
+
+    in vec3 position;
+
+    uniform float aspect_ratio;
+
+    out vec4 frag_color;
+
+    int march_max_iterations = 100;
+    float min_march_dist = 0.001;
+    float max_march_dist = 1000.;
+
+    float sphere(vec3 point, vec3 position, float radius){
+        return length(point-position)-radius;
+    }
+
+    float march(vec3 ray_origin, vec3 ray_direction){
+        vec3 current_point = ray_origin;
+        float total_dist = 0.;
+        for(int i = 0; i < march_max_iterations; i++){
+            current_point = ray_origin+ray_direction*total_dist;
+            float dist = sphere(current_point, vec3(0., 0., 2.), 0.5);
+            total_dist += dist;
+            if(dist < min_march_dist){
+                break;
+            }
+            if(total_dist > max_march_dist){
+                break;
+            }
+        }
+        return total_dist;
+    }
+
+    void main(){
+        vec2 uv = vec2(position.x, position.y*aspect_ratio);
+
+        vec3 ray_origin = vec3(0.);
+        vec3 ray_direction = normalize(vec3(uv.x, uv.y, 1.)-ray_origin);
+        float dist = march(ray_origin, ray_direction);
+        dist /= 3.;
+        frag_color = vec4(vec3(dist), 1.);
+    }`,
+
+    `#version 300 es
+    precision highp float;
+
+    in vec3 position;
+
+    uniform float aspect_ratio;
+
+    out vec4 frag_color;
+
+    int march_max_iterations = 100;
+    float min_march_dist = 0.001;
+    float max_march_dist = 1000.;
+
+    float sphere(vec3 point, vec3 position, float radius){
+        return length(point-position)-radius;
+    }
+
+    float box(vec3 point, vec3 position, vec3 size){
+        vec3 d = abs(point-position)-size;
+        return min(max(d.x, max(d.y, d.z)), 0.0)+length(max(d, 0.0));
+    }
+
+    float scene(vec3 point){
+        float sphere1 = sphere(point, vec3(-0.7, 0., 2.), 0.5);
+        float box1 = box(point, vec3(0.7, 0., 2.), vec3(0.4, 0.4, 0.4));
+        return min(sphere1, box1);
+    }
+
+    float march(vec3 ray_origin, vec3 ray_direction){
+        vec3 current_point = ray_origin;
+        float total_dist = 0.;
+        for(int i = 0; i < march_max_iterations; i++){
+            current_point = ray_origin+ray_direction*total_dist;
+            float dist = scene(current_point);
+            total_dist += dist;
+            if(dist < min_march_dist){
+                break;
+            }
+            if(total_dist > max_march_dist){
+                break;
+            }
+        }
+        return total_dist;
+    }
+
+    void main(){
+        vec2 uv = vec2(position.x, position.y*aspect_ratio);
+
+        vec3 ray_origin = vec3(0.);
+        vec3 ray_direction = normalize(vec3(uv.x, uv.y, 1.)-ray_origin);
+        float dist = march(ray_origin, ray_direction);
+        dist /= 3.;
+        frag_color = vec4(vec3(dist), 1.);
+    }`,
+];
+
+for(let i = 0; i < gl_canvases_id.length; i++){
+    let canvas_id  = gl_canvases_id[i];
+    let [gl, vao, shader] = init_3d(canvas_id, fragment_shaders[i]);
+    draw_3d(gl, vao, shader);
+}

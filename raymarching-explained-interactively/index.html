@@ -16,10 +16,11 @@
     <script src="/js/highlight.js"></script>
     <style>
         canvas{
-            border: 2px solid black;
-        }
-        canvas:not(#canvas-raymarching-2){
-            cursor: none;
+            padding-left: 0;
+            padding-right: 0;
+            margin-left: auto;
+            margin-right: auto;
+            display: block;
         }
         .red{
             background-color: #ea3333;
@@ -30,12 +31,68 @@
         .blue{
             background-color: #2c66c9;
         }
+        .orange{
+            background-color: #dba017;
+        }
         .rounded-bg{
             border-radius: 3px;
-            padding: 2px 5px 2px 5px;
+            padding: 1px 5px 1px 5px;
             color: white;
             font-family: "mono";
             font-weight: bold;
+        }
+        .super{
+            vertical-align: super;
+            font-size: 13px;
+            margin-right: 3px;
+        }
+        .equation{
+            font-family: "mono";
+            font-weight: bold;
+            border: none;
+            margin-right: auto;
+            margin-left: auto;
+        }
+        .equation td{
+            padding-bottom: 12px;
+        }
+        .equation td, .equation tr{
+            border: none;
+        }
+        .sqrt-before-before{
+            content: "";
+            width: 5px;
+            height: 30%;
+            position: absolute;
+            border-right: 2px solid;
+            border-top: none;
+            left: 0px;
+            bottom: 10px;
+            transform: skew(20deg);
+        }
+        .sqrt-before{
+            content: "";
+            width: 5px;
+            height: 80%;
+            position: absolute;
+            border-right: 2px solid;
+            border-top: none;
+            left: 4px;
+            top: -3px;
+            transform: skew(-8deg);
+        }
+        .sqrt{
+            padding-left: 10px;
+            position: relative;
+        }
+        .sqrt-overline{
+            border-top: 2px solid black;
+            padding-top: 5px;
+            padding-left: 5px;
+        }
+        .norm{
+            letter-spacing: -5px;
+            padding-right: 5px;
         }
     </style>
 </head>
@@ -43,42 +100,94 @@
     <div id="menu"><span><a href="/index.html">Home</a></span></div>
     <h1>Raymarching explained interactively</h1>
 
-    <!-- <p>
-        In this interactive tutorial, I will explain how raymarching works<br><br>
-        You may be familiar with the ,<br>
-     -->
     <h2 id="introduction"><a href="#introduction">Introduction</a></h2>
     <p>
-        You may be familiar with the <a href="https://en.wikipedia.org/wiki/Demoscene">demos</a>: those cool, often small sized 3D animations with music.
-        My all-time favorite demo is <a href="https://www.youtube.com/watch?v=JZ6ZzJeWgpY">"fermi paradox" by mercury</a>. This youtube video weights tens of megabytes, but the demo executable itself is only 64 kilobytes. To get such a small size several techniques are used, among which there is procedural generation and extreme data compression, but that's not the only trick.<br>
+        Raymarching is a 3D rendering technique popular in the <a href="https://en.wikipedia.org/wiki/Demoscene">demoscene</a> and in websites like <a href="https://www.shadertoy.com/">Shadertoy</a>.<br>
+        What's impressive about demos is that there is <strong>no 3D geometry whatsoever</strong>. All the objects that make up the scene are generated in real time using mathematical functions.
     </p>
     <p>
-        What is most impressive about most of these demos is that there is <strong>no 3D geometry whatsoever</strong>. The planets, the mountains and the seas are all generated in real time with mathematical functions in a program called the <strong>fragment shader</strong>.
+        My all-time favorite demo is <a href="https://www.youtube.com/watch?v=JZ6ZzJeWgpY">"fermi paradox" by mercury</a>. This youtube video weights tens of megabytes, but thanks to raymarching (and other clever techniques like compression and procedural generation) the demo executable itself is only 64 kilobytes.<br>
     </p>
-    <p>
+    <p>In this interactive tutorial, we will see how the raymarching algorithm works.</p>
+    <!-- <p>
         A fragment shader is a program that is executed in the graphics card. Usually in 3D applications like video games, two types of shaders are used: the <strong>vertex shader</strong>, which is executed once every frame for each point of each 3D model in the scene, and the fragment shader, which is executed for each pixel of the screen.
     </p>
-    <p>
-        <strong>Raymarching</strong> is the rendering technique that allows us to bypass using 3D models and instead use a clever combination of mathematical equations to render 3D geometry. In this interactive tutorial, we will see how this technique works, and we will implement our own raymarcher in WebGL.
-    </p>
-
+ -->
     <h2 id="signed-distance-function"><a href="#signed-distance-function">Signed distance function</a></h2>
 
-    <p>
-        To calculate the distance between a point in the plan and a circle, we first calculate the euclidian distance between the point and the center of the circle, then substract the radius of the circle.<br><br>
-        The distance between our <span class="rounded-bg blue">cursor</span> and a circle width radius <span id="radius" class="rounded-bg green"></span> is <span id="circle-distance" class="rounded-bg red"></span> :<br>
-    </p>
+    <p>The raymarching algorithm is based on the notion of distances, we will see how later.</p>
+
+    <p>You may be familiar with the formula for the distance between two points, it is known as the <strong>Euclidean distance</strong> and is calculated using the Pythagorean theorem:</p>
+
+    <table class="equation">
+        <tr>
+            <td>
+                EuclideanDistance(<span class="rounded-bg blue">P1</span>,<span class="rounded-bg green">P2</span>)
+            </td>
+            <td>=</td>
+            <td class="sqrt">
+                <span class="sqrt-before-before"></span>
+                <span class="sqrt-before"></span>
+                <span class="sqrt-overline">
+                    (<span class="rounded-bg blue">P1.x</span>-<span class="rounded-bg green">P2.x</span>)<span class="super">2</span>+(<span class="rounded-bg blue">P1.y</span>-<span class="rounded-bg green">P2.y</span>)<span class="super">2</span>
+                </span>
+            </td>
+        </tr>
+        <tr>
+            <td></td>
+            <td>=</td>
+            <td><span class="rounded-bg red" id="euclidean-distance"></span></td>
+        </tr>
+    </table>
+
+    <br>
+    <canvas id="canvas-euclidean-distance"></canvas>
+
+    <p>Now imagine we want to calculate the distance between a point and a circle. To do that we first calculate the euclidean distance between the point and the center of the circle, then substract the radius of the circle:</p>
+    <table class="equation">
+        <tr>
+            <td>
+                DistanceToCircle(<span class="rounded-bg blue">P</span>,<span class="rounded-bg green">C</span>,<span class="rounded-bg orange">R</span>)
+            </td>
+            <td>=</td>
+            <td>
+                EuclideanDistance(<span class="rounded-bg blue">P</span>,<span class="rounded-bg green">C</span>)-<span class="rounded-bg orange">R</span>
+            </td>
+        </tr>
+        <tr>
+            <td></td>
+            <td>=</td>
+            <td><span id="circle-distance" class="rounded-bg red"></td>
+        </tr>
+    </table>
     <canvas id="canvas-circle-sdf"></canvas>
-    <p>Notice that when the cursor is inside the circle, the distance is negative—hence "signed" distance function. This will become useful later on.</p>
+    <p>Notice that when the point is inside the circle, the distance is negative—hence "signed" distance function. This will become useful later on.</p>
 
-    <p>Signed distance <span id="square-distance" class="rounded-bg red"></span></p>
+    <p>The distance from a point to a rectangle is a little bit more complicated</p>
 
-    <canvas id="canvas-square-sdf"></canvas>
+     <table class="equation">
+        <tr>
+            <td>
+                DistanceToRect(<span class="rounded-bg blue">P</span>,<span class="rounded-bg green">C</span>,<span class="rounded-bg orange">Size</span>)
+            </td>
+            <td>=</td>
+            <td><span class="norm">||</span>max(|<span class="rounded-bg blue">P</span>-<span class="rounded-bg green">C</span>|-(<span class="rounded-bg orange">Size</span>/2),0)<span class="norm">||</span></td>
+        </tr>
+        <tr>
+            <td></td>
+            <td>=</td>
+            <td><span id="rect-distance" class="rounded-bg red"></span></td>
+        </tr>
+    </table>
 
-    <p>If we have a scene with multiple objects, the closets point to our cursor is the <strong>minimum</strong> of all the SDFs of the shapes:</p>
+    <canvas id="canvas-rect-sdf"></canvas>
+
+    <p>If we have multiple shapes and we want to find the closets point to another point, we calculate the <strong>minimum</strong> of all the SDFs of the shapes:</p>
     <canvas id="canvas-shapes-sdf"></canvas>
 
     <h2 id="the-raymarching-algorithm"><a href="#the-raymarching-algorithm">The Raymarching algorithm</a></h2>
+
+    <p>Why distances have anything to do with rendering 3D shapes? </p>
 
     <canvas id="canvas-raymarching-1"></canvas>
     <br>
@@ -88,7 +197,11 @@
 
     <canvas id="canvas-raymarching-2"></canvas>
 
+    <h2 id="going-3d"><a href="#going-3d">Going 3D</a></h2>
 
+    <canvas id="canvas-webgl-1"></canvas>
+    <canvas id="canvas-webgl-2"></canvas>
+    <canvas id="canvas-webgl-3"></canvas>
     <!-- <iframe width="640" height="360" frameborder="0" src="https://www.shadertoy.com/embed/NsjXzV?gui=true&t=10&paused=true&muted=false" allowfullscreen></iframe> -->
     <!-- <p>In raymaching, we don't use 3D models to render our scene, instead we use a <strong>signed distance function</strong> also known as <strong>SDF</strong>.<br>
     The SDF of an object is a function that, given a point in space as input, outputs the distance from that point to the closest point of the object.</p>
@@ -122,9 +235,10 @@
 <script src="3.js"></script>
 <br> -->
 
+<script src="/js/webgl_helper.js"></script>
 <script src="/js/math.js"></script>
-<script src="main.js"></script>
 <script src="/js/light.js"></script>
+<script src="main.js"></script>
 <script>
 document.addEventListener("DOMContentLoaded", function(e){
     document.querySelectorAll(".code").forEach(function(block){
