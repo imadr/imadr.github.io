@@ -72,7 +72,7 @@
         font-size: 2em;
         margin-top: 20px;
     }
-    button{
+    button, #light{
         font-family: "sans";
         font-size: 16px;
         font-weight: 300;
@@ -92,15 +92,18 @@
         margin-left: auto;
         margin-bottom: 9px;
     }
-    button > svg{
+    button > svg, #light > svg{
         margin-right: 8px;
         height: 20px;
         width: 20px;
         vertical-align: text-top;
     }
-    button:hover{
+    button:hover, #light:hover{
         background-color: var(--color-fg-1);
         color: var(--color-bg-1);
+    }
+    #light:hover svg{
+        stroke: var(--color-bg-1);
     }
     h1{
         margin-bottom: 40px;

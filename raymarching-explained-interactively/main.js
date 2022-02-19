@@ -224,7 +224,7 @@ function draw_canvas_circle_sdf(ctx, $){
 
     ctx.lineWidth = 4;
 
-    draw_arrow(ctx, $.center, closest_point, "#dba017");
+    draw_arrow(ctx, $.center, closest_point, "#ff8f00");
     draw_arrow(ctx, $.point, closest_point, "#ea3333");
     draw_circle(ctx, $.center, radius, false, "#000");
     draw_circle(ctx, $.center, 6, true, "#29c643");
@@ -290,12 +290,13 @@ function draw_canvas_rect_sdf(ctx, $){
         Math.min($.corner_0[1], $.corner_2[1])+rect_size[1]/2,
     ];
 
-    ctx.lineWidth = 4;
 
+    ctx.lineWidth = 4;
     draw_rect(ctx, rect_pos, rect_size, false, "#000");
+    ctx.lineWidth = 5;
     let top_left = vec2_sub(rect_pos, vec2_scale(rect_size, 0.5));
-    draw_line(ctx, top_left, vec2_add(top_left, [rect_size[0], 0]), "#dba017");
-    draw_line(ctx, top_left, vec2_add(top_left, [0, rect_size[1]]), "#dba017");
+    draw_line(ctx, top_left, vec2_add(top_left, [rect_size[0], 0]), "#ff8f00");
+    draw_line(ctx, top_left, vec2_add(top_left, [0, rect_size[1]]), "#ff8f00");
     for(let i = 0; i < 4; i++){
         draw_circle(ctx, $["corner_"+i], 5, true, "#000");
     }
@@ -307,13 +308,6 @@ function draw_canvas_rect_sdf(ctx, $){
     draw_circle(ctx, $.point, 6, true, "#2c66c9");
 
     draw_circle(ctx, rect_pos, 6, true, "#29c643");
-    // ctx.lineWidth = 3.7;
-    // let cross_size = 6;
-    // draw_line(ctx, [rect_pos[0]-cross_size, rect_pos[1]-cross_size],
-    //                [rect_pos[0]+cross_size, rect_pos[1]+cross_size], "#29c643")
-    // draw_line(ctx, [rect_pos[0]-cross_size, rect_pos[1]+cross_size],
-    //                [rect_pos[0]+cross_size, rect_pos[1]-cross_size], "#29c643")
-
     draw_text(ctx, "C", [rect_pos[0]-15, rect_pos[1]], "bold 18px mono", "#000");
 
     let add_x = 17;
@@ -379,7 +373,7 @@ function draw_canvas_raymarching_1(ctx, $){
     draw_rect(ctx, [ctx.canvas.width/2, ctx.canvas.height/2], [ctx.canvas.width, ctx.canvas.height], true, "#fff");
 
     if($.dragging == undefined) $.dragging = null;
-    if($.point == undefined) $.point = [439, 158];
+    if($.point == undefined) $.point = [420, 158];
     let draggables = ["point"];
     update_draggables($, draggables);
 
@@ -397,8 +391,8 @@ function draw_canvas_raymarching_1(ctx, $){
     shapes.push(["circle", circle_pos, circle_radius]);
     draw_circle(ctx, circle_pos, circle_radius, false, "#000");
 
-    circle_radius = 80;
-    circle_pos = [250, 250];
+    circle_radius = 65;
+    circle_pos = [260, 230];
     shapes.push(["circle", circle_pos, circle_radius]);
     draw_circle(ctx, circle_pos, circle_radius, false, "#000");
 
@@ -448,7 +442,7 @@ function draw_canvas_raymarching_2(ctx, $){
     let fov = rad(parseInt(document.getElementById("fov").value));
     let view_length = near_plane*Math.tan(fov);
     let nb_rays = parseInt(document.getElementById("nb-rays").value);
-    let raymarching_max_steps = 50;
+    let nb_iterations = parseInt(document.getElementById("iterations").value);
 
     let circle_pos = [410, ctx.canvas.height/2];
     let circle_radius = 100;
@@ -461,7 +455,7 @@ function draw_canvas_raymarching_2(ctx, $){
         draw_line(ctx, camera, ray_point, "#000");
         let ray = vec2_normalize(vec2_sub(ray_point, camera));
         let current_point = ray_point;
-        for(let t = 0; t < raymarching_max_steps; t++){
+        for(let t = 0; t < nb_iterations; t++){
             let [closest_point, dist] = point_circle_dist(current_point, circle_pos, circle_radius);
             // draw_circle(ctx, current_point, dist, false, "#ea3333");
             let new_point = vec2_add(current_point, vec2_scale(ray, dist));
@@ -504,9 +498,22 @@ for(let canvas_id of canvases_id){
 document.getElementById("near-plan").oninput =
 document.getElementById("fov").oninput =
 document.getElementById("nb-rays").oninput =
+document.getElementById("iterations").oninput =
 function(){
     draw_canvas_raymarching_2(ctxs[5], canvas_vars[5], [0, 0], 0);
-}
+};
+
+let raymarching_animation;
+document.getElementById("raymarching-play").onclick = function(){
+    clearInterval(raymarching_animation);
+    let current_iteration = 0;
+    raymarching_animation = setInterval(function(){
+        document.getElementById("iterations").value = current_iteration;
+        draw_canvas_raymarching_2(ctxs[5], canvas_vars[5], [0, 0], 0);
+        current_iteration++;
+        if(current_iteration > 10) clearInterval(raymarching_animation);
+    }, 400);
+};
 
 for(let [i, canvas] of canvases.entries()){
     canvas.width = 600;

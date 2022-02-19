@@ -23,34 +23,20 @@ a[href^="http://"]:after, a[href^="https://"]:after{
     font-size: 14px;
 }
 @font-face{
-    font-family: "serif";
-    font-style: normal;
-    font-weight: 400;
-    src: url("source-serif-pro-v11-latin-regular.eot");
-    src: local(""),
-        url("source-serif-pro-v11-latin-regular.eot?#iefix") format("embedded-opentype"),
-        url("source-serif-pro-v11-latin-regular.woff2") format("woff2"),
-        url("source-serif-pro-v11-latin-regular.woff") format("woff"),
-        url("source-serif-pro-v11-latin-regular.ttf") format("truetype"),
-        url("source-serif-pro-v11-latin-regular.svg#SourceSerifPro") format("svg");
-}
-@font-face{
-    font-family: "serif";
-    font-style: normal;
-    font-weight: 700;
-    src: url("source-serif-pro-v11-latin-700.eot");
-    src: local(""),
-        url("source-serif-pro-v11-latin-700.eot?#iefix") format("embedded-opentype"),
-        url("source-serif-pro-v11-latin-700.woff2") format("woff2"),
-        url("source-serif-pro-v11-latin-700.woff") format("woff"),
-        url("source-serif-pro-v11-latin-700.ttf") format("truetype"),
-        url("source-serif-pro-v11-latin-700.svg#SourceSerifPro") format("svg");
-}
-@font-face{
     font-family: "mono";
     src: url("IBMPlexMono-Regular-Latin1.woff2") format("woff2");
     font-display: swap;
-    unicode-range: U+0000, U+000D, U+0020-007E, U+00A0-00A3, U+00A4-00FF, U+0131, U+0152-0153, U+02C6, U+02DA, U+02DC, U+2013-2014, U+2018-201A, U+201C-201E, U+2020-2022, U+2026, U+2030, U+2039-203A, U+2044, U+2074, U+20AC, U+2122, U+2212, U+FB01-FB02;
+}
+@font-face{
+    font-family: "sans";
+    src: url("IBMPlexSans-Regular-Latin1.woff2") format("woff2");
+    font-display: swap;
+}
+@font-face{
+    font-family: "sans";
+    src: url("IBMPlexSans-SemiBold-Latin1.woff2") format("woff2");
+    font-weight: bold;
+    font-display: swap;
 }
 pre{
     font-family: "mono", monospace;
@@ -68,7 +54,7 @@ pre{
     margin-bottom: 20px;
 }
 body{
-    font-family: "serif", "Times new roman";
+    font-family: "sans", sans-serif;
     font-weight: normal;
     margin-right: auto;
     margin-left: auto;
@@ -84,7 +70,6 @@ h3, h2{
 h1{
     font-weight: bold;
     font-size: 2em;
-    border-bottom: 2px solid black;
 }
 h2{
     margin-bottom: 1em;
@@ -92,34 +77,11 @@ h2{
     font-size: 1.5em;
     border-bottom: 2px solid black;
 }
-#menu a{
-    text-decoration: none;
-}
 p{
     line-height: 1.7;
 }
 .muted{
     font-size: 15px;
-}
-#menu{
-    user-select: none;
-    -moz-user-select: none;
-    -webkit-user-select: none;
-    -ms-user-select: none;
-    position: fixed;
-    top: 5px;
-    left: 5px;
-    background-color: white;
-    font-family: "mono", monospace;
-}
-#menu *{
-    font-family: "mono", monospace;
-    cursor: pointer;
-    border: none;
-    border-bottom: 2px solid black;
-    color: black;
-    background-color: white;
-    font-size: 1em;
 }
 hr{
     margin-top: 2em;
@@ -131,4 +93,35 @@ input{
 .math-block{
     text-align: center;
     margin-top: 1em;
+}
+nav{
+    margin-top: 0.5em;
+    margin-bottom: 2em;
+}
+nav a{
+    text-decoration: none;
+    color: initial;
+    font-weight: bold;
+    margin-right: 0.6em;
+    margin-left: 0.6em;
+}
+nav a:first-child{
+    margin-left: 0em;
+}
+nav a:last-child{
+    margin-right: 0em;
+}
+nav button{
+    cursor: pointer;
+    display: inline-block;
+    vertical-align: middle;
+}
+svg{
+    stroke: black;
+}
+#light{
+    width: 2em;
+    background-color: transparent;
+    border: none;
+    outline: none;
 }
