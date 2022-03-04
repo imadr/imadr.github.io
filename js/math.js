@@ -89,6 +89,14 @@ function mat4_identity(){
     ];
 }
 
+function mat4_transpose(m){
+    let t = mat4_identity();
+    for(let i = 0; i < 16; i++){
+        t[i] = m[(i%4*4)+Math.floor(i/4)];
+    }
+    return t;
+}
+
 function translate_3d(t){
      return [
         1, 0, 0, 0,

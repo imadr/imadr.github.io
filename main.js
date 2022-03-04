@@ -8,6 +8,9 @@ let camera = {
     near_plane: 0.1,
     far_plane: 1000,
     position: [0, 1.5, 2.5],
+    up_vector: [0, 1, 0],
+    projection_matrix: mat4_identity(),
+    view_matrix: mat4_identity()
 };
 
 let vertex_shader = `#version 300 es
@@ -228,12 +231,12 @@ function draw(){
     gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
 
     let aspect_ratio = gl.canvas.width/gl.canvas.height;
-    let p = perspective_projection(rad(camera.fov),
+    camera.projection_matrix = perspective_projection(rad(camera.fov),
                                 aspect_ratio,
                                 camera.near_plane,
                                 camera.far_plane);
 
-    let v = lookat_matrix(camera.position, [0, 0, 0], [0, 1, 0]);
+    camera.view_matrix = lookat_matrix(camera.position, [0, 0, 0], camera.up_vector);
 
     gl.useProgram(shader.program);
 
@@ -242,9 +245,9 @@ function draw(){
     m = mat4_mat4_mul(rotate_3d(euler_to_quat([0, 0, 0])), m);
     rot += 0.01;
     m = mat4_mat4_mul(scale_3d([0.5, 0.5, 0.5]), m);
-    let mvp = mat4_identity();
-    let vp = mat4_mat4_mul(v, p);
-    mvp = mat4_mat4_mul(m, vp);
+
+    let vp = mat4_mat4_mul(camera.view_matrix, camera.projection_matrix);
+    let mvp = mat4_mat4_mul(m, vp);
     set_shader_uniform(gl, shader, "mvp", mvp);
 
     gl.bindVertexArray(vao);
@@ -260,7 +263,7 @@ draw();
 
 let mouse_down = false;
 let previous_mouse_pos = [0, 0];
-let camera_angle = [0, 0];
+let camera_angle = [0, 0, 0];
 
 canvas.addEventListener("mousedown", function(e){
     let rect = e.target.getBoundingClientRect();
@@ -281,16 +284,26 @@ canvas.addEventListener("mousemove", function(e){
         let rect = e.target.getBoundingClientRect();
         let x = e.clientX-rect.left;
         let y = e.clientY-rect.top;
-        camera_angle[0] = (previous_mouse_pos[0]-x)*2*Math.PI*canvas.width;
-        camera_angle[1] = (previous_mouse_pos[1]-y)*Math.PI*canvas.height;
-        let new_pos = [
-            Math.cos(camera_angle[0]),
-            Math.cos(camera_angle[1]),
-            // Math.sqrt(1-Math.pow(Math.cos(camera_angle[0]), 2)-Math.pow(Math.cos(camera_angle[1]), 2))
-            0
-        ];
-        // console.log(1-Math.pow(Math.cos(camera_angle[0]), 2)-Math.pow(Math.cos(camera_angle[1]), 2))
-        camera.position = new_pos;
+        camera_angle[1] = (previous_mouse_pos[0]-x)*(-2*Math.PI/canvas.width);
+        camera_angle[0] = (previous_mouse_pos[1]-y)*(Math.PI/canvas.height);
+
+//         let cos_angle = vec3_dot(app->m_camera.GetViewDir(), app->m_upVector);
+// if (cosAngle * sgn(yDeltaAngle) > 0.99f)
+//     yDeltaAngle = 0;
+
+        let rotation_matrix = rotate_3d(euler_to_quat(camera_angle));
+        let homogeneous_position = camera.position.concat(1);
+        homogeneous_position = mat4_vec4_mul(rotation_matrix, homogeneous_position);
+        // let new_pos = [
+        //     Math.cos(camera_angle[0]),
+        //     Math.cos(camera_angle[1]),
+        //     // Math.sqrt(1-Math.pow(Math.cos(camera_angle[0]), 2)-Math.pow(Math.cos(camera_angle[1]), 2))
+        //     0
+        // ];
+        // // console.log(1-Math.pow(Math.cos(camera_angle[0]), 2)-Math.pow(Math.cos(camera_angle[1]), 2))
+        camera.position = homogeneous_position.slice(0, 3);
         previous_mouse_pos = [x, y];
     }
 });
+
+        console.log(mat4_transpose(camera.view_matrix))

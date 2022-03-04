@@ -18,7 +18,7 @@ h2 > a{
 }
 a[href^="http://"]:after, a[href^="https://"]:after{
     font-family: "icon";
-    margin-left: -4px;
+    margin-left: 0px;
     content: " \f08e";
     font-size: 14px;
 }
