@@ -11,6 +11,15 @@
         canvas{
             border: 2px solid black;
         }
+        .rot-input{
+            border: none;
+            background-color: transparent;
+            font-family: 'mono';
+            font-size: 1em;
+            border-bottom: 2px solid;
+            text-align: center;
+            width: 2em;
+        }
     </style>
 </head>
 <body>
@@ -902,10 +911,16 @@ obj.rotation = quat_mul(euler_to_quat((Vector3){0, PI/4, 0}), obj.rotation);
 // We rotate again by PI/4 making it a PI/2 rotation around Y
 obj.rotation = quat_mul(euler_to_quat((Vector3){0, PI/4, 0}), obj.rotation);</pre>
 </code>
-
-<p style="text-align: center;">
-    <img style="width: 80%" src="cube_rotation.png">
-</p>
+<br>
+<div style="text-align: center;font-family: 'mono';">
+    <div style="margin-bottom: 9px;">q1 = (<input autocomplete="off" class="rot-input" type="text" id="rot1-0" value="0">, <input autocomplete="off" class="rot-input" type="text" id="rot1-1" value="π/4">, <input autocomplete="off" class="rot-input" type="text" id="rot1-2" value="0">)
+    </div>
+    <div style="margin-bottom: 9px;">q2 = (<input autocomplete="off" class="rot-input" type="text" id="rot2-0" value="0">, <input autocomplete="off" class="rot-input" type="text" id="rot2-1" value="π/4">, <input autocomplete="off" class="rot-input" type="text" id="rot2-2" value="0">)
+    </div>
+    <!-- <div style="margin-bottom: 9px;">q1.q2 = (<span id="rot3-0">0</span>, <span id="rot3-1">π/2</span>, <span id="rot3-2">0</span>)
+    </div> -->
+    <canvas id="canvas-mult"></canvas>
+</div>
 
 <h2 id="quaternion-to-rotation-matrix"><a href="#quaternion-to-rotation-matrix">Quaternion to rotation matrix</a></h2>
 
@@ -2217,11 +2232,11 @@ Multiplying a quaternion by its inverse results in the identity quaternion:</p>
 </svg>:</p>
 
 <div style="text-align: center;">
-<div style="font-family: 'mono';">t = <span id="t-value1"></span></div>
-<button id="play-demo1" style="width: 60px;">Play</button> <input style="vertical-align: bottom;" type="range" min="0" max="1" value="0" autocomplete="off" step="0.001" id="slerp-slider1">
+<div style="font-family: 'mono';">t = <span id="t-value-lerp"></span></div>
+<button id="play-demo-lerp" style="width: 60px;">Play</button> <input style="vertical-align: bottom;" type="range" min="0" max="1" value="0" autocomplete="off" step="0.001" id="slerp-slider-lerp">
 <br>
 <br>
-<canvas id="canvas1"></canvas>
+<canvas id="canvas-lerp"></canvas>
 </div>
 
 <p>Well that doesn't look quite right, the cube is doing a <svg width="2.6ex" height="3.509ex" style="vertical-align: -1.171ex;" viewBox="0 -1006.6 1119.4 1510.9" role="img" focusable="false">
@@ -2602,11 +2617,11 @@ q_{1} \bullet q_{2} = ae+bf+cg+dh
 </svg>, this time taking the shortest path for the rotation:</p>
 
 <div style="text-align: center;">
-<div style="font-family: 'mono';">t = <span id="t-value2"></span></div>
-<button id="play-demo2" style="width: 60px;">Play</button> <input style="vertical-align: bottom;" type="range" min="0" max="1" value="0" autocomplete="off" step="0.001" id="slerp-slider2">
+<div style="font-family: 'mono';">t = <span id="t-value-lerp-fixed"></span></div>
+<button id="play-demo-lerp-fixed" style="width: 60px;">Play</button> <input style="vertical-align: bottom;" type="range" min="0" max="1" value="0" autocomplete="off" step="0.001" id="slerp-slider-lerp-fixed">
 <br>
 <br>
-<canvas id="canvas2"></canvas>
+<canvas id="canvas-lerp-fixed"></canvas>
 </div>
 
 <h2 id="source-code"><a href="#source-code">Source code</a></h2>

@@ -88,7 +88,7 @@ hr{
     margin-bottom: 2em;
 }
 input{
-    font-family: "serif";
+    font-family: "sans";
 }
 .math-block{
     text-align: center;
@@ -120,7 +120,8 @@ svg{
     stroke: black;
 }
 #light{
-    width: 2em;
+    padding: 0;
+    width: 1.5em;
     background-color: transparent;
     border: none;
     outline: none;
