@@ -36,3 +36,7 @@ svg{
 nav a{
     color: var(--color-fg-1);
 }
+input{
+    color: var(--color-fg-1);
+    background-color: var(--color-bg);
+}
