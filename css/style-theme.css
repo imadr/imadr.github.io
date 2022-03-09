@@ -38,5 +38,6 @@ nav a{
 }
 input{
     color: var(--color-fg-1);
+    border-color: var(--color-fg-1);
     background-color: var(--color-bg);
 }
