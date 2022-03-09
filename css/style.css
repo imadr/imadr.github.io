@@ -5,7 +5,7 @@ table, td, th{
     border: 1px solid black;
 }
 a{
-    color: #237de1;
+    color: rgb(24, 112, 240);
 }
 h2 > a{
     text-decoration: none;
@@ -40,9 +40,8 @@ a[href^="http://"]:after, a[href^="https://"]:after{
 }
 pre{
     font-family: "mono", monospace;
-}
-pre{
-    padding: 1em;
+    border-radius: 5px;
+    padding: 0.7em !important;
     margin-bottom: 0px;
     background-color: #f3f3f3;
     color: black;

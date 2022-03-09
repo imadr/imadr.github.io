@@ -4,19 +4,7 @@ css_file.type = "text/css";
 css_file.href = location.pathname == "/" ? "css/style-theme.css" : "../css/style-theme.css";
 document.head.appendChild(css_file);
 
-let theme;
-if(localStorage.getItem("theme") != null){
-    theme = localStorage.getItem("theme");
-}
-else if(window.matchMedia("(prefers-color-scheme: dark)").matches){
-    theme = "dark";
-    localStorage.setItem("theme", theme);
-}
-else{
-    theme = "light";
-    localStorage.setItem("theme", theme);
-}
-
+let theme = localStorage.getItem("theme") == null ? "light" : localStorage.getItem("theme");
 document.body.setAttribute("data-theme", theme);
 
 let dark_icon = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none"  stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path></svg>`;

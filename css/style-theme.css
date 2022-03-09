@@ -1,17 +1,19 @@
-:root{
-    --color-ext-url: rgb(79, 140, 201);
-}
 [data-theme="light"]{
     --color-muted: #5f5f5f;
     --color-bg-1: #fff;
     --color-fg-1: black;
-    --color-code-bg: #f3f3f3;
+    --color-code-bg: rgb(35, 34, 43);
+    --color-href: rgb(25, 110, 240);
 }
 [data-theme="dark"]{
     --color-muted: #adadad;
-    --color-bg-1: #1a1a1a;
+    --color-bg-1: rgb(20, 20, 25);
     --color-fg-1: white;
-    --color-code-bg: #303841;
+    --color-code-bg: rgb(35, 34, 43);
+    --color-href: rgb(115, 170, 245);
+}
+a{
+    color: var(--color-href);
 }
 body{
     color: var(--color-fg-1);
@@ -21,7 +23,7 @@ h2{
     border-bottom: 2px solid var(--color-fg-1);
 }
 pre{
-    background-color: var(--color-code-bg);
+    background-color: var(--color-code-bg) !important;
     color: var(--color-fg-1);
 }
 h2 > a{
