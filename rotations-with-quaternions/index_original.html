@@ -8,16 +8,54 @@
     <link rel="stylesheet" href="/css/highlight.css">
     <script src="/js/highlight.js"></script>
     <style>
-        canvas{
-            border: 2px solid black;
+        .rot-input{
+            border: none;
+            background-color: transparent;
+            border-radius: 0px;
+            font-family: "mono";
+            font-size: 1em;
+            border-bottom: 2px solid;
+            text-align: center;
+            width: 2em;
         }
     </style>
 </head>
 <body>
-    <div id="menu"><span><a href="/index.html">Home</a></span></div>
+    <nav>
+        <a href="/" style="text-transform: uppercase;">Imadr.me</a>
+        <span id="navbar-right" style="float: right;">
+        </span>
+    </nav>
+
     <h1>Rotations with quaternions</h1>
+
+    <ul>
+        <li><a href="#introduction">Introduction</a></li>
+        <li><a href="#quaternion-magnitude">Quaternion magnitude</a></li>
+        <li><a href="#quaternion-normalization">Quaternion normalization</a></li>
+        <li><a href="#identity-quaternion">Identity quaternion</a></li>
+        <li><a href="#scaling-quaternion">Scaling a quaternion</a></li>
+        <li><a href="#quaternion-multiplication">Quaternion multiplication</a></li>
+        <li><a href="#euler-angles-to-quaternion">Euler angle to Quaternion</a></li>
+        <li><a href="#axis-angle-to-quaternion">Axis angle to Quaternion</a></li>
+        <li><a href="#quaternion-to-rotation-matrix">Quaternion to rotation matrix</a></li>
+        <li><a href="#quaternion-conjugate">Quaternion conjugate</a></li>
+        <li><a href="#rotating-a-vector-by-a-quaternion">Rotating a vector by a quaternion</a></li>
+        <li><a href="#quaternion-inverse">Quaternion inverse</a></li>
+        <li><a href="#quaternion-difference">Quaternion difference</a></li>
+        <li><a href="#quaternion-exp-log">Quaternion Exp and Log</a></li>
+        <li><a href="#quaternion-exponentiation">Quaternion exponentiation</a></li>
+        <li><a href="#quaternion-slerping">Quaternion slerping</a></li>
+        <li><a href="#quaternion-dot-product">Quaternion dot product</a></li>
+        <li><a href="#fixed-quaternion-slerping">Fixed quaternion slerping</a></li>
+        <li><a href="#source-code">Source code</a></li>
+        <li><a href="#further-reading">Further reading</a></li>
+    </ul>
+
+    <h2 id="introduction"><a href="#introduction">Introduction</a></h2>
+
     <p>
-        A quaternion is a 4 dimensional complex-like number, it has four components, three of which are the "imaginary" part.<br>
+        A quaternion is a four dimensional complex-like number. It has two parts: an imaginary (or vector) part with three components, and a real (or scalar) part with one component.<br>
         $$ q = w+x\textrm{i}+y\textrm{j}+z\textrm{k} $$
         $$ q = (x,y,z,w) $$
         $$ \textrm{i}^{2}=\textrm{j}^{2}=\textrm{k}^{2}=\textrm{i}\textrm{j}\textrm{k}=-1 $$
@@ -40,6 +78,8 @@
     <p>Initializing a quaternion:</p>
 <code>
 <pre class="code language-c">Quaternion q = (Quaternion){1, 2, 3, 4};</pre></code>
+
+<p>A quaternion with zero real (or scalar) term is called a <strong>pure quaternion</strong>.</p>
 
 <h2 id="quaternion-magnitude"><a href="#quaternion-magnitude">Quaternion magnitude</a></h2>
 <p>A quaternion is basically a 4 dimensional vector, so it has a magnitude (or norm, or length):</p>
@@ -65,7 +105,7 @@ $$||q|| = \sqrt{x^{2}+y^{2}+z^{2}+w^{2}}$$
 }</pre>
 </code>
 
-<p>A special property of quaternions is that <strong>a unit quaternion (a quaternion with magnitude \(1\)) represents a rotation in 3D space.</strong></p>
+<p>A special property of quaternions is that <strong>a unit quaternion (a quaternion with magnitude 1) represents a rotation in 3D space.</strong></p>
 
 <h2 id="identity-quaternion"><a href="#identity-quaternion">Identity quaternion</a></h2>
 
@@ -115,7 +155,7 @@ $$\begin{align*} q_{1}.q_{2} = (ae-bf-cg-dh)+(af+be+ch-dg)\textrm{i}+\\
 }</pre>
 </code>
 
-<h2 id="quaternion-vs-euler-angles"><a href="#quaternion-vs-euler-angles">Quaternion vs Euler angles</a></h2>
+<h2 id="euler-angles-to-quaternion"><a href="#euler-angles-to-quaternion">Euler angle to Quaternion</a></h2>
 
 <p>We use quaternions instead of Euler angles to represent rotations for a couple of reasons:</p>
 <ul>
@@ -188,9 +228,42 @@ obj.rotation = quat_mul(euler_to_quat((Vector3){0, PI/4, 0}), obj.rotation);
 obj.rotation = quat_mul(euler_to_quat((Vector3){0, PI/4, 0}), obj.rotation);</pre>
 </code>
 
-<p style="text-align: center;">
-    <img style="width: 80%" src="cube_rotation.png">
-</p>
+<br>
+<div style="text-align: center;font-family: 'mono';">
+    <div style="margin-bottom: 9px;">q1 = euler_to_quat(<input autocomplete="off" class="rot-input" type="text" id="rot1-0" value="0">, <input autocomplete="off" class="rot-input" type="text" id="rot1-1" value="π/4">, <input autocomplete="off" class="rot-input" type="text" id="rot1-2" value="0">)
+    </div>
+    <div style="margin-bottom: 9px;">q2 = euler_to_quat(<input autocomplete="off" class="rot-input" type="text" id="rot2-0" value="0">, <input autocomplete="off" class="rot-input" type="text" id="rot2-1" value="π/4">, <input autocomplete="off" class="rot-input" type="text" id="rot2-2" value="0">)
+    </div>
+    <!-- <div style="margin-bottom: 9px;">q1.q2 = (<span id="rot3-0">0</span>, <span id="rot3-1">π/2</span>, <span id="rot3-2">0</span>)
+    </div> -->
+    <canvas id="canvas-mult"></canvas>
+</div>
+
+<h2 id="axis-angle-to-quaternion"><a href="#axis-angle-to-quaternion">Axis angle to Quaternion</a></h2>
+
+If we have a rotation represented by an axis \(\vec{A}\) and an angle \(\theta\), we can convert it to a quaternion like this:
+
+$$
+q = \begin{bmatrix}
+\vec{A}_{x}.\sin{\frac{\theta}{2}}\\
+\vec{A}_{y}.\sin{\frac{\theta}{2}}\\
+\vec{A}_{z}.\sin{\frac{\theta}{2}}\\
+\frac{\cos{\theta}}{2}\\
+\end{bmatrix}
+$$
+
+<code>
+<pre class="code language-c">Quaternion axis_angle_to_quat(Vector3 axis, float angle){
+    float s = sin(angle/2);
+    return (Quaternion){
+        axis.x*s,
+        axis.y*s,
+        axis.z*s,
+        cos(angle/2)
+    };
+}</pre>
+</code>
+
 
 <h2 id="quaternion-to-rotation-matrix"><a href="#quaternion-to-rotation-matrix">Quaternion to rotation matrix</a></h2>
 
@@ -229,7 +302,7 @@ $$</div>
     };
 } Mat4;
 
-Mat4 rotate_3d_matrix(Quaternion q){
+Mat4 quat_to_matrix(Quaternion q){
     float xx = q.x*q.x;
     float yy = q.y*q.y;
     float zz = q.z*q.z;
@@ -242,7 +315,7 @@ Mat4 rotate_3d_matrix(Quaternion q){
 }</pre>
 </code>
 
-<h2 id="quaternion-conjugate"><a href="#quaternion-conjugate">Quaternion Conjugate</a></h2>
+<h2 id="quaternion-conjugate"><a href="#quaternion-conjugate">Quaternion conjugate</a></h2>
 <p>The <strong>conjugate</strong> of a quaternion \(q\) is denoted \(q^{*}\):</p>
 
 $$q^{*} = w-x\textrm{i}-y\textrm{j}-z\textrm{k}$$
@@ -254,7 +327,22 @@ $$q^{*} = w-x\textrm{i}-y\textrm{j}-z\textrm{k}$$
 </pre>
 </code>
 
-<h2 id="quaternion-inverse"><a href="#quaternion-inverse">Quaternion Inverse</a></h2>
+<h2 id="rotating-a-vector-by-a-quaternion"><a href="#rotating-a-vector-by-a-quaternion">Rotating a vector by a quaternion</a></h2>
+
+<p>We can use a quaternion \(q\) to rotate a vector \(v\) directly without converting it to a matrix. First we convert the 3D vector \(v\) to a pure quaternion, then we pre-multiply it by \(q\) and post-multiply it by the conjugate \(q^{*}\):</p>
+
+$$v = (x, y, z) \Rightarrow (x, y, z, 0)$$
+$$v' = (q.v).q^{*}$$
+
+<code>
+<pre class="code language-c">Vector3 rotate_vector(Vector3 v, Quaternion q){
+    Quaternion v_ = (Quaternion){v.x, v.y, v.z, 0};
+    v_ = quat_mul(quat_mul(q, v_), quat_conjugate(q));
+    return (Vector3){v_.x, v_.y, v_.x};
+}</pre>
+</code>
+
+<h2 id="quaternion-inverse"><a href="#quaternion-inverse">Quaternion inverse</a></h2>
 
 <p>The <strong>inverse</strong> of a quaternion \(q\), denoted \(q^{-1}\), is the conjugate divided by the magnitude squared:</p>
 
@@ -368,11 +456,11 @@ $$\textrm{slerp}(q_{1}, q_{2}, t) = q_{1}(q_{1}^{-1}q_{2})^{t}$$
 <p>Here is an interactive demo showing a cube slerping from Euler angle \((0, -\frac{3\pi}{2}, 0)\) to \((0, 0, 0)\):</p>
 
 <div style="text-align: center;">
-<div style="font-family: 'mono';">t = <span id="t-value1"></span></div>
-<button id="play-demo1" style="width: 60px;">Play</button> <input style="vertical-align: bottom;" type="range" min="0" max="1" value="0" autocomplete="off" step="0.001" id="slerp-slider1">
+<div style="font-family: 'mono';">t = <span id="t-value-lerp">0.00</span></div>
+<button id="play-demo-lerp" style="width: 60px;">Play</button> <input style="vertical-align: bottom;" type="range" min="0" max="1" value="0" autocomplete="off" step="0.001" id="slerp-slider-lerp">
 <br>
 <br>
-<canvas id="canvas1"></canvas>
+<canvas id="canvas-lerp"></canvas>
 </div>
 
 <p>Well that doesn't look quite right, the cube is doing a \(\frac{3\pi}{2}\) rotation clockwise on the Y axis, when a \(\frac{\pi}{2}\) counterclockwise rotation would have suffised. To fix that we will use the quaternion dot product.</p>
@@ -419,11 +507,11 @@ $$
 <p>Here is another  demo showing the cube slerping from Euler angle \((0, -\frac{3\pi}{2}, 0)\) to \((0, 0, 0)\), this time taking the shortest path for the rotation:</p>
 
 <div style="text-align: center;">
-<div style="font-family: 'mono';">t = <span id="t-value2"></span></div>
-<button id="play-demo2" style="width: 60px;">Play</button> <input style="vertical-align: bottom;" type="range" min="0" max="1" value="0" autocomplete="off" step="0.001" id="slerp-slider2">
+<div style="font-family: 'mono';">t = <span id="t-value-lerp-fixed">0.00</span></div>
+<button id="play-demo-lerp-fixed" style="width: 60px;">Play</button> <input style="vertical-align: bottom;" type="range" min="0" max="1" value="0" autocomplete="off" step="0.001" id="slerp-slider-lerp-fixed">
 <br>
 <br>
-<canvas id="canvas2"></canvas>
+<canvas id="canvas-lerp-fixed"></canvas>
 </div>
 
 <h2 id="source-code"><a href="#source-code">Source code</a></h2>
@@ -447,7 +535,7 @@ $$
 
 <script src="/js/math.js"></script>
 <script src="/js/webgl_helper.js"></script>
-<script src="cube.js"></script>
+<script src="teapot.js"></script>
 <script src="main.js"></script>
 
 <script src="/js/light.js"></script>

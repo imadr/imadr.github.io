@@ -295,7 +295,7 @@ function init(id){
     for(let i = 0; i < objects_to_draw.length; i++){
         let shader_program = link_shader_program(gl,
             shaders[objects_to_draw[i].vertex_shader],
-            shaders[objects_to_draw[i].fragment_shader]);
+            shaders[objects_to_draw[i].fragment_shader], null);
         objects_to_draw[i].shader.program = shader_program;
         gl.useProgram(objects_to_draw[i].shader.program);
 
