@@ -10,6 +10,6 @@ flat out vec3 position;
 void main(){
     mat4 v_ = v;
     v_[3][2] = -3.0;
-    gl_Position = p*v_*m*vec4(position_attrib, 1.0);
+    gl_Position = p*v_*vec4(position_attrib, 1.0);
     position = position_attrib;
 }

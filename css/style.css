@@ -16,7 +16,7 @@ h2 > a{
     font-family: "icon";
     src: url("icon.woff2") format("woff2");
 }
-a[href^="http://"]:after, a[href^="https://"]:after{
+a:not(.image)[href^="http://"]:after, a:not(.image)[href^="https://"]:after{
     font-family: "icon";
     margin-left: 0px;
     content: " \f08e";
