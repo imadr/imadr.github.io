@@ -1,6 +1,6 @@
 let assets_to_load = [
     {name: "test_shader", path: ["assets/shaders/test.vert", "assets/shaders/test.frag"], type: "asset_shader"},
-    {name: "teapot_mesh", path: "assets/meshes/teapot.mesh", type: "asset_mesh"},
+    {name: "dragon_mesh", path: "assets/meshes/teapot.mesh", type: "asset_mesh"},
     {name: "grid_shader", path: ["assets/shaders/grid.vert", "assets/shaders/grid.frag"], type: "asset_shader"},
     {name: "plane_mesh", path: "assets/meshes/plane.mesh", type: "asset_mesh"},
     {name: "axis_mesh", path: "assets/meshes/axis.mesh", type: "asset_mesh"},
@@ -8,15 +8,15 @@ let assets_to_load = [
 ];
 let assets = {};
 let objects = {
-    "teapot": {
+    "dragon": {
         type: "drawable",
-        shader: "test_shader", mesh: "teapot_mesh",
+        shader: "test_shader", mesh: "dragon_mesh",
         transform: {
-            position: [0, 0.5, 0],
+            position: [0, 0, 0],
             scale: [1, 1, 1],
             rotation: quat_id()
         },
-        cull_face: false
+        // cull_face: false
     },
     "grid": {
         type: "drawable",
@@ -77,7 +77,7 @@ function update(){
 
     update_camera_projection_matrix(gl, objects["camera"]);
 
-    draw(gl, objects["teapot"], objects["camera"]);
+    draw(gl, objects["dragon"], objects["camera"]);
     draw(gl, objects["grid"], objects["camera"]);
 
     gl.viewport(0, 0, 100, 100);
@@ -126,5 +126,6 @@ document.addEventListener("wheel", function(e){
         delta = e.deltaY/Math.abs(e.deltaY)/10;
     }
     objects["camera"].orbit.zoom += delta;
+    objects["camera"].orbit.zoom = Math.max(0.1, objects["camera"].orbit.zoom);
     update_camera_orbit(gl, objects["camera"]);
 });

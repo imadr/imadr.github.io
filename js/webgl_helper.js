@@ -101,11 +101,12 @@ function create_vertex_buffer(gl, buffer, attributes, indexed, indices){
         attribs_stride += attribute.size;
     }
 
+    let attrib_offset = 0;
     for(const [i, attribute] of attributes.entries()){
-        let attrib_offset = i*attribute.size;
         gl.vertexAttribPointer(i, attribute.size, gl.FLOAT, false,
                                attribs_stride*Float32Array.BYTES_PER_ELEMENT,
                                attrib_offset*Float32Array.BYTES_PER_ELEMENT);
+        attrib_offset += attribute.size;
         gl.enableVertexAttribArray(i);
     }
 
@@ -181,13 +182,10 @@ function draw(gl, drawable, camera){
         gl.enable(gl.DEPTH_TEST);
         gl.depthFunc(drawable.depth_func);
     }
-    if(drawable.cull_face == false){
-        gl.disable(gl.CULL_FACE);
-    }
-    else{
-        gl.enable(gl.CULL_FACE);
-        gl.cullFace(drawable.cull_face);
-    }
+
+    gl.enable(gl.CULL_FACE);
+    gl.cullFace(gl.BACK);
+
     gl.useProgram(drawable.shader.program);
 
     let m = mat4_identity();

@@ -7,5 +7,5 @@ in vec3 position;
 in vec3 normal;
 
 void main(){
-    frag_color = vec4(abs(normal), 1);
+    frag_color = vec4(normal, 1);
 }

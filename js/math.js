@@ -466,3 +466,7 @@ function distance(a, b){
     if(a.length == 3) return vec3_magnitude(vec3_sub(a, b));
     if(a.length == 4) return vec4_magnitude(vec4_sub(a, b));
 }
+
+function clamp(v, min, max){
+    return Math.min(Math.max(v, min), max);
+};

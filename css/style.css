@@ -27,17 +27,6 @@ a[href^="http://"]:after, a[href^="https://"]:after{
     src: url("IBMPlexMono-Regular-Latin1.woff2") format("woff2");
     font-display: swap;
 }
-@font-face{
-    font-family: "sans";
-    src: url("IBMPlexSans-Regular-Latin1.woff2") format("woff2");
-    font-display: swap;
-}
-@font-face{
-    font-family: "sans";
-    src: url("IBMPlexSans-SemiBold-Latin1.woff2") format("woff2");
-    font-weight: bold;
-    font-display: swap;
-}
 pre{
     font-family: "mono", monospace;
     border-radius: 5px;
@@ -53,7 +42,7 @@ pre{
     margin-bottom: 20px;
 }
 body{
-    font-family: "sans", sans-serif;
+    font-family: sans-serif;
     font-weight: normal;
     margin-right: auto;
     margin-left: auto;
@@ -87,7 +76,7 @@ hr{
     margin-bottom: 2em;
 }
 input{
-    font-family: "sans";
+    font-family: sans-serif;
 }
 .math-block{
     text-align: center;

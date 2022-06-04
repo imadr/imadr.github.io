@@ -33,21 +33,21 @@ in mat4 m_inv;
 void main(){
     float ambient = 0.1f;
     vec3 light_position_ = (m_inv*vec4(light_position, 1.0)).xyz;
-    float diffuse = max(0.0f, dot(normal, light_position_))*0.5;
+    float diffuse = max(0.0f, dot(normal, light_position_))*0.4;
     float light = diffuse+ambient;
     vec3 col = vec3(light);
     col = pow(col, vec3(1.0/2.2));
     frag_color = vec4(col, 1);
 }`);
 
-let mesh_buffer = create_vertex_buffer(gl, teapot.buffer, teapot.attributes, false);
+let mesh_buffer = create_vertex_buffer(gl, teapot.buffer, teapot.attributes, true, teapot.indices);
 
 let start = euler_to_quat([0, -Math.PI-Math.PI/2, 0]);
 let end = euler_to_quat([0, 0, 0]);
 
 let mesh = create_drawable(gl, {
-        position: [0, 0, 0],
-        scale: [1.3, 1.3, 1.3],
+        position: [0, -0.7, 0],
+        scale: [0.7, 0.7, 0.7],
         rotation: start
     }, mesh_buffer, shader, gl.TRIANGLES, gl.LESS, gl.FRONT);
 
@@ -85,7 +85,7 @@ function update(id){
     gl.clearColor(0, 0, 0, 0);
     gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
 
-    set_shader_uniform(gl, mesh.shader, "light_position", [0, 0, 2]);
+    set_shader_uniform(gl, mesh.shader, "light_position", [1, 0, -1]);
 
     draw(gl, mesh, camera);
 
