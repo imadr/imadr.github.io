@@ -61,7 +61,17 @@ Quaternion euler_to_quat(Vector3 e){
     };
 }
 
-Mat4 rotate_3d_matrix(Quaternion q){
+Quaternion axis_angle_to_quat(Vector3 axis, float angle){
+    float s = sin(angle/2);
+    return (Quaternion){
+        axis.x*s,
+        axis.y*s,
+        axis.z*s,
+        cos(angle/2)
+    };
+}
+
+Mat4 quat_to_matrix(Quaternion q){
     float xx = q.x*q.x;
     float yy = q.y*q.y;
     float zz = q.z*q.z;
@@ -75,6 +85,12 @@ Mat4 rotate_3d_matrix(Quaternion q){
 
 Quaternion quat_conjugate(Quaternion q){
     return (Quaternion){-q.x, -q.y, -q.z, q.w};
+}
+
+Vector3 rotate_vector(Vector3 v, Quaternion q){
+    Quaternion v_ = (Quaternion){v.x, v.y, v.z, 0};
+    v_ = quat_mul(quat_mul(q, v_), quat_conjugate(q));
+    return (Vector3){v_.x, v_.y, v_.x};
 }
 
 Quaternion quat_inverse(Quaternion q){
@@ -126,6 +142,6 @@ float quat_dot(Quaternion q1, Quaternion q2){
 Quaternion quat_slerp(Quaternion q1, Quaternion q2, float t){
     t = t < 0 ? 0 : t;
     t = t > 1 ? 1 : t;
-    if(quat_dot_product(q1, q2) < 0) q2 = quat_scale(q2, -1);
+    if(quat_dot(q1, q2) < 0) q2 = quat_scale(q2, -1);
     return quat_mul(q1, quat_pow(quat_mul(quat_inverse(q1), q2), t));
 }

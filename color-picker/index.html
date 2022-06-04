@@ -1,0 +1,452 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Color Picker</title>
+    <style type="text/css">
+        body{
+            margin: 0;
+            padding: 0;
+            font-family: monospace;
+            text-align: center;
+            padding-top: 10vh;
+        }
+        canvas{
+        }
+        input[type=text]{
+            font-family: monospace;
+            width: 300px;
+        }
+        table{
+            margin-right: auto;
+            margin-left: auto;
+        }
+        td:first-child{
+            text-align: left;
+        }
+    </style>
+</head>
+<body>
+<canvas id="canvas_"></canvas>
+<table>
+<tr>
+    <td><label for="rgb_hex">rgb hex:</label></td>
+    <td><input id="rgb_hex"></td>
+</tr>
+<tr>
+    <td><label for="rgb_uint">rgb (uint, uint, uint):</label></td>
+    <td><input id="rgb_uint"></td>
+</tr>
+<tr>
+    <td><label for="rgb_float">rgb (float, float, float):</label></td>
+    <td><input id="rgb_float"></td>
+</tr>
+<tr>
+    <td><label for="hsv_">hsv (deg, %, %):</label></td>
+    <td><input id="hsv_"></td>
+</tr>
+<tr>
+    <td><label for="hsv_float">hsv (float, float, float):</label></td>
+    <td><input id="hsv_float"></td>
+</tr>
+<tr>
+    <td><label for="hsl_">hsl (deg, %, %):</label></td>
+    <td><input id="hsl_"></td>
+</tr>
+<tr>
+    <td><label for="hsl_float">hsl (float, float, float):</label></td>
+    <td><input id="hsl_float"></td>
+</tr>
+</table>
+
+<label for="hsv_picker_radio">hsv picker</label> <input name="picker_type" type="radio" id="hsv_picker_radio" checked>
+<label for="hsl_picker_radio">hsl picker</label> <input name="picker_type" type="radio" id="hsl_picker_radio">
+<script src="../js/math.js"></script>
+<script>
+function rgb_to_hsl(rgb){
+    let r = rgb[0];
+    let g = rgb[1];
+    let b = rgb[2];
+    let max = Math.max(r, g, b);
+    let min = Math.min(r, g, b);
+    let c = max-min;
+
+    let h;
+    if(c == 0){
+        h = 0;
+    }
+    else if(max == r){
+        h = (g-b)/c;
+        h += (h < 0 ? 6 : 0);
+    }
+    else if(max == g){
+        h = ((b-r)/c)+2;
+    }
+    else if(max == b){
+        h = ((r-g)/c)+4;
+    }
+    let l = (max+min)/2;
+    let s = 0;
+    if(l != 1 && l != 0){
+        s = c/(1-Math.abs(2*l-1));
+    }
+    h /= 6;
+    return [h, s, l];
+}
+
+function hsl_to_rgb(hsl){
+    let h = hsl[0];
+    let s = hsl[1];
+    let l = hsl[2];
+    let c = (1-Math.abs(2*l-1))*s;
+    h *= 6;
+    let x = c*(1-Math.abs(h%2-1));
+    let r, g, b;
+    if(h < 1){
+        r = c;
+        g = x;
+        b = 0;
+    }
+    else if(h >= 1 && h < 2){
+        r = x;
+        g = c;
+        b = 0;
+    }
+    else if(h >= 2 && h < 3){
+        r = 0;
+        g = c;
+        b = x;
+    }
+    else if(h >= 3 && h < 4){
+        r = 0;
+        g = x;
+        b = c;
+    }
+    else if(h >= 4 && h < 5){
+        r = x;
+        g = 0;
+        b = c;
+    }
+    else if(h >= 5 && h <= 6){
+        r = c;
+        g = 0;
+        b = x;
+    }
+    let m = l-c/2;
+    return [r+m, g+m, b+m];
+}
+
+function rgb_to_hsv(rgb){
+    let r = rgb[0];
+    let g = rgb[1];
+    let b = rgb[2];
+    let max = Math.max(r, g, b);
+    let min = Math.min(r, g, b);
+    let c = max-min;
+
+    let h;
+    if(c == 0){
+        h = 0;
+    }
+    else if(max == r){
+        h = (g-b)/c;
+        h += (h < 0 ? 6 : 0);
+    }
+    else if(max == g){
+        h = ((b-r)/c)+2;
+    }
+    else if(max == b){
+        h = ((r-g)/c)+4;
+    }
+    let v = Math.max(r, Math.max(g, b));
+    let s = 0;
+    if(v != 0){
+        s = c/v;
+    }
+    h /= 6;
+    return [h, s, v];
+}
+
+function hsv_to_rgb(hsv){
+    let h = hsv[0];
+    let s = hsv[1];
+    let v = hsv[2];
+    let c = v*s;
+    h *= 6;
+    let x = c*(1-Math.abs(h%2-1));
+    let r, g, b;
+    if(h < 1){
+        r = c;
+        g = x;
+        b = 0;
+    }
+    else if(h >= 1 && h < 2){
+        r = x;
+        g = c;
+        b = 0;
+    }
+    else if(h >= 2 && h < 3){
+        r = 0;
+        g = c;
+        b = x;
+    }
+    else if(h >= 3 && h < 4){
+        r = 0;
+        g = x;
+        b = c;
+    }
+    else if(h >= 4 && h < 5){
+        r = x;
+        g = 0;
+        b = c;
+    }
+    else if(h >= 5 && h <= 6){
+        r = c;
+        g = 0;
+        b = x;
+    }
+    let m = v-c;
+    return [r+m, g+m, b+m];
+}
+
+function generate_picker_buffer(s){
+    let canvas = s.canvas;
+    let d = s.ctx.createImageData(canvas.width, canvas.height);
+    let current_hue = s.hue_cursor/s.color_width;
+
+    for(let y = s.padding; y <= s.color_width+s.padding; y++){
+        let local_y = (y-s.padding)/s.color_width;
+        for(let x = s.padding; x <= s.padding+s.color_width; x++){
+            let index = y*canvas.width+x;
+            index *= 4;
+            let local_x = (x-s.padding)/s.color_width;
+            let rgb;
+            if(s.picker_type == "hsv"){
+                rgb = hsv_to_rgb([current_hue, local_x, 1-local_y]);
+            }
+            else{
+                rgb = hsl_to_rgb([current_hue, local_x, 1-local_y]);
+            }
+            d.data[index]   = rgb[0]*255;
+            d.data[index+1] = rgb[1]*255;
+            d.data[index+2] = rgb[2]*255;
+            d.data[index+3] = 255;
+        }
+    }
+
+    let hue_picker_start = s.padding+s.color_width+s.margin_right;
+    for(let y = s.padding; y <= s.color_width+s.padding; y++){
+        let local_y = (y-s.padding)/s.color_width;
+        let hsv = [local_y, 1, 1];
+        let rgb = hsv_to_rgb(hsv);
+        for(let x = hue_picker_start; x < hue_picker_start+s.bar_width; x++){
+            let index = y*canvas.width+x;
+            index *= 4;
+            d.data[index]   = rgb[0]*255;
+            d.data[index+1] = rgb[1]*255;
+            d.data[index+2] = rgb[2]*255;
+            d.data[index+3] = 255;
+        }
+    }
+
+    let saturation_picker_start = hue_picker_start+s.bar_width+s.margin_right;
+    for(let y = s.padding; y <= s.color_width+s.padding; y++){
+        let local_y = (y-s.padding)/s.color_width;
+        let hsv = [current_hue, 1-local_y, 1];
+        let rgb = hsv_to_rgb(hsv);
+        for(let x = saturation_picker_start; x < saturation_picker_start+s.bar_width; x++){
+            let index = y*canvas.width+x;
+            index *= 4;
+            d.data[index]   = rgb[0]*255;
+            d.data[index+1] = rgb[1]*255;
+            d.data[index+2] = rgb[2]*255;
+            d.data[index+3] = 255;
+        }
+    }
+
+    // let saturation_picker_start = hue_picker_start+s.bar_width+s.margin_right;
+    // for(let y = s.padding; y <= s.color_width+s.padding; y++){
+    //     let local_y = (y-s.padding)/s.color_width;
+    //     let hsv = [current_hue, 1-local_y, 0.5];
+    //     let rgb = hsl_to_rgb(hsv);
+    //     for(let x = saturation_picker_start; x < saturation_picker_start+s.bar_width; x++){
+    //         let index = y*canvas.width+x;
+    //         index *= 4;
+    //         d.data[index]   = rgb[0]*255;
+    //         d.data[index+1] = rgb[1]*255;
+    //         d.data[index+2] = rgb[2]*255;
+    //         d.data[index+3] = 255;
+    //     }
+    // }
+    return d;
+}
+
+function to_rgb_str(color){
+    return "rgb("+Math.floor(color[0]*255)+", "+Math.floor(color[1]*255)+", "+Math.floor(color[2]*255)+")";
+}
+
+function draw_color_cursor(s){
+    let x = s.color_cursor[0]+s.padding;
+    let y = s.color_cursor[1]+s.padding;
+    s.ctx.beginPath();
+    s.ctx.arc(x, y, s.cursor_size, 0, 2*Math.PI);
+    s.ctx.fillStyle = to_rgb_str(s.current_color);
+    s.ctx.strokeStyle = "#aaaaaaee";
+    s.ctx.lineWidth = 2;
+    s.ctx.fill();
+    s.ctx.stroke();
+}
+
+function draw_hue_cursor(s){
+    let start = s.padding+s.color_width+s.margin_right+s.bar_width/2;
+    s.ctx.beginPath();
+    s.ctx.arc(start, s.padding+s.hue_cursor, s.cursor_size, 0, 2*Math.PI);
+    s.ctx.fillStyle = to_rgb_str(hsv_to_rgb([s.hue_cursor/s.color_width, 1, 1]));
+    s.ctx.strokeStyle = "#aaaaaaee";
+    s.ctx.lineWidth = 2;
+    s.ctx.fill();
+    s.ctx.stroke();
+}
+
+function check_cursor(s, x, y){
+    if(distance([x, y], [s.color_cursor[0]+s.padding, s.color_cursor[1]+s.padding]) < s.cursor_size){
+        document.body.style.cursor = "pointer";
+    }
+    else{
+        document.body.style.cursor = "default";
+    }
+}
+
+function draw(s){
+    s.picker_buffer = generate_picker_buffer(s);
+    s.ctx.putImageData(s.picker_buffer, 0, 0);
+
+    draw_color_cursor(s);
+    draw_hue_cursor(s);
+
+    document.getElementById("rgb_hex").value = "#"+Math.floor(s.current_color[0]*255).toString(16)+Math.floor(s.current_color[1]*255).toString(16)+Math.floor(s.current_color[2]*255).toString(16);
+    document.getElementById("rgb_uint").value = Math.floor(s.current_color[0]*255)+", "+Math.floor(s.current_color[1]*255)+", "+Math.floor(s.current_color[2]*255);
+    document.getElementById("rgb_float").value = (s.current_color[0]).toFixed(3)+", "+(s.current_color[1]).toFixed(3)+", "+(s.current_color[2]).toFixed(3);
+    let hsv = rgb_to_hsv(s.current_color);
+    let hsl = rgb_to_hsl(s.current_color);
+    document.getElementById("hsv_").value = (hsv[0]*360).toFixed(3)+", "+(hsv[1]*100).toFixed(3)+", "+(hsv[2]*100).toFixed(3);
+    document.getElementById("hsv_float").value = (hsv[0]).toFixed(3)+", "+(hsv[1]).toFixed(3)+", "+(hsv[2]).toFixed(3);
+    document.getElementById("hsl_").value = (hsl[0]*360).toFixed(3)+", "+(hsl[1]*100).toFixed(3)+", "+(hsl[2]*100).toFixed(3);
+    document.getElementById("hsl_float").value = (hsl[0]).toFixed(3)+", "+(hsl[1]).toFixed(3)+", "+(hsl[2]).toFixed(3);
+}
+
+function regenerate_color(){
+    if(s.picker_type == "hsv"){
+        current_color_hsv = [s.hue_cursor/s.color_width, s.color_cursor[0]/s.color_width, 1-s.color_cursor[1]/s.color_width];
+        s.current_color = hsv_to_rgb(current_color_hsv);
+    }
+    else if(s.picker_type == "hsl"){
+        current_color_hsl = [s.hue_cursor/s.color_width, s.color_cursor[0]/s.color_width, 1-s.color_cursor[1]/s.color_width];
+        s.current_color = hsl_to_rgb(current_color_hsl);
+    }
+}
+
+let s = {
+    canvas: document.getElementById("canvas_"),
+    ctx: document.getElementById("canvas_").getContext("2d"),
+    color_width: 200,
+    margin_right: 20,
+    bar_width: 11,
+    padding: 30,
+    cursor_size: 10,
+    color_cursor: [0, 0],
+    hue_cursor: 0,
+    current_color: [1, 1, 1],
+    color_cursor_dragging: false,
+    hue_cursor_dragging: false,
+    picker_type: "hsv"
+};
+s.canvas.width = (s.margin_right+s.bar_width)*3+s.color_width+s.padding*2;
+s.canvas.height = s.color_width+s.padding*2;
+
+document.addEventListener("mouseup", function(e){
+    s.color_cursor_dragging = false;
+    s.hue_cursor_dragging = false;
+});
+
+s.canvas.addEventListener("mousedown", function(e){
+    let rect = e.target.getBoundingClientRect();
+    let x = e.clientX - rect.left;
+    let y = e.clientY - rect.top;
+    if(x >= s.padding && x <= s.color_width+s.padding &&
+        y >= s.padding && y <= s.color_width+s.padding && !s.hue_cursor_dragging){
+        s.color_cursor_dragging = true;
+        s.color_cursor = [x-s.padding, y-s.padding];
+        regenerate_color();
+        draw(s);
+    }
+    let hue_picker_start = s.padding+s.color_width+s.margin_right;
+    if(x >= hue_picker_start && x <= hue_picker_start+s.bar_width &&
+        y >= s.padding && y <= s.color_width+s.padding && !s.color_cursor_dragging){
+        s.hue_cursor_dragging = true;
+        s.hue_cursor = y-s.padding;
+        regenerate_color();
+        draw(s);
+    }
+    check_cursor(s, x, y);
+});
+
+document.addEventListener("mousemove", function(e){
+    if(!e.target.getBoundingClientRect) return;
+    let rect = s.canvas.getBoundingClientRect();
+    let x = e.clientX - rect.left;
+    let y = e.clientY - rect.top;
+    if(s.color_cursor_dragging){
+        x = clamp(x, s.padding, s.color_width+s.padding);
+        y = clamp(y, s.padding, s.color_width+s.padding);
+        s.color_cursor = [x-s.padding, y-s.padding];
+        regenerate_color();
+        draw(s);
+    }
+    if(s.hue_cursor_dragging){
+        y = clamp(y, s.padding, s.color_width+s.padding);
+        s.hue_cursor = y-s.padding;
+        regenerate_color();
+        draw(s);
+    }
+    check_cursor(s, x, y);
+});
+
+document.getElementById("hsv_picker_radio").checked = s.picker_type == "hsv";
+document.getElementById("hsv_picker_radio").onchange = function(){
+    s.picker_type = "hsv";
+    regenerate_cursors();
+    draw(s);
+};
+document.getElementById("hsl_picker_radio").checked = s.picker_type == "hsl";
+document.getElementById("hsl_picker_radio").onchange = function(){
+    s.picker_type = "hsl";
+    regenerate_cursors();
+    draw(s);
+};
+
+function regenerate_cursors(s){
+    let hsv = rgb_to_hsv(s.current_color);
+    s.color_cursor = [hsv[1]*s.color_width, (1-hsv[2])*s.color_width];
+    s.hue_cursor = hsv[0]*s.color_width;
+}
+
+document.getElementById("rgb_uint").addEventListener("input", function(e){
+    s.current_color = this.value.split(",").map(function(x){
+        x = clamp(parseFloat(x)/255, 0, 1);
+        if(isNaN(x)) x = 0;
+        return x;
+    });
+    while(s.current_color.length < 3){
+        s.current_color.push(0);
+    }
+    regenerate_cursors(s);
+    draw(s);
+});
+
+
+draw(s);
+</script>
+</body>
+</html>

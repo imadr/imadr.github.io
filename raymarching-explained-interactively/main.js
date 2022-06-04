@@ -569,7 +569,7 @@ function init_3d(canvas_id, fragment_shader){
 
     let vao, vbo;
 
-    let shader_program = link_shader_program(gl, default_vertex_shader, fragment_shader);
+    let shader_program = link_shader_program(gl, default_vertex_shader, fragment_shader, null);
     let n_uniforms = gl.getProgramParameter(shader_program, gl.ACTIVE_UNIFORMS);
     let shader = {
         program: shader_program,

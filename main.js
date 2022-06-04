@@ -66,7 +66,7 @@ void main(){
 }`;
 
 let shader = {
-    program: link_shader_program(gl, vertex_shader, fragment_shader),
+    program: link_shader_program(gl, vertex_shader, fragment_shader, null),
     uniforms: {}
 };
 
