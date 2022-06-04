@@ -177,8 +177,8 @@ function draw_canvas_euclidean_distance(ctx, $){
     draw_circle(ctx, $.point1, 8, true, "#2c66c9");
     draw_circle(ctx, $.point2, 8, true, "#29c643");
 
-    draw_text(ctx, "P1", [$.point1[0]+add_x*1.5, $.point1[1]], "bold 18px mono", "#000");
-    draw_text(ctx, "P2", [$.point2[0]-add_x*1.5, $.point2[1]], "bold 18px mono", "#000");
+    draw_text(ctx, "P1", [$.point1[0]+add_x*1.5, $.point1[1]], "bold 18px sans-serif", "#000");
+    draw_text(ctx, "P2", [$.point2[0]-add_x*1.5, $.point2[1]], "bold 18px sans-serif", "#000");
 
     let pos = vec2_lerp($.point2, $.point1, 0.5);
     ctx.save();
@@ -232,8 +232,8 @@ function draw_canvas_circle_sdf(ctx, $){
 
     let add_x = 15;
     if($.point[0] < $.center[0]) add_x *= -1;
-    draw_text(ctx, "P", [$.point[0]+add_x, $.point[1]], "bold 18px mono", "#000");
-    draw_text(ctx, "C", [$.center[0]+10, $.center[1]-10], "bold 18px mono", "#000");
+    draw_text(ctx, "P", [$.point[0]+add_x, $.point[1]], "bold 18px sans-serif", "#000");
+    draw_text(ctx, "C", [$.center[0]+10, $.center[1]-10], "bold 18px sans-serif", "#000");
 
     document.querySelector("#circle-distance").innerHTML = Math.round(min_dist);
 }
@@ -308,11 +308,11 @@ function draw_canvas_rect_sdf(ctx, $){
     draw_circle(ctx, $.point, 6, true, "#2c66c9");
 
     draw_circle(ctx, rect_pos, 6, true, "#29c643");
-    draw_text(ctx, "C", [rect_pos[0]-15, rect_pos[1]], "bold 18px mono", "#000");
+    draw_text(ctx, "C", [rect_pos[0]-15, rect_pos[1]], "bold 18px sans-serif", "#000");
 
     let add_x = 17;
     if($.point[0] < rect_pos[0]) add_x *= -1;
-    draw_text(ctx, "P", [$.point[0]+add_x, $.point[1]], "bold 18px mono", "#000");
+    draw_text(ctx, "P", [$.point[0]+add_x, $.point[1]], "bold 18px sans-serif", "#000");
 }
 
 function draw_canvas_shapes_sdf(ctx, $){
@@ -364,7 +364,7 @@ function draw_canvas_shapes_sdf(ctx, $){
     }
     draw_arrow(ctx, $.point, closest_point, "#ea3333");
     draw_circle(ctx, $.point, 6, true, "#2c66c9");
-    draw_text(ctx, "P", [$.point[0]-14, $.point[1]], "bold 18px mono", "#000");
+    draw_text(ctx, "P", [$.point[0]-14, $.point[1]], "bold 18px sans-serif", "#000");
     if(dist < 0) return;
     draw_circle(ctx, $.point, dist, false, "#ea3333");
 }

@@ -1,6 +1,6 @@
 let assets_to_load = [
     {name: "test_shader", path: ["assets/shaders/test.vert", "assets/shaders/test.frag"], type: "asset_shader"},
-    {name: "dragon_mesh", path: "assets/meshes/teapot.mesh", type: "asset_mesh"},
+    {name: "test_mesh", path: "assets/meshes/teapot.mesh", type: "asset_mesh"},
     {name: "grid_shader", path: ["assets/shaders/grid.vert", "assets/shaders/grid.frag"], type: "asset_shader"},
     {name: "plane_mesh", path: "assets/meshes/plane.mesh", type: "asset_mesh"},
     {name: "axis_mesh", path: "assets/meshes/axis.mesh", type: "asset_mesh"},
@@ -8,9 +8,9 @@ let assets_to_load = [
 ];
 let assets = {};
 let objects = {
-    "dragon": {
+    "test_object": {
         type: "drawable",
-        shader: "test_shader", mesh: "dragon_mesh",
+        shader: "test_shader", mesh: "test_mesh",
         transform: {
             position: [0, 0, 0],
             scale: [1, 1, 1],
@@ -77,7 +77,7 @@ function update(){
 
     update_camera_projection_matrix(gl, objects["camera"]);
 
-    draw(gl, objects["dragon"], objects["camera"]);
+    draw(gl, objects["test_object"], objects["camera"]);
     draw(gl, objects["grid"], objects["camera"]);
 
     gl.viewport(0, 0, 100, 100);
