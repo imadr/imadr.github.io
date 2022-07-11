@@ -427,9 +427,16 @@ document.getElementById("hsl_picker_radio").onchange = function(){
 };
 
 function regenerate_cursors(s){
-    let hsv = rgb_to_hsv(s.current_color);
-    s.color_cursor = [hsv[1]*s.color_width, (1-hsv[2])*s.color_width];
-    s.hue_cursor = hsv[0]*s.color_width;
+    if(s.picker_type == "hsv"){
+        let hsv = rgb_to_hsv(s.current_color);
+        s.color_cursor = [hsv[1]*s.color_width, (1-hsv[2])*s.color_width];
+        s.hue_cursor = hsv[0]*s.color_width;
+    }
+    else if(s.picker_type == "hsv"){
+        let hsv = rgb_to_hsv(s.current_color);
+        s.color_cursor = [hsv[1]*s.color_width, (1-hsv[2])*s.color_width];
+        s.hue_cursor = hsv[0]*s.color_width;
+    }
 }
 
 document.getElementById("rgb_uint").addEventListener("input", function(e){

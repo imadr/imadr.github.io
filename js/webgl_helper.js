@@ -161,47 +161,26 @@ function create_transform_feedback(gl, buffer){
     return transform_feedback;
 }
 
-function create_drawable(gl, transform, vertex_buffer, shader, primitive, depth_func, cull_face){
-    if(depth_func == undefined) depth_func = gl.LESS;
-    if(cull_face == undefined) cull_face = gl.BACK;
-    return {
-        transform: transform,
-        vertex_buffer: vertex_buffer,
-        shader: shader,
-        primitive: primitive,
-        depth_func: depth_func,
-        cull_face: cull_face,
-    };
-}
-
-function draw(gl, drawable, camera){
-    if(drawable.depth_func == false){
-        gl.disable(gl.DEPTH_TEST);
-    }
-    else{
-        gl.enable(gl.DEPTH_TEST);
-        gl.depthFunc(drawable.depth_func);
-    }
-
+function draw(gl, mesh, shader, transform, camera){
+    gl.enable(gl.DEPTH_TEST);
     gl.enable(gl.CULL_FACE);
-    gl.cullFace(gl.BACK);
 
-    gl.useProgram(drawable.shader.program);
+    gl.useProgram(shader.program);
 
     let m = mat4_identity();
-        m = mat4_mat4_mul(translate_3d(drawable.transform.position), m);
-        m = mat4_mat4_mul(rotate_3d(drawable.transform.rotation), m);
-        m = mat4_mat4_mul(scale_3d(drawable.transform.scale), m);
+        m = mat4_mat4_mul(translate_3d(transform.position), m);
+        m = mat4_mat4_mul(rotate_3d(transform.rotation), m);
+        m = mat4_mat4_mul(scale_3d(transform.scale), m);
 
-    set_shader_uniform(gl, drawable.shader, "m", m);
-    set_shader_uniform(gl, drawable.shader, "v", camera.view_matrix);
-    set_shader_uniform(gl, drawable.shader, "p", camera.projection_matrix);
+    set_shader_uniform(gl, shader, "m", m);
+    set_shader_uniform(gl, shader, "v", camera.view_matrix);
+    set_shader_uniform(gl, shader, "p", camera.projection_matrix);
 
-    draw_buffer(gl, drawable.vertex_buffer, drawable.primitive);
+    draw_buffer(gl, mesh, gl.TRIANGLES);
 }
 
 // @Note remove {cache: "no-store"}
-function load_assets_and_objects(gl, assets_to_load, assets, objects, callback){
+function load_assets_and_objects(gl, assets_to_load, assets, callback){
     (async function(){
         for(let asset of assets_to_load){
             if(asset.type == "asset_mesh"){
@@ -222,95 +201,31 @@ function load_assets_and_objects(gl, assets_to_load, assets, objects, callback){
                 assets[asset.name] = create_shader(gl, text_vert, text_frag);
             }
         }
-
-        let primitives = {
-            "lines": gl.LINES,
-            "triangles": gl.TRIANGLES,
-        }
-
-        for(var key in objects){
-            let object = objects[key];
-            if(object.type == "drawable"){
-                objects[key] = create_drawable(gl, object.transform,
-                    assets[object.mesh],
-                    assets[object.shader],
-                    primitives[object.primitive == undefined ? "triangles" : object.primitive],
-                    object.depth_func,
-                    object.cull_face,
-                );
-            }
-            else if(object.type == "camera"){
-                objects[key] = create_camera(object.fov, object.near_plane, object.far_plane,
-                    object.position, object.target, object.rotation, object.up_vector);
-            }
-        }
         callback();
     })();
-}
-
-function create_camera(fov, near_plane, far_plane, position, target, rotation, up_vector){
-    return {
-        fov: fov,
-        near_plane: near_plane,
-        far_plane: far_plane,
-        position: position,
-        target: target,
-        rotation: rotation,
-        view_matrix: mat4_identity(),
-        projection_matrix: mat4_identity(),
-        up_vector: up_vector,
-        orbit: {
-            pivot: [0, 0, 0],
-            zoom: 5,
-            angle: [-Math.PI, Math.PI/3]
-        }
-    };
-}
-
-function camera_get_forward(camera){
-    return vec3_normalize(camera.view_matrix.slice(8, 11));
-}
-
-function camera_get_up(camera){
-    return vec3_normalize(camera.view_matrix.slice(4, 7));
-}
-
-function camera_get_right(camera){
-    return vec3_normalize(camera.view_matrix.slice(0, 3));
 }
 
 function update_camera_projection_matrix(gl, camera){
     let aspect_ratio = gl.canvas.width/gl.canvas.height;
     let projection_matrix = perspective_projection(rad(camera.fov),
                                 aspect_ratio,
-                                camera.near_plane,
-                                camera.far_plane);
+                                camera.z_near,
+                                camera.z_far);
     camera.projection_matrix = projection_matrix;
 }
 
 function update_camera_view_matrix(gl, camera){
-    let view_matrix = lookat_matrix(camera.position, camera.target, camera.up_vector);
-    camera.view_matrix = view_matrix;
+    let m = mat4_identity();
+    m = mat4_mat4_mul(translate_3d(camera.position), m);
+    m = mat4_mat4_mul(rotate_3d(euler_to_quat(camera.rotation)), m);
+    camera.view_matrix = mat4_invert(m);
 }
 
-function update_camera_orbit(gl, camera){
-    camera.position = [
-        Math.sin(camera.orbit.angle[1])*Math.sin(camera.orbit.angle[0]),
-        Math.cos(camera.orbit.angle[1]),
-        Math.sin(camera.orbit.angle[1])*Math.cos(camera.orbit.angle[0]),
-    ];
-    camera.position = vec3_scale(vec3_normalize(vec3_add(camera.position, camera.orbit.pivot)), camera.orbit.zoom);
-    update_camera_view_matrix(gl, camera);
-}
-
-function update_camera_lookat(gl, camera){
-    let x = camera.rotation[0];
-    let y = camera.rotation[1];
-    let forward = [
-        Math.cos(x)*Math.cos(y),
-        Math.sin(y),
-        Math.sin(x)*Math.cos(y)
-    ];
-    camera.target = vec3_add(camera.position, forward);
-    update_camera_view_matrix(gl, camera);
+function update_camera_orbit(camera){
+    let m = mat4_identity();
+        m = mat4_mat4_mul(translate_3d(camera.orbit.pivot), m);
+        m = mat4_mat4_mul(rotate_3d(euler_to_quat(main_camera.orbit.rotation)), m);
+        m = mat4_mat4_mul(translate_3d([0, 0, main_camera.orbit.zoom]), m);
+    camera.position = vec4_mat4_mul([0, 0, 0, 1], m).slice(0, 3);
+    camera.view_matrix = mat4_invert(m);
 }
