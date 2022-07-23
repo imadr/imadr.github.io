@@ -9,46 +9,6 @@ let assets_to_load = [
 let scene = [];
 let assets = {};
 
-scene.push({
-    name: "sphere",
-    mesh: "sphere_mesh",
-    shader: "sphere_shader",
-    transform: {
-        position: [0, 1, 0],
-        scale: [1, 1, 1],
-        rotation: quat_id()
-    },
-    transparent: false
-});
-
-scene.push({
-    name: "light",
-    mesh: "sphere_mesh",
-    shader: "unlit_shader",
-    transform: {
-        position: [2, 3, 0],
-        scale: [0.2, 0.2, 0.2],
-        rotation: quat_id()
-    },
-    transparent: false
-});
-
-scene.push({
-    name: "grid",
-    mesh: "plane_mesh",
-    shader: "grid_shader",
-    transform: {
-        position: [0, 0, 0],
-        scale: [1, 1, 1],
-        rotation: quat_id()
-    },
-    transparent: true
-});
-
-scene.sort(function(a, b){
-    return a.transparent ? 1 : -1;
-});
-
 let main_camera = {
     fov: 60, z_near: 0.1, z_far: 1000,
     position: [0, 1, 5], rotation: [0, 0, 0],
@@ -73,13 +33,53 @@ function resize_canvas(){
 }
 
 function init(){
+    scene.push({
+        name: "sphere",
+        mesh: assets["sphere_mesh"],
+        shader: assets["sphere_shader"],
+        transform: {
+            position: [0, 1, 0],
+            scale: [1, 1, 1],
+            rotation: quat_id()
+        },
+        transparent: false
+    });
+
+    scene.push({
+        name: "light",
+        mesh: assets["sphere_mesh"],
+        shader: assets["unlit_shader"],
+        transform: {
+            position: [2, 3, 0],
+            scale: [0.2, 0.2, 0.2],
+            rotation: quat_id()
+        },
+        transparent: false
+    });
+
+    scene.push({
+        name: "grid",
+        mesh: assets["plane_mesh"],
+        shader: assets["grid_shader"],
+        transform: {
+            position: [0, 0, 0],
+            scale: [1, 1, 1],
+            rotation: quat_id()
+        },
+        transparent: true
+    });
+
+    scene.sort(function(a, b){
+        return a.transparent ? 1 : -1;
+    });
+
     window.addEventListener("resize", resize_canvas);
     resize_canvas();
 
     update_camera_view_matrix(gl, main_camera);
 
-    set_shader_uniform(gl, assets[find_object("sphere").shader], "light_pos", find_object("light").transform.position);
-    set_shader_uniform(gl, assets[find_object("sphere").shader], "view_pos", main_camera.position);
+    set_shader_uniform(gl, find_object("sphere").shader, "light_pos", find_object("light").transform.position);
+    set_shader_uniform(gl, find_object("sphere").shader, "view_pos", main_camera.position);
 
     update();
 }
@@ -92,7 +92,7 @@ function update(){
     gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
 
     for(let i = 0; i < scene.length; i++){
-        draw(gl, assets[scene[i].mesh], assets[scene[i].shader], scene[i].transform, main_camera);
+        draw(gl, scene[i].mesh, scene[i].shader, scene[i].transform, main_camera);
     }
 
     window.requestAnimationFrame(update);
@@ -127,7 +127,7 @@ document.addEventListener("mousemove", function(e){
 
         update_camera_orbit(main_camera);
 
-        set_shader_uniform(gl, assets[find_object("sphere").shader], "view_pos", main_camera.position);
+        set_shader_uniform(gl, find_object("sphere").shader, "view_pos", main_camera.position);
     }
 });
 
@@ -136,10 +136,10 @@ document.addEventListener("wheel", function(e){
     if(Math.abs(e.deltaY) != 0){
         delta = e.deltaY/Math.abs(e.deltaY)/10;
     }
-    main_camera.orbit.zoom += delta;
+    main_camera.orbit.zoom += delta*main_camera.orbit.zoom/3;
     main_camera.orbit.zoom = Math.max(0.1, main_camera.orbit.zoom);
     update_camera_orbit(main_camera);
-    set_shader_uniform(gl, assets[find_object("sphere").shader], "view_pos", main_camera.position);
+    set_shader_uniform(gl, find_object("sphere").shader, "view_pos", main_camera.position);
 });
 
 function find_object(name){
@@ -172,5 +172,5 @@ document.addEventListener("keydown", function(e){
             break;
     }
 
-    set_shader_uniform(gl, assets[find_object("sphere").shader], "light_pos", find_object("light").transform.position);
+    set_shader_uniform(gl, find_object("sphere").shader, "light_pos", find_object("light").transform.position);
 })

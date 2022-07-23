@@ -45,15 +45,34 @@ let mesh_buffer = create_vertex_buffer(gl, teapot.buffer, teapot.attributes, tru
 let start = euler_to_quat([0, -Math.PI-Math.PI/2, 0]);
 let end = euler_to_quat([0, 0, 0]);
 
-let mesh = create_drawable(gl, {
-        position: [0, -0.7, 0],
-        scale: [0.7, 0.7, 0.7],
-        rotation: start
-    }, mesh_buffer, shader, gl.TRIANGLES, gl.LESS, gl.FRONT);
+let scene = [
+    {
+        name: "mesh",
+        mesh: mesh_buffer,
+        shader: shader,
+        transform: {
+            position: [0, 0, 0],
+            scale: [0.7, 0.7, 0.7],
+            rotation: start
+        },
+        transparent: false
+    },
+];
 
-let camera = create_camera(60, 0.1, 1000, [0, 1.5, -4], [0, 0, 0], [Math.PI/2, -Math.PI/8, 0], [0, 1, 0]);
-update_camera_projection_matrix(gl, camera);
-update_camera_lookat(gl, camera);
+let main_camera = {
+    fov: 30, z_near: 0.1, z_far: 1000,
+    position: [0, 1, 8], rotation: [0, 0, 0],
+    up_vector: [0, 1, 0],
+    view_matrix: mat4_identity(),
+    orbit: {
+        rotation: [0, 0, 0],
+        pivot: [0, 1, 0],
+        zoom: 5
+    }
+};
+
+update_camera_projection_matrix(gl, main_camera);
+update_camera_view_matrix(gl, main_camera);
 
 let ctxs = [];
 let canvas_id = ["mult", "lerp", "lerp-fixed"];
@@ -73,7 +92,7 @@ function resize_canvas(){
     width -= padding*2;
     width = Math.min(530, width);
     gl_canvas.width = width;
-    update_camera_projection_matrix(gl, camera);
+    update_camera_projection_matrix(gl, main_camera);
     for(let i = 0; i < ctxs.length; i++){
         ctxs[i].canvas.width = width;
         update(i);
@@ -85,9 +104,11 @@ function update(id){
     gl.clearColor(0, 0, 0, 0);
     gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
 
-    set_shader_uniform(gl, mesh.shader, "light_position", [1, 0, -1]);
+    set_shader_uniform(gl, scene[0].shader, "light_position", [1, 0, 1]);
 
-    draw(gl, mesh, camera);
+    for(let i = 0; i < scene.length; i++){
+        draw(gl, scene[i].mesh, scene[i].shader, scene[i].transform, main_camera);
+    }
 
     ctxs[id].clearRect(0, 0, gl_canvas.width, gl_canvas.height);
     ctxs[id].drawImage(gl_canvas, 0, 0);
@@ -101,7 +122,7 @@ let demo_lerp_playing = false;
 document.getElementById("slerp-slider-lerp").oninput = function(){
     demo_lerp_playing = false;
     clearInterval(demo_lerp_interval);
-    mesh.transform.rotation = bad_quat_slerp(start, end, parseFloat(this.value));
+    scene[0].transform.rotation = bad_quat_slerp(start, end, parseFloat(this.value));
     document.getElementById("t-value-lerp").innerHTML = (Math.round(parseFloat(this.value)*100)/100).toFixed(2)
     update(1);
 }
@@ -118,7 +139,7 @@ document.getElementById("play-demo-lerp").onclick = function(){
                 play = false;
             }
             slider.value = parseFloat(slider.value)+0.002;
-            mesh.transform.rotation = bad_quat_slerp(start, end, parseFloat(slider.value));
+            scene[0].transform.rotation = bad_quat_slerp(start, end, parseFloat(slider.value));
             t_value.innerHTML = (Math.round(parseFloat(slider.value)*100)/100).toFixed(2);
             update(1);
         }, 1);
@@ -126,7 +147,7 @@ document.getElementById("play-demo-lerp").onclick = function(){
     else{
         clearInterval(demo_lerp_interval);
         slider.value = 0;
-        mesh.transform.rotation = bad_quat_slerp(start, end, parseFloat(slider.value));
+        scene[0].transform.rotation = bad_quat_slerp(start, end, parseFloat(slider.value));
         t_value.innerHTML = (Math.round(parseFloat(slider.value)*100)/100).toFixed(2);
         update(1);
     }
@@ -137,7 +158,7 @@ let demo_lerp_fixed_playing = false;
 document.getElementById("slerp-slider-lerp-fixed").oninput = function(){
     demo_lerp_fixed_playing = false;
     clearInterval(demo_lerp_fixed_interval);
-    mesh.transform.rotation = quat_slerp(start, end, parseFloat(this.value));
+    scene[0].transform.rotation = quat_slerp(start, end, parseFloat(this.value));
     document.getElementById("t-value-lerp-fixed").innerHTML = (Math.round(parseFloat(this.value)*100)/100).toFixed(2)
     update(2);
 }
@@ -154,7 +175,7 @@ document.getElementById("play-demo-lerp-fixed").onclick = function(){
                 play = false;
             }
             slider.value = parseFloat(slider.value)+0.002;
-            mesh.transform.rotation = quat_slerp(start, end, parseFloat(slider.value));
+            scene[0].transform.rotation = quat_slerp(start, end, parseFloat(slider.value));
             t_value.innerHTML = (Math.round(parseFloat(slider.value)*100)/100).toFixed(2);
             update(2);
         }, 1);
@@ -162,13 +183,11 @@ document.getElementById("play-demo-lerp-fixed").onclick = function(){
     else{
         clearInterval(demo_lerp_fixed_interval);
         slider.value = 0;
-        mesh.transform.rotation = quat_slerp(start, end, parseFloat(slider.value));
+        scene[0].transform.rotation = quat_slerp(start, end, parseFloat(slider.value));
         t_value.innerHTML = (Math.round(parseFloat(slider.value)*100)/100).toFixed(2);
         update(2);
     }
 };
-
-// }
 
 // // quick and dirty
 // function input_parse(id){
