@@ -20,24 +20,38 @@
             padding: 0.2em 0;
         }
         .column{
-            float: left;
-            width: 50%;
+            display: flex;
+            flex-direction: column;
         }
-        .row:after{
-            content: "";
-            display: table;
-            clear: both;
+        .row{
+            display: flex;
+            flex-direction: row;
         }
-        @media screen and(max-width: 600px){
-            .column{
-                width: 100%;
+        .main .column{
+            flex: auto;
+        }
+        .main{
+            display: flex;
+            flex-direction: row;
+        }
+        @media(max-width:600px){
+            .main{
+                display: flex;
+                flex-direction: column;
+            }
+            h2{
+                margin-bottom: 0em;
             }
         }
         #image-container{
+            gap: 24px;
             display: flex;
-            justify-content: center;
+            justify-content: space-between;
             flex-wrap: wrap;
             font-size: 0;
+        }
+        #image-container a{
+            flex: auto;
         }
         video{
             width: 380px;
@@ -45,39 +59,29 @@
             padding: 0;
         }
         body{
-            max-width: 100vw;
-        }
-        .text{
-            max-width: 55rem;
-            margin-right: auto;
-            margin-left: auto;
-        }
-        .image > *{
-            width: 24vw;
+            padding-bottom: 50px;
         }
     </style>
 </head>
 <body>
-    <div class="text">
-        <nav>
-            <a href="/" style="font-size: 2em;">Imad's Website</a>
-            <span id="navbar-right" style="float: right;">
-            </span>
-        </nav>
-    </div>
+    <nav>
+        <a href="/" style="font-size: 2em;">Imad's Website</a>
+        <span id="navbar-right" style="float: right;">
+        </span>
+    </nav>
 
     <div id="image-container">
-        <a class="image" href="/demo"><img src="1.png"></a>
-        <a class="image" target="_blank" href="https://github.com/imadr/raytracer"><img src="2.png"></a>
-        <a class="image" href="/terrain-generation"><img src="3.png"></a>
-        <a class="image" target="_blank" href="https://github.com/imadr/blob"><video loop autoplay>
+        <a class="image a-no-icon" href="/demo"><img src="1.png"></a>
+        <a class="image a-no-icon" target="_blank" href="https://github.com/imadr/raytracer"><img src="2.png"></a>
+        <a class="image a-no-icon" href="/terrain-generation"><img src="3.png"></a>
+        <a class="image a-no-icon" target="_blank" href="https://github.com/imadr/blob"><video loop autoplay>
             <source src="4.webm" type="video/webm">
         </video></a>
     </div>
 
-    <div class="text">
+    <div class="main">
         <div class="column">
-            <div class="row">
+            <div class="column">
                 <h2>articles</h2>
                 <ul>
                     <li><a href="raymarching-explained-interactively/">Raymarching explained interactively</a></li>
@@ -86,7 +90,7 @@
                     <li><a href="cross-platform-window-in-c/">Cross-platform window in C</a></li>
                 </ul>
             </div>
-            <div class="row">
+            <div class="column">
                 <h2>projects</h2>
                 <ul>
                     <li><a target="_blank" href="https://github.com/imadr/glsl-viewer">GLSL sandbox</a></li>
@@ -94,23 +98,23 @@
                     <li><a target="_blank" href="https://github.com/imadr/game">Game engine written in C</a></li>
                 </ul>
             </div>
-            <div class="row">
-                <h2>random stuff</h2>
-                <ul>
-                    <li><a href="color-picker/">Color picker</a></li>
-                    <li><a href="japanese-learning/">Japanese kana learning</a></li>
-                    <li><a href="websites/">Cool websites</a></li>
-                </ul>
-            </div>
         </div>
         <div class="column">
-            <div class="row">
+            <div class="column">
                 <h2>contact</h2>
                 <ul>
                     <li><a href="mailto:imadr.codes@gmail.com">Email</a></li>
                     <li><a href="https://github.com/imadr">Github</a></li>
                     <li><a href="https://www.shadertoy.com/user/imadr">Shadertoy</a></li>
                     <li><a href="https://twitter.com/imadr_">Twitter</a></li>
+                </ul>
+            </div>
+            <div class="column">
+                <h2>random stuff</h2>
+                <ul>
+                    <li><a href="color-picker/">Color picker</a></li>
+                    <li><a href="japanese-learning/">Japanese kana learning</a></li>
+                    <li><a href="websites/">Cool websites</a></li>
                 </ul>
             </div>
         </div>

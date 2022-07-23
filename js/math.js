@@ -72,6 +72,15 @@ function mat4_vec4_mul(m, v){
     ];
 }
 
+function vec4_mat4_mul(v, m){
+    return [
+        v[0]*m[0]+v[1]*m[4]+v[2]*m[8]+v[3]*m[12],
+        v[0]*m[1]+v[1]*m[5]+v[2]*m[9]+v[3]*m[13],
+        v[0]*m[2]+v[1]*m[6]+v[2]*m[10]+v[3]*m[14],
+        v[0]*m[3]+v[1]*m[7]+v[2]*m[11]+v[3]*m[15]
+    ];
+}
+
 function mat3_identity(){
     return [
         1, 0, 0,
@@ -95,6 +104,53 @@ function mat4_transpose(m){
         t[i] = m[(i%4*4)+Math.floor(i/4)];
     }
     return t;
+}
+
+function mat4_det(m){
+    return m[3]*m[6]*m[9]*m[12] - m[2]*m[7]*m[9]*m[12] - m[3]*m[5]*m[10]*m[12] + m[1]*m[7]*m[10]*m[12]+
+           m[2]*m[5]*m[11]*m[12] - m[1]*m[6]*m[11]*m[12] - m[3]*m[6]*m[8]*m[13] + m[2]*m[7]*m[8]*m[13]+
+           m[3]*m[4]*m[10]*m[13] - m[0]*m[7]*m[10]*m[13] - m[2]*m[4]*m[11]*m[13] + m[0]*m[6]*m[11]*m[13]+
+           m[3]*m[5]*m[8]*m[14] - m[1]*m[7]*m[8]*m[14] - m[3]*m[4]*m[9]*m[14] + m[0]*m[7]*m[9]*m[14]+
+           m[1]*m[4]*m[11]*m[14] - m[0]*m[5]*m[11]*m[14] - m[2]*m[5]*m[8]*m[15] + m[1]*m[6]*m[8]*m[15]+
+           m[2]*m[4]*m[9]*m[15] - m[0]*m[6]*m[9]*m[15] - m[1]*m[4]*m[10]*m[15] + m[0]*m[5]*m[10]*m[15];
+}
+
+function mat4_scale(m, s){
+    return [s*m[0], s*m[1], s*m[2], s*m[3], s*m[4], s*m[5], s*m[6], s*m[7], s*m[8], s*m[9], s*m[10], s*m[11], s*m[12], s*m[13], s*m[14], s*m[15]];
+}
+
+function mat4_invert(m){
+    let det = mat4_det(m);
+    m = [
+        m[6]*m[11]*m[13] - m[7]*m[10]*m[13] + m[7]*m[9]*m[14] - m[5]*m[11]*m[14] - m[6]*m[9]*m[15] + m[5]*m[10]*m[15],
+        m[3]*m[10]*m[13] - m[2]*m[11]*m[13] - m[3]*m[9]*m[14] + m[1]*m[11]*m[14] + m[2]*m[9]*m[15] - m[1]*m[10]*m[15],
+        m[2]*m[7]*m[13] - m[3]*m[6]*m[13] + m[3]*m[5]*m[14] - m[1]*m[7]*m[14] - m[2]*m[5]*m[15] + m[1]*m[6]*m[15],
+        m[3]*m[6]*m[9] - m[2]*m[7]*m[9] - m[3]*m[5]*m[10] + m[1]*m[7]*m[10] + m[2]*m[5]*m[11] - m[1]*m[6]*m[11],
+        m[7]*m[10]*m[12] - m[6]*m[11]*m[12] - m[7]*m[8]*m[14] + m[4]*m[11]*m[14] + m[6]*m[8]*m[15] - m[4]*m[10]*m[15],
+        m[2]*m[11]*m[12] - m[3]*m[10]*m[12] + m[3]*m[8]*m[14] - m[0]*m[11]*m[14] - m[2]*m[8]*m[15] + m[0]*m[10]*m[15],
+        m[3]*m[6]*m[12] - m[2]*m[7]*m[12] - m[3]*m[4]*m[14] + m[0]*m[7]*m[14] + m[2]*m[4]*m[15] - m[0]*m[6]*m[15],
+        m[2]*m[7]*m[8] - m[3]*m[6]*m[8] + m[3]*m[4]*m[10] - m[0]*m[7]*m[10] - m[2]*m[4]*m[11] + m[0]*m[6]*m[11],
+        m[5]*m[11]*m[12] - m[7]*m[9]*m[12] + m[7]*m[8]*m[13] - m[4]*m[11]*m[13] - m[5]*m[8]*m[15] + m[4]*m[9]*m[15],
+        m[3]*m[9]*m[12] - m[1]*m[11]*m[12] - m[3]*m[8]*m[13] + m[0]*m[11]*m[13] + m[1]*m[8]*m[15] - m[0]*m[9]*m[15],
+        m[1]*m[7]*m[12] - m[3]*m[5]*m[12] + m[3]*m[4]*m[13] - m[0]*m[7]*m[13] - m[1]*m[4]*m[15] + m[0]*m[5]*m[15],
+        m[3]*m[5]*m[8] - m[1]*m[7]*m[8] - m[3]*m[4]*m[9] + m[0]*m[7]*m[9] + m[1]*m[4]*m[11] - m[0]*m[5]*m[11],
+        m[6]*m[9]*m[12] - m[5]*m[10]*m[12] - m[6]*m[8]*m[13] + m[4]*m[10]*m[13] + m[5]*m[8]*m[14] - m[4]*m[9]*m[14],
+        m[1]*m[10]*m[12] - m[2]*m[9]*m[12] + m[2]*m[8]*m[13] - m[0]*m[10]*m[13] - m[1]*m[8]*m[14] + m[0]*m[9]*m[14],
+        m[2]*m[5]*m[12] - m[1]*m[6]*m[12] - m[2]*m[4]*m[13] + m[0]*m[6]*m[13] + m[1]*m[4]*m[14] - m[0]*m[5]*m[14],
+        m[1]*m[6]*m[8] - m[2]*m[5]*m[8] + m[2]*m[4]*m[9] - m[0]*m[6]*m[9] - m[1]*m[4]*m[10] + m[0]*m[5]*m[10]
+    ];
+    return mat4_scale(m, 1/det);
+}
+
+function print_mat4(m){
+    let str = "";
+    for(let i = 0; i < m.length; i++){
+        let n = m[i];
+        n = n.toFixed(4);
+        str += n+"\t";
+        if(i%4 == 3) str += "\n";
+    }
+    console.log(str);
 }
 
 function translate_3d(t){
@@ -128,17 +184,17 @@ function rotate_3d(q){
 }
 
 function perspective_projection(fov, aspect_ratio, z_near, z_far){
-    let f = 1/Math.tan(fov/2);
+    let f = Math.tan(fov/2);
     return [
-        f/aspect_ratio, 0, 0, 0,
-        0, f, 0, 0,
-        0, 0, (z_far+z_near)/(z_near-z_far), -1,
-        0, 0, (2*z_far*z_near)/(z_near-z_far), 0
+        1/(f*aspect_ratio), 0, 0, 0,
+        0, 1/f, 0, 0,
+        0, 0, z_far/(z_near-z_far), -1,
+        0, 0, -(z_far*z_near)/(z_far-z_near), 0
     ];
 }
 
-function lookat_matrix(camera, target, world_up){
-    let forward = vec3_normalize(vec3_sub(target, camera));
+function lookat_matrix(from, to, world_up){
+    let forward = vec3_normalize(vec3_sub(to, from));
     let right = vec3_normalize(vec3_cross(forward, world_up));
     let up = vec3_cross(right, forward);
     forward = vec3_scale(forward, -1);
@@ -147,9 +203,9 @@ function lookat_matrix(camera, target, world_up){
         right[0], up[0], forward[0], 0,
         right[1], up[1], forward[1], 0,
         right[2], up[2], forward[2], 0,
-        -vec3_dot(right, camera),
-        -vec3_dot(up, camera),
-        -vec3_dot(forward, camera), 1
+        -vec3_dot(right, from),
+        -vec3_dot(up, from),
+        -vec3_dot(forward, from), 1
     ];
 }
 
