@@ -17,4 +17,4 @@ jobs:
           host: ${{ secrets.SERVER_IP }}
           username: ${{ secrets.SERVER_USERNAME }}
           key: ${{ secrets.KEY }}
-          script: pwd
+          script: cd website && git pull origin master
