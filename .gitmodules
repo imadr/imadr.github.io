@@ -1,0 +1,3 @@
+[submodule "japanese-learning"]
+	path = japanese-learning
+	url = git@github.com:imadr/japanese-learning.git
