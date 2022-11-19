@@ -85,7 +85,7 @@ let canvas = document.getElementById("canvas_");
 let ctx = document.getElementById("canvas_").getContext("2d");
 let picker_type = "hsv";
 let color_width = 200;
-let margin_right = 20;
+let margin_right = 25;
 let bar_width = 11;
 let padding = 30;
 let cursor_size = 10;
@@ -106,7 +106,7 @@ function setup_copy(){
         (function(){
             svg.onclick = function(){
                 if(navigator.clipboard !== undefined){
-                    navigator.clipboard.writeText(this.parentNode.parentNode.getElementsByTagName("input")[0]);
+                    navigator.clipboard.writeText(this.parentNode.parentNode.getElementsByTagName("input")[0].value);
                 }
             }
         })();
@@ -175,7 +175,7 @@ function check_cursor(x, y){
 }
 
 function generate_picker_buffer(){
-    canvas.width = (margin_right+bar_width)*3+color_width+padding*2;
+    canvas.width = (margin_right+bar_width)*1+color_width+padding*2;
     canvas.height = color_width+padding*2;
 
     let d = ctx.createImageData(canvas.width, canvas.height);
