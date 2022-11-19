@@ -10,13 +10,7 @@
             padding: 0;
             font-family: monospace;
             text-align: center;
-            padding-top: 10vh;
-        }
-        canvas{
-        }
-        input[type=text]{
-            font-family: monospace;
-            width: 300px;
+            padding-top: 4vh;
         }
         table{
             margin-right: auto;
@@ -25,7 +19,29 @@
         td:first-child{
             text-align: left;
         }
+        td:nth-child(2){
+            width: 250px;
+        }
+        input[type=text]{
+            font-family: monospace;
+            width: 100% !important;
+        }
+        .decimals_{
+            width: 100%;
+            display: flex;
+            justify-content: center;
+            align-content: center;
+        }
+        .decimals_ input{
+            flex: 2;
+            vertical-align: text-bottom;
+            margin-left: 11px;
+        }
+        .decimals_ label{
+            line-height: 1.8;
+        }
         .copy_icon{
+            padding-left: 8px;
             cursor: pointer;
         }
     </style>
@@ -35,38 +51,46 @@
 <table>
 <tr>
     <td><label for="rgb_hex">rgb hex:</label></td>
-    <td><input id="rgb_hex"></td>
+    <td><input type="text" id="rgb_hex"></td>
     <td class="copy_icon"></td>
 </tr>
 <tr>
     <td><label for="rgb_uint">rgb (uint, uint, uint):</label></td>
-    <td><input id="rgb_uint"></td>
+    <td><input type="text" id="rgb_uint"></td>
     <td class="copy_icon"></td>
 </tr>
 <tr>
     <td><label for="rgb_float">rgb (float, float, float):</label></td>
-    <td><input id="rgb_float"></td>
+    <td><input type="text" id="rgb_float"></td>
     <td class="copy_icon"></td>
 </tr>
 <tr>
     <td><label for="hsv_">hsv (deg, %, %):</label></td>
-    <td><input id="hsv_"></td>
+    <td><input type="text" id="hsv_"></td>
     <td class="copy_icon"></td>
 </tr>
 <tr>
     <td><label for="hsv_float">hsv (float, float, float):</label></td>
-    <td><input id="hsv_float"></td>
+    <td><input type="text" id="hsv_float"></td>
     <td class="copy_icon"></td>
 </tr>
 <tr>
     <td><label for="hsl_">hsl (deg, %, %):</label></td>
-    <td><input id="hsl_"></td>
+    <td><input type="text" id="hsl_"></td>
     <td class="copy_icon"></td>
 </tr>
 <tr>
     <td><label for="hsl_float">hsl (float, float, float):</label></td>
-    <td><input id="hsl_float"></td>
+    <td><input type="text" id="hsl_float"></td>
     <td class="copy_icon"></td>
+</tr>
+<tr>
+    <td colspan="2">
+        <div class="decimals_">
+        <label for="decimals">decimal places</label>
+        <input type="range" id="decimals" value="3" min="0" max="10">
+        </div>
+    </td>
 </tr>
 </table>
 
@@ -81,6 +105,8 @@ let current_color = {
     saturation: 1,
 };
 
+let color_history = [];
+
 let canvas = document.getElementById("canvas_");
 let ctx = document.getElementById("canvas_").getContext("2d");
 let picker_type = "hsv";
@@ -93,6 +119,7 @@ let color_cursor_dragging = false;
 let hue_cursor_dragging = false;
 let color_cursor = [0, 0];
 let hue_cursor = 0;
+let decimals = parseInt(document.getElementById("decimals").value);
 
 setup_copy();
 set_current_color(current_color);
@@ -393,25 +420,39 @@ function hsv_to_rgb(hsv){
     return [r+m, g+m, b+m];
 }
 
+function rgb_to_hex(rgb){
+    return "#"+
+        ("00"+Math.floor(rgb[0]*255).toString(16)).slice(-2)+
+        ("00"+Math.floor(rgb[1]*255).toString(16)).slice(-2)+
+        ("00"+Math.floor(rgb[2]*255).toString(16)).slice(-2);
+}
+
 function set_current_color(color){
     current_color.rgb = color.rgb;
     current_color.hue = color.hue;
     current_color.saturation = color.saturation;
 
-    document.getElementById("rgb_hex").value = "#"+Math.floor(current_color.rgb[0]*255).toString(16)+Math.floor(current_color.rgb[1]*255).toString(16)+Math.floor(current_color.rgb[2]*255).toString(16);
+    document.getElementById("rgb_hex").value = rgb_to_hex(current_color.rgb);
     document.getElementById("rgb_uint").value = Math.floor(current_color.rgb[0]*255)+", "+Math.floor(current_color.rgb[1]*255)+", "+Math.floor(current_color.rgb[2]*255);
-    document.getElementById("rgb_float").value = (current_color.rgb[0]).toFixed(3)+", "+(current_color.rgb[1]).toFixed(3)+", "+(current_color.rgb[2]).toFixed(3);
+    document.getElementById("rgb_float").value = (current_color.rgb[0]).toFixed(decimals)+", "+(current_color.rgb[1]).toFixed(decimals)+", "+(current_color.rgb[2]).toFixed(decimals);
     let hsv = rgb_to_hsv(current_color.rgb);
-    hsv = [current_color.hue, current_color.saturation, hsv[1]];
+    // hsv = [current_color.hue, current_color.saturation, hsv[1]];
     let hsl = rgb_to_hsl(current_color.rgb);
-    hsl = [current_color.hue, current_color.saturation, hsl[1]];
-    document.getElementById("hsv_").value = (hsv[0]*360).toFixed(3)+", "+(hsv[1]*100).toFixed(3)+", "+(hsv[2]*100).toFixed(3);
-    document.getElementById("hsv_float").value = (hsv[0]).toFixed(3)+", "+(hsv[1]).toFixed(3)+", "+(hsv[2]).toFixed(3);
-    document.getElementById("hsl_").value = (hsl[0]*360).toFixed(3)+", "+(hsl[1]*100).toFixed(3)+", "+(hsl[2]*100).toFixed(3);
-    document.getElementById("hsl_float").value = (hsl[0]).toFixed(3)+", "+(hsl[1]).toFixed(3)+", "+(hsl[2]).toFixed(3);
+    // hsl = [current_color.hue, current_color.saturation, hsl[1]];
+    document.getElementById("hsv_").value = (hsv[0]*360).toFixed(decimals)+", "+(hsv[1]*100).toFixed(decimals)+", "+(hsv[2]*100).toFixed(decimals);
+    document.getElementById("hsv_float").value = (hsv[0]).toFixed(decimals)+", "+(hsv[1]).toFixed(decimals)+", "+(hsv[2]).toFixed(decimals);
+    document.getElementById("hsl_").value = (hsl[0]*360).toFixed(decimals)+", "+(hsl[1]*100).toFixed(decimals)+", "+(hsl[2]*100).toFixed(decimals);
+    document.getElementById("hsl_float").value = (hsl[0]).toFixed(decimals)+", "+(hsl[1]).toFixed(decimals)+", "+(hsl[2]).toFixed(decimals);
+    color_history.unshift(JSON.parse(JSON.stringify(current_color)));
+    color_history = color_history.slice(0,5)
     regenerate_cursors();
     draw();
 }
+
+document.getElementById("decimals").addEventListener("input", function(e){
+    decimals = parseInt(this.value);
+    set_current_color(current_color);
+});
 
 document.getElementById("rgb_hex").addEventListener("input", function(e){
     let rgb = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(this.value);
@@ -424,7 +465,8 @@ document.getElementById("rgb_hex").addEventListener("input", function(e){
             if(isNaN(x)) x = 0;
             return x;
         }) : null;
-    if(col != null) set_current_color({rgb: col, hue: rgb_to_hsv(col)[0]});
+    let hsv = rgb_to_hsv(col);
+    if(col != null) set_current_color({rgb: col, hue: hsv[0], saturation: hsv[1]});
 });
 
 document.getElementById("rgb_uint").addEventListener("input", function(e){
@@ -436,7 +478,8 @@ document.getElementById("rgb_uint").addEventListener("input", function(e){
     while(col.length < 3){
         col.push(0);
     }
-    set_current_color({rgb: col, hue: rgb_to_hsv(col)[0]});
+    let hsv = rgb_to_hsv(col);
+    set_current_color({rgb: col, hue: hsv[0], saturation: hsv[1]});
 });
 
 document.getElementById("rgb_float").addEventListener("input", function(e){
@@ -448,7 +491,8 @@ document.getElementById("rgb_float").addEventListener("input", function(e){
     while(col.length < 3){
         col.push(0);
     }
-    set_current_color({rgb: col, hue: rgb_to_hsv(col)[0]});
+    let hsv = rgb_to_hsv(col);
+    set_current_color({rgb: col, hue: hsv[0], saturation: hsv[1]});
 });
 
 document.getElementById("hsv_").addEventListener("input", function(e){
@@ -462,7 +506,7 @@ document.getElementById("hsv_").addEventListener("input", function(e){
     while(col.length < 3){
         col.push(0);
     }
-    set_current_color({rgb: hsv_to_rgb(col), hue: col[0]});
+    set_current_color({rgb: hsv_to_rgb(col), hue: col[0], saturation: col[1]});
 });
 
 document.getElementById("hsv_float").addEventListener("input", function(e){
@@ -474,7 +518,7 @@ document.getElementById("hsv_float").addEventListener("input", function(e){
     while(col.length < 3){
         col.push(0);
     }
-    set_current_color({rgb: hsv_to_rgb(col), hue: col[0]});
+    set_current_color({rgb: hsv_to_rgb(col), hue: col[0], saturation: col[1]});
 });
 
 document.getElementById("hsl_").addEventListener("input", function(e){
@@ -488,7 +532,7 @@ document.getElementById("hsl_").addEventListener("input", function(e){
     while(col.length < 3){
         col.push(0);
     }
-    set_current_color({rgb: hsl_to_rgb(col), hue: col[0]});
+    set_current_color({rgb: hsl_to_rgb(col), hue: col[0], saturation: col[1]});
 });
 
 document.getElementById("hsl_float").addEventListener("input", function(e){
@@ -500,18 +544,20 @@ document.getElementById("hsl_float").addEventListener("input", function(e){
     while(col.length < 3){
         col.push(0);
     }
-    set_current_color({rgb: hsl_to_rgb(col), hue: col[0]});
+    set_current_color({rgb: hsl_to_rgb(col), hue: col[0], saturation: col[1]});
 });
 
 document.getElementById("hsv_picker_radio").checked = picker_type == "hsv";
 document.getElementById("hsv_picker_radio").onchange = function(){
     picker_type = "hsv";
+    regenerate_cursors();
     regenerate_color();
     draw();
 };
 document.getElementById("hsl_picker_radio").checked = picker_type == "hsl";
 document.getElementById("hsl_picker_radio").onchange = function(){
     picker_type = "hsl";
+    regenerate_cursors();
     regenerate_color();
     draw();
 };
