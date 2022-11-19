@@ -404,8 +404,7 @@ function set_current_color(color){
     let hsv = rgb_to_hsv(current_color.rgb);
     hsv = [current_color.hue, current_color.saturation, hsv[1]];
     let hsl = rgb_to_hsl(current_color.rgb);
-    hsl.hue = current_color.hue;
-    hsl.saturation = current_color.saturation;
+    hsl = [current_color.hue, current_color.saturation, hsl[1]];
     document.getElementById("hsv_").value = (hsv[0]*360).toFixed(3)+", "+(hsv[1]*100).toFixed(3)+", "+(hsv[2]*100).toFixed(3);
     document.getElementById("hsv_float").value = (hsv[0]).toFixed(3)+", "+(hsv[1]).toFixed(3)+", "+(hsv[2]).toFixed(3);
     document.getElementById("hsl_").value = (hsl[0]*360).toFixed(3)+", "+(hsl[1]*100).toFixed(3)+", "+(hsl[2]*100).toFixed(3);
