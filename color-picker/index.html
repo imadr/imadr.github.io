@@ -10,17 +10,18 @@
             padding: 0;
             font-family: monospace;
             text-align: center;
-            padding-top: 4vh;
+            padding-top: 1vh;
         }
         table{
             margin-right: auto;
             margin-left: auto;
+            width: 40vw;
         }
         td:first-child{
             text-align: left;
         }
         td:nth-child(2){
-            width: 250px;
+            width: 21vw;
         }
         input[type=text]{
             font-family: monospace;
@@ -104,8 +105,6 @@ let current_color = {
     hue: 0,
     saturation: 1,
 };
-
-let color_history = [];
 
 let canvas = document.getElementById("canvas_");
 let ctx = document.getElementById("canvas_").getContext("2d");
@@ -443,8 +442,6 @@ function set_current_color(color){
     document.getElementById("hsv_float").value = (hsv[0]).toFixed(decimals)+", "+(hsv[1]).toFixed(decimals)+", "+(hsv[2]).toFixed(decimals);
     document.getElementById("hsl_").value = (hsl[0]*360).toFixed(decimals)+", "+(hsl[1]*100).toFixed(decimals)+", "+(hsl[2]*100).toFixed(decimals);
     document.getElementById("hsl_float").value = (hsl[0]).toFixed(decimals)+", "+(hsl[1]).toFixed(decimals)+", "+(hsl[2]).toFixed(decimals);
-    color_history.unshift(JSON.parse(JSON.stringify(current_color)));
-    color_history = color_history.slice(0,5)
     regenerate_cursors();
     draw();
 }
