@@ -361,6 +361,7 @@ function draw_canvas_shapes_sdf(ctx, $){
             dist = tmp_dist;
             closest_point = tmp_closest_point;
         }
+        draw_arrow(ctx, $.point, tmp_closest_point, "#aaa");
     }
     draw_arrow(ctx, $.point, closest_point, "#ea3333");
     draw_circle(ctx, $.point, 6, true, "#2c66c9");
@@ -373,7 +374,7 @@ function draw_canvas_raymarching_1(ctx, $){
     draw_rect(ctx, [ctx.canvas.width/2, ctx.canvas.height/2], [ctx.canvas.width, ctx.canvas.height], true, "#fff");
 
     if($.dragging == undefined) $.dragging = null;
-    if($.point == undefined) $.point = [420, 158];
+    if($.point == undefined) $.point = [150, 140];
     let draggables = ["point"];
     update_draggables($, draggables);
 
@@ -403,6 +404,7 @@ function draw_canvas_raymarching_1(ctx, $){
     let current_point = camera;
     let path = vec2_normalize(vec2_sub($.point, camera));
     let dist_sum = 0;
+    let points = [];
     for(let t = 0; t < 100; t++){
         let dist = Number.POSITIVE_INFINITY;
         let closest_point;
@@ -423,14 +425,18 @@ function draw_canvas_raymarching_1(ctx, $){
         if(dist <= 3) break;
         if(dist >= 500) break;
         draw_circle(ctx, current_point, dist, false, "#ea3333");
+        points.push(current_point);
         dist_sum += dist;
         current_point = vec2_add(camera, vec2_scale(path, dist_sum));
     }
-
     ctx.lineWidth = 3;
     draw_line(ctx, camera, current_point, "#000");
-    draw_circle(ctx, $.point, 6, true, "#2c66c9");
+    draw_arrow(ctx, camera, $.point, "#2c66c9");
     draw_circle(ctx, camera, 8, true, "#29c643");
+    points.shift();
+    for(let point of points){
+        draw_circle(ctx, point, 5, true, "#ea3333");
+    }
 }
 
 function draw_canvas_raymarching_2(ctx, $){
@@ -446,9 +452,12 @@ function draw_canvas_raymarching_2(ctx, $){
 
     let circle_pos = [410, ctx.canvas.height/2];
     let circle_radius = 100;
+    ctx.lineWidth = 4;
+    draw_circle(ctx, circle_pos, circle_radius, false, "#000");
 
-    draw_circle(ctx, camera, 8, true, "#000");
     let ray_spacing = view_length*2/(nb_rays-1);
+
+    let points = [];
     ctx.lineWidth = 1;
     for(let i = 0; i < nb_rays; i++){
         let ray_point = [camera[0]+near_plane, (ctx.canvas.height/2)-view_length+i*ray_spacing];
@@ -457,21 +466,32 @@ function draw_canvas_raymarching_2(ctx, $){
         let current_point = ray_point;
         for(let t = 0; t < nb_iterations; t++){
             let [closest_point, dist] = point_circle_dist(current_point, circle_pos, circle_radius);
-            // draw_circle(ctx, current_point, dist, false, "#ea3333");
-            let new_point = vec2_add(current_point, vec2_scale(ray, dist));
+                let new_point = vec2_add(current_point, vec2_scale(ray, dist));
             draw_line(ctx, current_point, new_point, "#000");
-            draw_circle(ctx, new_point, 5, true, "#000");
             current_point = new_point;
-            if(dist <= 3) break;
+            if(dist <= 3){
+                points.push([new_point, true]);
+                break;
+            }
+            points.push([new_point, false]);
             if(dist >= 500) break;
         }
     }
 
+    points.sort(function(a, b){
+        return a[1] > b[1];
+    });
+    for(let point of points){
+        draw_circle(ctx, point[0], 5, true, point[1] ? "#ea3333" : "#000");
+    }
+
     ctx.lineWidth = 4;
-    draw_circle(ctx, circle_pos, circle_radius, false, "#000");
+    draw_circle(ctx, camera, 8, true, "#29c643");
     draw_line(ctx,
         [camera[0]+near_plane, ctx.canvas.height/2-view_length],
-        [camera[0]+near_plane, ctx.canvas.height/2+view_length], "#000");
+        [camera[0]+near_plane, ctx.canvas.height/2+view_length], "#29c643");
+    draw_line(ctx, camera, [camera[0]+near_plane, ctx.canvas.height/2+view_length], "#29c643");
+    draw_line(ctx, camera, [camera[0]+near_plane, ctx.canvas.height/2-view_length], "#29c643");
 }
 
 let canvases_id = [
@@ -507,11 +527,15 @@ let raymarching_animation;
 document.getElementById("raymarching-play").onclick = function(){
     clearInterval(raymarching_animation);
     let current_iteration = 0;
-    raymarching_animation = setInterval(function(){
+    function f(){
         document.getElementById("iterations").value = current_iteration;
         draw_canvas_raymarching_2(ctxs[5], canvas_vars[5], [0, 0], 0);
         current_iteration++;
-        if(current_iteration > 10) clearInterval(raymarching_animation);
+        if(current_iteration > document.getElementById("iterations").max) clearInterval(raymarching_animation);
+    }
+    f();
+    raymarching_animation = setInterval(function(){
+        f();
     }, 400);
 };
 
@@ -607,6 +631,7 @@ let gl_canvases_id = [
    "canvas-webgl-1",
    "canvas-webgl-2",
    "canvas-webgl-3",
+   "canvas-webgl-4",
 ];
 
 let fragment_shaders = [
@@ -692,8 +717,65 @@ let fragment_shaders = [
 
     float scene(vec3 point){
         float sphere1 = sphere(point, vec3(-0.7, 0., 2.), 0.5);
+        float sphere2 = sphere(point, vec3(0, -100.4, 2.), 100.0);
         float box1 = box(point, vec3(0.7, 0., 2.), vec3(0.4, 0.4, 0.4));
-        return min(sphere1, box1);
+        return min(sphere1, min(sphere2, box1));
+    }
+
+    float march(vec3 ray_origin, vec3 ray_direction){
+        vec3 current_point = ray_origin;
+        float total_dist = 0.;
+        for(int i = 0; i < march_max_iterations; i++){
+            current_point = ray_origin+ray_direction*total_dist;
+            float dist = scene(current_point);
+            total_dist += dist;
+            if(dist < min_march_dist){
+                break;
+            }
+            if(total_dist > max_march_dist){
+                break;
+            }
+        }
+        return total_dist;
+    }
+
+    void main(){
+        vec2 uv = vec2(position.x, position.y*aspect_ratio);
+
+        vec3 ray_origin = vec3(0.);
+        vec3 ray_direction = normalize(vec3(uv.x, uv.y, 1.)-ray_origin);
+        float dist = march(ray_origin, ray_direction);
+        dist /= 3.;
+        frag_color = vec4(vec3(dist), 1.);
+    }`,
+
+    `#version 300 es
+    precision highp float;
+
+    in vec3 position;
+
+    uniform float aspect_ratio;
+
+    out vec4 frag_color;
+
+    int march_max_iterations = 100;
+    float min_march_dist = 0.001;
+    float max_march_dist = 1000.;
+
+    float sphere(vec3 point, vec3 position, float radius){
+        return length(point-position)-radius;
+    }
+
+    float box(vec3 point, vec3 position, vec3 size){
+        vec3 d = abs(point-position)-size;
+        return min(max(d.x, max(d.y, d.z)), 0.0)+length(max(d, 0.0));
+    }
+
+    float scene(vec3 point){
+        float sphere1 = sphere(point, vec3(-0.7, 0., 2.), 0.5, vec3(1., 0., 0.));
+        float sphere2 = sphere(point, vec3(0, -100.4, 2.), 100.0, vec3(0., 1., 0.));
+        float box1 = box(point, vec3(0.7, 0., 2.), vec3(0.4, 0.4, 0.4));
+        return min(sphere1, min(sphere2, box1));
     }
 
     float march(vec3 ray_origin, vec3 ray_direction){
