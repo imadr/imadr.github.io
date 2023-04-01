@@ -137,3 +137,8 @@ input{
     border: 1px solid;
     border-radius: 3px;
 }
+.article-date{
+    font-size: small;
+    color: grey;
+    margin-top: -20px;
+}
