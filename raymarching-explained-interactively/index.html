@@ -265,7 +265,7 @@
         <div class="editor" id="canvas-webgl-1-editor"></div>
     </div>
 
-    <p>Just like how we did in 2D, the idea is to send a ray for each pixel on the screen. The view frustum extends from the camera towards the corners of the screen.<br>By iterativaly moving the ray along some direction, we test whether we hit an object (if the distance is below a certain minimum) or if the ray goes to infinity (if the distance is above a maximum).</p>
+    <p>Just like how we did in 2D, the idea is to send a ray for each pixel on the screen. The view frustum extends from the camera towards the corners of the screen.<br>By iteratively moving the ray along some direction, we test whether we hit an object (if the distance is below a certain minimum) or if the ray goes to infinity (if the distance is above a maximum).</p>
     <img src="3d.png" style="display: block;margin-right: auto;margin-left: auto;">
 
     <p>The equation of the SDF for a 3D sphere is basically the same for the 2D circle, in this shader we display the depth (distance) of each point in the scene composed of a sphere:</p>
@@ -286,7 +286,7 @@
         <div class="editor" id="canvas-webgl-4-editor"></div>
     </div>
 
-    <p>And if we compute the normals and do some basic lighting calcuations, we can add diffuse shading to our objects:</p>
+    <p>And if we compute the normals and do some basic lighting calculations, we can add diffuse shading to our objects:</p>
     <div class="shader-editor">
         <canvas id="canvas-webgl-5"></canvas>
         <div class="editor" id="canvas-webgl-5-editor"></div>
