@@ -5,16 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Raymarching explained interactively</title>
     <link rel="stylesheet" href="/css/style.css">
-    <link rel="stylesheet" href="/css/highlight.css">
-    <script src="/js/highlight.js"></script>
     <style>
-        canvas{
-            padding-left: 0;
-            padding-right: 0;
-            margin-left: auto;
-            margin-right: auto;
-            display: block;
-        }
         li{
             margin-bottom: 0.5em;
         }
@@ -101,6 +92,54 @@
             font-size: 1em;
             cursor: pointer;
         }
+        pre{
+            border-radius: inherit !important;
+            padding: inherit !important;
+            margin-bottom: inherit !important;
+            background-color: inherit !important;
+            color: inherit !important;
+            word-wrap: inherit !important;
+            white-space: inherit !important;
+        }
+        .shader-editor{
+            display: flex;
+            width: 100%;
+            height: 400px;
+        }
+        .editor{
+            flex: 1;
+            position: relative;
+        }
+        canvas{
+            padding-left: 0;
+            padding-right: 0;
+            display: block;
+            margin-right: auto;
+            margin-left: auto;
+        }
+        .ace_scrollbar{
+            scrollbar-width: thin;
+        }
+        .compile-button{
+            z-index: 1000;
+            position: absolute;
+            bottom: 0;
+            right: 0;
+            background-color: rgb(22, 119, 255);
+            color: white;
+            border: none;
+            border-radius: 0;
+            border-top-left-radius: 5px;
+            padding: 5px;
+            padding-left: 8px;
+            font-size: 1.5em;
+            cursor: pointer;
+        }
+        .marker{
+            position:absolute;
+            background:rgba(100,200,100,0.5);
+            z-index:20;
+        }
     </style>
 </head>
 <body>
@@ -110,7 +149,7 @@
         </span>
     </nav>
 
-    <h1>Raymarching explained interactively (WIP)</h1>
+    <h1>Raymarching explained interactively</h1>
 
     <h2 id="introduction"><a href="#introduction">Introduction</a></h2>
     <p>
@@ -118,10 +157,6 @@
         One of the impressive things about demos is that there is <strong>no 3D geometry whatsoever</strong>. All the objects that make up the scene are generated in real time using mathematical functions.
     </p>
     <p>In this interactive tutorial, we will learn how the raymarching algorithm works from the ground up and create our own raymarcher with shaders.</p>
-    <!-- <p>
-        A fragment shader is a program that is executed in the graphics card. Usually in 3D applications like video games, two types of shaders are used: the <strong>vertex shader</strong>, which is executed once every frame for each point of each 3D model in the scene, and the fragment shader, which is executed for each pixel of the screen.
-    </p>
- -->
     <h2 id="signed-distance-function"><a href="#signed-distance-function">Signed distance function</a></h2>
 
     <p>Before diving into the raymarching algorithm, we need to talk about distances.</p>
@@ -221,44 +256,52 @@
 
     <h2 id="going-3d"><a href="#going-3d">Going 3D</a></h2>
     <p>Until now, we have only seen how raymarching works in two dimensions. To do 3D rendering we are going to use a <strong>fragment shader.</strong></p>
+    <p>I'll skip explaining how to setup a fragment shader like this, you can either use <a href="https://www.shadertoy.com/">shadertoy</a> or draw a fullscreen quad in a custom 3D engine.</p>
+    <br>
+    <p>First, we will display the screen space position of each pixel (multiplied by the aspect ratio). The horizontal position is represented by the red channel, and the vertical position by the green channel.</p>
+    <div class="shader-editor">
+        <canvas id="canvas-webgl-1"></canvas>
+        <div class="editor" id="canvas-webgl-1-editor"></div>
+    </div>
 
-    <canvas id="canvas-webgl-1"></canvas>
-    <canvas id="canvas-webgl-2"></canvas>
-    <canvas id="canvas-webgl-3"></canvas>
-    <canvas id="canvas-webgl-4"></canvas>
+    <p>Just like how we did in 2D, the idea is to send a ray for each pixel on the screen. The view frustum extends from the camera towards the corners of the screen.<br>By iterativaly moving the ray along some direction, we test whether we hit an object (if the distance is below a certain minimum) or if the ray goes to infinity (if the distance is above a maximum).</p>
+    <img src="3d.png" style="display: block;margin-right: auto;margin-left: auto;">
+
+    <p>The equation of the SDF for a 3D sphere is basically the same for the 2D circle, in this shader we display the depth (distance) of each point in the scene composed of a sphere:</p>
+    <div class="shader-editor">
+        <canvas id="canvas-webgl-2"></canvas>
+        <div class="editor" id="canvas-webgl-2-editor"></div>
+    </div>
+
+    <p>Here we add the SDF for a cube and a plane:</p>
+    <div class="shader-editor">
+        <canvas id="canvas-webgl-3"></canvas>
+        <div class="editor" id="canvas-webgl-3-editor"></div>
+    </div>
+
+    <p>If we return a number id for each object, we can choose a color for each different object:</p>
+    <div class="shader-editor">
+        <canvas id="canvas-webgl-4"></canvas>
+        <div class="editor" id="canvas-webgl-4-editor"></div>
+    </div>
+
+    <p>And if we compute the normals and do some basic lighting calcuations, we can add diffuse shading to our objects:</p>
+    <div class="shader-editor">
+        <canvas id="canvas-webgl-5"></canvas>
+        <div class="editor" id="canvas-webgl-5-editor"></div>
+    </div>
 
     <h2 id="further-reading"><a href="#further-reading">Futher reading</a></h2>
     <ul>
         <li><a href="https://www.iquilezles.org/www/index.htm">Inigo Quilez</a> is the best resource on raymarching.</li>
     </ul>
 
-    <!-- <code><pre>function march(ray_origin, ray_direction){
-    total_distance = 0
-    for(i = 0; i < max_iterations; i++){
-        distance = sdf()
-        total_distance += distance
-
-        if(distance < small_number){
-            break
-        }
-        if(total_distance > big_number){
-            break
-        }
-    }
-    return total_distance
-}</pre></code>
- -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/ace/1.33.2/ace.min.js" integrity="sha512-40pej1Lz2wywxd9lNJwJNSp9ekNFyX6wCmOzoaqIuUqexcjAUYqnhbg+fYUuPHzVyr5hshGv5FX8Om7yuTuWnA==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/ace/1.33.2/mode-c_cpp.min.js" integrity="sha512-caUbWe+l7h52Yfiut+hnk+W8LT4v3OlrvqVK7AUE7HKhMcFI86cmrD0cshe98P1UpfpsK30mQDzRhkzYwZHzQA==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
 
 <script src="/js/webgl_helper.js"></script>
 <script src="/js/math.js"></script>
 <script src="/js/light.js"></script>
 <script src="main.js"></script>
-<script>
-document.addEventListener("DOMContentLoaded", function(e){
-    document.querySelectorAll(".code").forEach(function(block){
-        hljs.highlightBlock(block);
-    });
-});
-</script>
 </body>
 </html>

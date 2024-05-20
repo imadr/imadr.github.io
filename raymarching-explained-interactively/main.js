@@ -588,7 +588,7 @@ let default_vertices = [
 function init_3d(canvas_id, fragment_shader){
     let canvas = document.getElementById(canvas_id);
     let gl = canvas.getContext("webgl2");
-    canvas.width = 600;
+    canvas.width = 300;
     canvas.height = 300;
 
     let vao, vbo;
@@ -632,182 +632,375 @@ let gl_canvases_id = [
    "canvas-webgl-2",
    "canvas-webgl-3",
    "canvas-webgl-4",
+   "canvas-webgl-5",
 ];
 
 let fragment_shaders = [
-    `#version 300 es
-    precision highp float;
+`#version 300 es
+precision highp float;
 
-    in vec3 position;
+in vec3 position;
 
-    uniform float aspect_ratio;
+uniform float aspect_ratio;
 
-    out vec4 frag_color;
+out vec4 frag_color;
 
-    void main(){
-        vec2 uv = vec2(position.x, position.y*aspect_ratio);
-        frag_color = vec4(uv.x, uv.y, 0, 1);
-    }`,
+void main(){
+    vec2 uv = vec2(position.x, position.y*aspect_ratio);
+    frag_color = vec4(uv.x, uv.y, 0, 1);
+}`,
 
-    `#version 300 es
-    precision highp float;
+`#version 300 es
+precision highp float;
 
-    in vec3 position;
+in vec3 position;
 
-    uniform float aspect_ratio;
+uniform float aspect_ratio;
 
-    out vec4 frag_color;
+out vec4 frag_color;
 
-    int march_max_iterations = 100;
-    float min_march_dist = 0.001;
-    float max_march_dist = 1000.;
+int march_max_iterations = 100;
+float min_march_dist = 0.001;
+float max_march_dist = 1000.;
 
-    float sphere(vec3 point, vec3 position, float radius){
-        return length(point-position)-radius;
-    }
+float sphere(vec3 point, vec3 position, float radius){
+    return length(point-position)-radius;
+}
 
-    float march(vec3 ray_origin, vec3 ray_direction){
-        vec3 current_point = ray_origin;
-        float total_dist = 0.;
-        for(int i = 0; i < march_max_iterations; i++){
-            current_point = ray_origin+ray_direction*total_dist;
-            float dist = sphere(current_point, vec3(0., 0., 2.), 0.5);
-            total_dist += dist;
-            if(dist < min_march_dist){
-                break;
-            }
-            if(total_dist > max_march_dist){
-                break;
-            }
+float march(vec3 ray_origin, vec3 ray_direction){
+    vec3 current_point = ray_origin;
+    float total_dist = 0.;
+    for(int i = 0; i < march_max_iterations; i++){
+        current_point = ray_origin+ray_direction*total_dist;
+        float dist = sphere(current_point, vec3(0., 0., 2.), 0.5);
+        total_dist += dist;
+        if(dist < min_march_dist){
+            break;
         }
-        return total_dist;
-    }
-
-    void main(){
-        vec2 uv = vec2(position.x, position.y*aspect_ratio);
-
-        vec3 ray_origin = vec3(0.);
-        vec3 ray_direction = normalize(vec3(uv.x, uv.y, 1.)-ray_origin);
-        float dist = march(ray_origin, ray_direction);
-        dist /= 3.;
-        frag_color = vec4(vec3(dist), 1.);
-    }`,
-
-    `#version 300 es
-    precision highp float;
-
-    in vec3 position;
-
-    uniform float aspect_ratio;
-
-    out vec4 frag_color;
-
-    int march_max_iterations = 100;
-    float min_march_dist = 0.001;
-    float max_march_dist = 1000.;
-
-    float sphere(vec3 point, vec3 position, float radius){
-        return length(point-position)-radius;
-    }
-
-    float box(vec3 point, vec3 position, vec3 size){
-        vec3 d = abs(point-position)-size;
-        return min(max(d.x, max(d.y, d.z)), 0.0)+length(max(d, 0.0));
-    }
-
-    float scene(vec3 point){
-        float sphere1 = sphere(point, vec3(-0.7, 0., 2.), 0.5);
-        float sphere2 = sphere(point, vec3(0, -100.4, 2.), 100.0);
-        float box1 = box(point, vec3(0.7, 0., 2.), vec3(0.4, 0.4, 0.4));
-        return min(sphere1, min(sphere2, box1));
-    }
-
-    float march(vec3 ray_origin, vec3 ray_direction){
-        vec3 current_point = ray_origin;
-        float total_dist = 0.;
-        for(int i = 0; i < march_max_iterations; i++){
-            current_point = ray_origin+ray_direction*total_dist;
-            float dist = scene(current_point);
-            total_dist += dist;
-            if(dist < min_march_dist){
-                break;
-            }
-            if(total_dist > max_march_dist){
-                break;
-            }
+        if(total_dist > max_march_dist){
+            break;
         }
-        return total_dist;
     }
+    return total_dist;
+}
 
-    void main(){
-        vec2 uv = vec2(position.x, position.y*aspect_ratio);
+void main(){
+    vec2 uv = vec2(position.x, position.y*aspect_ratio);
 
-        vec3 ray_origin = vec3(0.);
-        vec3 ray_direction = normalize(vec3(uv.x, uv.y, 1.)-ray_origin);
-        float dist = march(ray_origin, ray_direction);
-        dist /= 3.;
-        frag_color = vec4(vec3(dist), 1.);
-    }`,
+    vec3 ray_origin = vec3(0.);
+    vec3 ray_direction = normalize(vec3(uv.x, uv.y, 1.)-ray_origin);
+    float dist = march(ray_origin, ray_direction);
+    dist /= 3.;
+    frag_color = vec4(vec3(dist), 1.);
+}`,
 
-    `#version 300 es
-    precision highp float;
+`#version 300 es
+precision highp float;
 
-    in vec3 position;
+in vec3 position;
 
-    uniform float aspect_ratio;
+uniform float aspect_ratio;
 
-    out vec4 frag_color;
+out vec4 frag_color;
 
-    int march_max_iterations = 100;
-    float min_march_dist = 0.001;
-    float max_march_dist = 1000.;
+int march_max_iterations = 100;
+float min_march_dist = 0.001;
+float max_march_dist = 1000.;
 
-    float sphere(vec3 point, vec3 position, float radius){
-        return length(point-position)-radius;
-    }
+float sphere(vec3 point, vec3 position, float radius){
+    return length(point-position)-radius;
+}
 
-    float box(vec3 point, vec3 position, vec3 size){
-        vec3 d = abs(point-position)-size;
-        return min(max(d.x, max(d.y, d.z)), 0.0)+length(max(d, 0.0));
-    }
+float box(vec3 point, vec3 position, vec3 size){
+    vec3 d = abs(point-position)-size;
+    return min(max(d.x, max(d.y, d.z)), 0.0)+length(max(d, 0.0));
+}
 
-    float scene(vec3 point){
-        float sphere1 = sphere(point, vec3(-0.7, 0., 2.), 0.5, vec3(1., 0., 0.));
-        float sphere2 = sphere(point, vec3(0, -100.4, 2.), 100.0, vec3(0., 1., 0.));
-        float box1 = box(point, vec3(0.7, 0., 2.), vec3(0.4, 0.4, 0.4));
-        return min(sphere1, min(sphere2, box1));
-    }
+float plane(vec3 point, vec3 position, vec3 normal) {
+    return abs(dot(point-position, normal));
+}
 
-    float march(vec3 ray_origin, vec3 ray_direction){
-        vec3 current_point = ray_origin;
-        float total_dist = 0.;
-        for(int i = 0; i < march_max_iterations; i++){
-            current_point = ray_origin+ray_direction*total_dist;
-            float dist = scene(current_point);
-            total_dist += dist;
-            if(dist < min_march_dist){
-                break;
-            }
-            if(total_dist > max_march_dist){
-                break;
-            }
+float scene(vec3 point){
+    float plane1 = plane(point, vec3(0, -0.9, 0), vec3(0, 1, 0));
+    float sphere1 = sphere(point, vec3(-0.7, 0., 2.), 0.5);
+    float box1 = box(point, vec3(0.7, 0., 2.), vec3(0.4, 0.4, 0.4));
+    return min(plane1, min(sphere1, box1));
+}
+
+float march(vec3 ray_origin, vec3 ray_direction){
+    vec3 current_point = ray_origin;
+    float total_dist = 0.;
+    for(int i = 0; i < march_max_iterations; i++){
+        current_point = ray_origin+ray_direction*total_dist;
+        float dist = scene(current_point);
+        total_dist += dist;
+        if(dist < min_march_dist){
+            break;
         }
-        return total_dist;
+        if(total_dist > max_march_dist){
+            break;
+        }
+    }
+    return total_dist;
+}
+
+void main(){
+    vec2 uv = vec2(position.x, position.y*aspect_ratio);
+
+    vec3 ray_origin = vec3(0.);
+    vec3 ray_direction = normalize(vec3(uv.x, uv.y, 1.)-ray_origin);
+    float dist = march(ray_origin, ray_direction);
+    dist /= 7.;
+    frag_color = vec4(vec3(dist), 1.);
+}`,
+
+`#version 300 es
+precision highp float;
+
+in vec3 position;
+
+uniform float aspect_ratio;
+
+out vec4 frag_color;
+
+int march_max_iterations = 300;
+float min_march_dist = 0.001;
+float max_march_dist = 1000.;
+
+float sphere(vec3 point, vec3 position, float radius){
+    return length(point-position)-radius;
+}
+
+float box(vec3 point, vec3 position, vec3 size){
+    vec3 d = abs(point-position)-size;
+    return min(max(d.x, max(d.y, d.z)), 0.0)+length(max(d, 0.0));
+}
+
+float plane(vec3 point, vec3 position, vec3 normal) {
+    return abs(dot(point-position, normal));
+}
+
+vec2 vec_min(vec2 a, vec2 b) {
+    return a.x > b.x ? b : a;
+}
+
+vec2 scene(vec3 point){
+    vec2 plane1 = vec2(plane(point, vec3(0, -0.9, 0), vec3(0, 1, 0)), 1.0);
+    vec2 sphere1 = vec2(sphere(point, vec3(-0.7, 0., 2.), 0.5), 2.0);
+    vec2 box1 = vec2(box(point, vec3(0.7, 0., 2.), vec3(0.4, 0.4, 0.4)), 3.0);
+    return vec_min(plane1, vec_min(sphere1, box1));
+}
+
+vec2 march(vec3 ray_origin, vec3 ray_direction){
+    vec3 current_point = ray_origin;
+    float total_dist = 0.;
+    float id;
+    for(int i = 0; i < march_max_iterations; i++){
+        current_point = ray_origin+ray_direction*total_dist;
+
+        vec2 s = scene(current_point);
+        id = s.y;
+        float dist = s.x;
+        total_dist += dist;
+
+        if(dist < min_march_dist){
+            break;
+        }
+        if(total_dist > max_march_dist){
+            id = 0.;
+            break;
+        }
+    }
+    return vec2(total_dist, id);
+}
+
+vec3 material(int id){
+    if(id == 1){
+        return vec3(0.7);
+    } else if(id == 2) {
+        return vec3(1.0, 0.0, 0.0);
+    } else if(id == 3) {
+        return vec3(0.0, 0.0, 1.0);
+    }
+     else if(id == 0) {
+        return vec3(0.480, 0.856, 1.000);
+    }
+}
+
+void main(){
+    vec2 uv = vec2(position.x, position.y*aspect_ratio);
+
+    vec3 ray_origin = vec3(0.);
+    vec3 ray_direction = normalize(vec3(uv.x, uv.y, 1.)-ray_origin);
+    vec2 march_out = march(ray_origin, ray_direction);
+    float dist = march_out.x;
+    vec3 col = material(int(march_out.y));
+    frag_color = vec4(col, 1.);
+}`,
+
+`#version 300 es
+precision highp float;
+
+in vec3 position;
+
+uniform float aspect_ratio;
+
+out vec4 frag_color;
+
+int march_max_iterations = 300;
+float min_march_dist = 0.001;
+float max_march_dist = 1000.;
+
+float sphere(vec3 point, vec3 position, float radius){
+    return length(point-position)-radius;
+}
+
+float box(vec3 point, vec3 position, vec3 size){
+    vec3 d = abs(point-position)-size;
+    return min(max(d.x, max(d.y, d.z)), 0.0)+length(max(d, 0.0));
+}
+
+float plane(vec3 point, vec3 position, vec3 normal) {
+    return abs(dot(point-position, normal));
+}
+
+vec2 vec_min(vec2 a, vec2 b) {
+    return a.x > b.x ? b : a;
+}
+
+vec2 scene(vec3 point){
+    vec2 plane1 = vec2(plane(point, vec3(0, -0.9, 0), vec3(0, 1, 0)), 1.0);
+    vec2 sphere1 = vec2(sphere(point, vec3(-0.7, 0., 2.), 0.5), 2.0);
+    vec2 box1 = vec2(box(point, vec3(0.7, 0., 2.), vec3(0.4, 0.4, 0.4)), 3.0);
+    return vec_min(plane1, vec_min(sphere1, box1));
+}
+
+vec2 march(vec3 ray_origin, vec3 ray_direction){
+    vec3 current_point = ray_origin;
+    float total_dist = 0.;
+    float id;
+    for(int i = 0; i < march_max_iterations; i++){
+        current_point = ray_origin+ray_direction*total_dist;
+
+        vec2 s = scene(current_point);
+        id = s.y;
+        float dist = s.x;
+        total_dist += dist;
+
+        if(dist < min_march_dist){
+            break;
+        }
+        if(total_dist > max_march_dist){
+            id = 0.;
+            break;
+        }
+    }
+    return vec2(total_dist, id);
+}
+
+vec3 material(int id){
+    if(id == 1){
+        return vec3(0.7);
+    } else if(id == 2) {
+        return vec3(1.0, 0.0, 0.0);
+    } else if(id == 3) {
+        return vec3(0.0, 0.0, 1.0);
+    }
+}
+
+vec3 normal(vec3 point) {
+    if (point.z > 1000.) return vec3(0.);
+    float dist = scene(point).x;
+    float delta = 0.001;
+    vec2 dir = vec2(delta, 0.);
+    float dx = scene(point + dir.xyy).x - dist;
+    float dy = scene(point + dir.yxy).x - dist;
+    float dz = scene(point + dir.yyx).x - dist;
+    return normalize(vec3(dx, dy, dz));
+}
+
+void main(){
+    vec2 uv = vec2(position.x, position.y*aspect_ratio);
+
+    vec3 ray_origin = vec3(0.);
+    vec3 ray_direction = normalize(vec3(uv.x, uv.y, 1.)-ray_origin);
+    vec2 march_out = march(ray_origin, ray_direction);
+
+    if(int(march_out.y) == 0) {
+        frag_color = vec4(0.480, 0.856, 1.000, 1.0);
+        return;
     }
 
-    void main(){
-        vec2 uv = vec2(position.x, position.y*aspect_ratio);
+    float depth = march_out.x;
+    vec3 point = ray_origin + ray_direction * depth;
 
-        vec3 ray_origin = vec3(0.);
-        vec3 ray_direction = normalize(vec3(uv.x, uv.y, 1.)-ray_origin);
-        float dist = march(ray_origin, ray_direction);
-        dist /= 3.;
-        frag_color = vec4(vec3(dist), 1.);
-    }`,
+    vec3 light_direction = normalize(vec3(0.5, 2.0, -1.0));
+    vec3 norm = normal(point);
+    vec3 ambient = vec3(0.4);
+
+    vec3 diffuse = vec3(max(0.0, dot(norm, light_direction)));
+    if (march(point + norm * 0.01, light_direction).x < length(light_direction - point)) {
+        diffuse = vec3(0.0);
+    }
+    diffuse += ambient;
+
+    vec3 col = material(int(march_out.y))*diffuse;
+
+    frag_color = vec4(col, 1.);
+}`
 ];
+
+let line_highlight = [
+    [],
+    [[13, 32]],
+    [[17, 24]],
+    [[37, 71]],
+    [[70, 79], [94, 106]],
+];
+
+let shaders = [];
+let gls = [];
+let vaos = [];
+let editor_elements = document.querySelectorAll(".editor");
+let editors = [];
+for(let i = 0; i < editor_elements.length; i++){
+    let editor = ace.edit(editor_elements[i]);
+    editor.setTheme("ace/theme/monokai");
+    editor.session.setMode("ace/mode/c_cpp");
+    editors.push(editor);
+    let button = document.createElement("button");
+    button.innerHTML = "compile";
+    button.className = "compile-button";
+    editor_elements[i].appendChild(button);
+    (function(button, i, editor){
+        button.addEventListener("click", function(){
+            fragment_shaders[i] = editor.getValue();
+            let canvas_id = gl_canvases_id[i];
+            let [gl, vao, shader] = init_3d(canvas_id, fragment_shaders[i]);
+            shaders[i] = shader;
+            gls[i] = gl;
+            vaos[i] = vao;
+            draw_3d(gl, vao, shaders[i]);
+        });
+    })(button, i, editor);
+}
+var Range = ace.require('ace/range').Range;
 
 for(let i = 0; i < gl_canvases_id.length; i++){
     let canvas_id  = gl_canvases_id[i];
     let [gl, vao, shader] = init_3d(canvas_id, fragment_shaders[i]);
-    draw_3d(gl, vao, shader);
+    shaders[i] = shader;
+    gls[i] = gl;
+    vaos[i] = vao;
+    draw_3d(gl, vao, shaders[i]);
+    editors[i].setValue(fragment_shaders[i]);
+    editors[i].clearSelection();
+    if(line_highlight[i].length > 0){
+        for(let j = 0; j < line_highlight[i].length; j++){
+            editors[i].session.addMarker(new Range(line_highlight[i][j][0], 0, line_highlight[i][j][1], 1), "marker", "fullLine");
+        }
+        editors[i].resize(true);
+        editors[i].scrollToLine(line_highlight[i][0][0]+1, true, true, function () {});
+        editors[i].gotoLine(line_highlight[i][0][0]+1, 0, true);
+    }
 }
