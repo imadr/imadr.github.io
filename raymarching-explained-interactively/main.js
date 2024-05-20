@@ -690,7 +690,7 @@ void main(){
     vec3 ray_origin = vec3(0.);
     vec3 ray_direction = normalize(vec3(uv.x, uv.y, 1.)-ray_origin);
     float dist = march(ray_origin, ray_direction);
-    dist /= 3.;
+    dist /= 7.;
     frag_color = vec4(vec3(dist), 1.);
 }`,
 
@@ -953,7 +953,7 @@ void main(){
 let line_highlight = [
     [],
     [[13, 32]],
-    [[17, 24]],
+    [[17, 24], [27,27], [29, 30]],
     [[37, 71]],
     [[70, 79], [94, 106]],
 ];
