@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Self compiling compiler from scratch</title>
+    <link rel="stylesheet" href="/css/style.css">
+    <link rel="stylesheet" href="/css/highlight.css">
+    <script src="/js/highlight.js"></script>
+    <style type="text/css">
+        .red{
+            font-weight: bold;
+            color: red;
+        }
+    </style>
+</head>
+<body>
+    <nav>
+        <a href="/" style="text-transform: uppercase;">Imadr.me</a>
+        <span id="navbar-right" style="float: right;">
+        </span>
+    </nav>
+
+    <h1>Self compiling compiler from scratch</h1>
+
+
+    <p>Resources on making compilers <strong>suck ass</strong>, that includes books (dragon book, engineering a compiler...etc) and most blog post or courses on the internet.<br>They spend too much time explaining trivialities, like tokenizing or parsing, and not nearly enough on important stuff like optimization or generating machine code that <strong>actually runs</strong> which is the point of a fucking compiler.</p>
+
+    <p>So we will be making a compiler for a C-like language, the compiler will be able to compile an implementation of itself in it's language.<br>
+    For that we need a language that has functions, variables, structs, arrays, ifs, loops, reading and writing files from the filesystem, that's it.</p>
+
+
+    <p><strong>NO BULLSHIT LALR, NO VISITOR PATTERNS, NO OOP TRASH, NO VIRTUAL MACHINE BYTE CODE NONSENSE</strong>, only straightforward code, and a compiler that generates a program that runs.<br><strong>SHIT AINT MAGIC</strong>, this is what we will be making in order:</p>
+
+    <ul>
+        <li><strong>Tokenizer:</strong> Takes a source code string as input and outputs a list of tokens (literals, keywords, punctutations like semicolons and so on)</li>
+        <li><strong>Parser:</strong> Takes the list of tokens and turns it into an abstract syntax tree (AST), checks if the source code syntax is correct. Simple recursive descent parser</li>
+        <li><strong>Semantics:</strong> Type checking, name checking</li>
+        <li><strong>Optimization:</strong> <span class="red">Peephole, deadcode elimination</span></li>
+        <li><strong>Code generation:</strong> Generating x86-64 (or x64, or amd64 whatever) assembly, <span class="red">register allocation</span></li>
+    </ul>
+    <p>👉 at this point, you can take the generated assembly and use an assembler like <a href="https://flatassembler.net/">FASM</a> to generate an executable, but that's for the weak...</p>
+    <ul>
+        <li><strong>Assembly and linking:</strong> Turn into machine code and create an executable that can run on windows (PE format) and linux (ELF format)</li>
+    </ul>
+
+    <p class="red">*actually hard stuff</p>
+
+    <h2 id="main"><a href="#main">The main program</a></h2>
+
+    This is what our compiler main should look like :
+
+    <code>
+<pre class="code language-c">
+int main() {
+    str file_path = "test.x";
+    pair<Error, str> file_content = read_whole_file(file_path);
+    if (file_content.first) {
+        printf(file_content.first);
+        return 1;
+    }
+
+    TokenizerState tokenizer_state = tokenize(file_content.second, file_path);
+    if (tokenizer_state.error) {
+        printf(tokenizer_state.error);
+        return 1;
+    }
+
+    SemanticState semantic_state;
+    init_semantics(&semantic_state);
+
+    ParserState parser_state = parse(tokenizer_state.tokens, &semantic_state, file_path);
+
+    CodegenState codegen_state = codegen(parser_state.root_node);
+
+    return 0;
+}</pre>
+</code>
+
+    <h2 id="tokenizer"><a href="#tokenizer">Tokenizer</a></h2>
+
+
+
+
+    <h2 id="parser"><a href="#parser">Parser</a></h2>
+
+
+<script src="/js/light.js"></script>
+<script>
+document.addEventListener("DOMContentLoaded", function(e){
+    document.querySelectorAll(".code").forEach(function(block){
+        hljs.highlightBlock(block);
+    });
+});
+</script>
+</body>
+</html>
