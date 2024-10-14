@@ -90,7 +90,7 @@ Quaternion quat_conjugate(Quaternion q){
 Vector3 rotate_vector(Vector3 v, Quaternion q){
     Quaternion v_ = (Quaternion){v.x, v.y, v.z, 0};
     v_ = quat_mul(quat_mul(q, v_), quat_conjugate(q));
-    return (Vector3){v_.x, v_.y, v_.x};
+    return (Vector3){v_.x, v_.y, v_.z};
 }
 
 Quaternion quat_inverse(Quaternion q){
