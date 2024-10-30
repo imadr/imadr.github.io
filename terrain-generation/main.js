@@ -481,13 +481,13 @@ document.addEventListener("mousemove", function(e){
         if(canvas_id[dragging] != "canvas_water"){
             objects_to_draw_s[dragging][0].transform.rotation = quat_mul(
                 objects_to_draw_s[dragging][0].transform.rotation,
-                euler_to_quat([0, -x/100, 0]));
+                euler_to_quat([0, x/100, 0]));
         }
         else{
             for(let i = 0; i < objects_to_draw_s[dragging].length; i++){
                 objects_to_draw_s[dragging][i].transform.rotation = quat_mul(
                     objects_to_draw_s[dragging][i].transform.rotation,
-                    euler_to_quat([0, -x/100, 0]));
+                    euler_to_quat([0, x/100, 0]));
             }
         }
         draw_3d(dragging);
