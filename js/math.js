@@ -328,6 +328,7 @@ function vec4_normalize(v){
     return [
         v[0]/m,
         v[1]/m,
+        v[2]/m,
         v[2]/m
     ];
 }
