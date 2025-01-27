@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>WebGL Multiple Canvases</title>
+    <style>
+        canvas {
+            width: 100%;
+            height: 200px;
+            margin-bottom: 10px;
+            border: 1px solid black;
+        }
+        .content {
+            height: 200px;
+            margin-bottom: 10px;
+        }
+    </style>
+</head>
+<body>
+    <canvas id="canvas1"></canvas>
+    <div class="content">Some text between canvas 1 and 2</div>
+    <canvas id="canvas2"></canvas>
+    <div class="content">Some text between canvas 2 and 3</div>
+    <canvas id="canvas3"></canvas>
+
+    <script>
+        let gl = null;
+        let canvasElements = [];
+
+        function initializeWebGL() {
+            // Initialize the WebGL context on the first canvas
+            const firstCanvas = document.querySelector('canvas');
+            gl = firstCanvas.getContext('webgl');
+            if (!gl) {
+                console.log("WebGL not supported");
+                return;
+            }
+
+            // Store all canvases
+            canvasElements = Array.from(document.querySelectorAll('canvas'));
+        }
+
+        function setViewportForCanvas(canvas) {
+            const rect = canvas.getBoundingClientRect();
+            gl.viewport(0, 0, rect.width, rect.height);
+        }
+
+        function drawOnCanvas(canvas) {
+            setViewportForCanvas(canvas);
+
+            // Clear and set the background color to black
+            gl.clearColor(0.0, 0.0, 0.0, 1.0); 
+            gl.clear(gl.COLOR_BUFFER_BIT);
+
+            // Example: draw a simple red square in the center
+            const vertices = new Float32Array([
+                -0.5,  0.5, 0.0,
+                -0.5, -0.5, 0.0,
+                 0.5, -0.5, 0.0,
+                 0.5,  0.5, 0.0
+            ]);
+
+            const vertexBuffer = gl.createBuffer();
+            gl.bindBuffer(gl.ARRAY_BUFFER, vertexBuffer);
+            gl.bufferData(gl.ARRAY_BUFFER, vertices, gl.STATIC_DRAW);
+
+            const vertexShaderSource = `
+                attribute vec4 a_position;
+                void main() {
+                    gl_Position = a_position;
+                }
+            `;
+            const fragmentShaderSource = `
+                void main() {
+                    gl_FragColor = vec4(1.0, 0.0, 0.0, 1.0); // Red
+                }
+            `;
+
+            const vertexShader = compileShader(vertexShaderSource, gl.VERTEX_SHADER);
+            const fragmentShader = compileShader(fragmentShaderSource, gl.FRAGMENT_SHADER);
+            const shaderProgram = createShaderProgram(vertexShader, fragmentShader);
+
+            gl.useProgram(shaderProgram);
+
+            const positionLocation = gl.getAttribLocation(shaderProgram, 'a_position');
+            gl.vertexAttribPointer(positionLocation, 3, gl.FLOAT, false, 0, 0);
+            gl.enableVertexAttribArray(positionLocation);
+
+            gl.drawArrays(gl.TRIANGLE_FAN, 0, 4);
+        }
+
+        function compileShader(source, type) {
+            const shader = gl.createShader(type);
+            gl.shaderSource(shader, source);
+            gl.compileShader(shader);
+            if (!gl.getShaderParameter(shader, gl.COMPILE_STATUS)) {
+                console.error("Shader compile failed", gl.getShaderInfoLog(shader));
+                return null;
+            }
+            return shader;
+        }
+
+        function createShaderProgram(vertexShader, fragmentShader) {
+            const program = gl.createProgram();
+            gl.attachShader(program, vertexShader);
+            gl.attachShader(program, fragmentShader);
+            gl.linkProgram(program);
+            if (!gl.getProgramParameter(program, gl.LINK_STATUS)) {
+                console.error("Program link failed", gl.getProgramInfoLog(program));
+                return null;
+            }
+            return program;
+        }
+
+        function isElementPartiallyVisible(el) {
+            const rect = el.getBoundingClientRect();
+            return rect.top < window.innerHeight && rect.bottom > 0 && rect.left < window.innerWidth && rect.right > 0;
+        }
+
+        function render() {
+            canvasElements.forEach((canvas) => {
+                if (isElementPartiallyVisible(canvas)) {
+                    drawOnCanvas(canvas);
+                }
+            });
+        }
+
+        initializeWebGL();
+
+        // Trigger rendering periodically to check visibility
+        setInterval(render, 100);
+    </script>
+</body>
+</html>

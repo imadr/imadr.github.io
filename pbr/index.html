@@ -3,10 +3,39 @@
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title></title>
+    <title>Physically based rendering from first principles</title>
+    <link rel="stylesheet" href="style.css">
 </head>
 <body>
-<canvas id="canvas"></canvas>
+    <canvas id="main-canvas"></canvas>
+    <h1>Physically based rendering from first principles</h1>
+    <h1>What is light?</h1>
+    <h2>The Electric force</h2>
+    <p>One of the fundamental properties of matter is the electric charge, and it comes in two types: <strong class="red">positive</strong> and <strong class="blue">negative</strong>.<br>Charges determine how particles interact: charges of the same type repel each other, while opposite charges attract.</p>
+    <div class="canvas" id="scene_charges"></div>
+    <p>Every charge generates an <strong>electric field</strong>, an invisible region where it exerts forces on other charges, shaping interactions at both microscopic and macroscopic scales.</p>
+    <br>
+    <br>
+    <br>
+    <br>
+    <br>
+    <br>
+    <div class="canvas-sliders">
+        <div class="canvas" id="scene1"></div>
+        <div class="canvas-sliders-right">
+            <div class="slider-container">
+                <label>Amplitude</label><input id="amplitude-input" type="range" min="0.2" max="1" step="0.01" data-color="#888">
+            </div>
+            <div class="slider-container">
+                <label>Frequency</label><input id="frequency-input" type="range" min="0.5" max="4" step="0.01" data-color="#888">
+            </div>
+        </div>
+    </div>
+    <div class="canvas" id="scene2"></div>
+
+    <h2>Special relativity and magnetism</h2>
+    <h2>The Electromagnetic spectrum</h2>
+
 <script type="text/javascript" src="../js/math.js"></script>
 <script type="text/javascript" src="main.js"></script>
 </body>
