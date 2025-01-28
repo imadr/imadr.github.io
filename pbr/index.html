@@ -8,20 +8,23 @@
 </head>
 <body>
     <canvas id="main-canvas"></canvas>
-    <h1>Physically based rendering from first principles</h1>
-    <h1>What is light?</h1>
+    <h1 id="main-title">Physically based rendering from first principles</h1>
+    <h1>Chapter 1: What is light?</h1>
     <h2>The Electric force</h2>
     <p>One of the fundamental properties of matter is the electric charge, and it comes in two types: <strong class="red">positive</strong> and <strong class="blue">negative</strong>.<br>Charges determine how particles interact: charges of the same type repel each other, while opposite charges attract.</p>
+    <p>You can <strong>move around</strong> these charges to see how the eletric force affects them:</p>
     <div class="canvas" id="scene_charges"></div>
-    <p>Every charge generates an <strong>electric field</strong>, an invisible region where it exerts forces on other charges, shaping interactions at both microscopic and macroscopic scales.</p>
+    <p>Every charge generates an <strong>electric field</strong>, an invisible region where it exerts forces on other charges.</p>
+    <div class="canvas" id="scene_electric_field"></div>
     <br>
     <br>
     <br>
     <br>
+    <div class="canvas" id="scene_plane"></div>
     <br>
     <br>
     <div class="canvas-sliders">
-        <div class="canvas" id="scene1"></div>
+        <div class="canvas" id="scene_wave"></div>
         <div class="canvas-sliders-right">
             <div class="slider-container">
                 <label>Amplitude</label><input id="amplitude-input" type="range" min="0.2" max="1" step="0.01" data-color="#888">
@@ -31,7 +34,6 @@
             </div>
         </div>
     </div>
-    <div class="canvas" id="scene2"></div>
 
     <h2>Special relativity and magnetism</h2>
     <h2>The Electromagnetic spectrum</h2>

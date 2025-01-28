@@ -16,6 +16,7 @@
 }
 body{
     color: #333333;
+    background: rgb(250, 250, 250);
     font-family: "Inter", sans-serif;
     font-weight: normal;
     margin-right: auto;
@@ -36,8 +37,9 @@ body{
     display: block;
 }
 .canvas{
-    margin-left: auto;
-    margin-right: auto;
+    position: relative;
+    left: 50%;
+    transform: translateX(-50%);
 }
 input[type="range"] {
     -webkit-appearance: none;
@@ -82,4 +84,12 @@ input[type="range"]::-moz-range-thumb {
 }
 .red{
     color: #eb3434;
+}
+#main-title{
+    font-size: 3em;
+    line-height: 1.0em;
+    margin-bottom: 1em;
+}
+h1{
+    margin-bottom: 1em;
 }
