@@ -93,3 +93,11 @@ input[type="range"]::-moz-range-thumb {
 h1{
     margin-bottom: 1em;
 }
+h2{
+    margin-top: 2em;
+}
+.blue-red-gradient{
+    background: linear-gradient(to right, #3470eb, #eb3434);
+    -webkit-background-clip: text;
+    color: transparent;
+}

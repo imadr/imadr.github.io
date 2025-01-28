@@ -562,8 +562,9 @@ in vec3 normal;
 #define NUM_POSITIVE 10
 #define NUM_NEGATIVE 10
 void main(){
-    vec2 uv = normal.yz * vec2(600.0/400.0, 1);
-    float time_scaled = time*0.0;
+    float aspect_ratio = 600.0/400.0;
+    vec2 uv = normal.yz * vec2(aspect_ratio, 1);
+    float time_scaled = time*2.0;
     vec2 positive_charge[NUM_POSITIVE] = vec2[](
         vec2(0.5 + 0.3 * sin(time_scaled + 0.1), 0.5 + 0.3 * cos(time_scaled + 0.1)),
         vec2(-0.4 + 0.2 * sin(time_scaled + 0.2), 0.3 + 0.2 * cos(time_scaled + 0.3)),
@@ -597,7 +598,7 @@ void main(){
     float decay_factor = 2.0;
     float max_distance = 0.0;
     for (int i = 0; i < NUM_POSITIVE; i++) {
-        float dist_to_positive = distance(origin, positive_charge[i]);
+        float dist_to_positive = distance(origin, positive_charge[i]+vec2(0.3, -0.1));
         float positive_decay = exp(-dist_to_positive * decay_factor) * 1.0;
         charge += positive_decay;
         charge_normalized += dist_to_positive;
@@ -607,7 +608,7 @@ void main(){
     }
 
     for (int i = 0; i < NUM_NEGATIVE; i++) {
-        float dist_to_negative = distance(origin, negative_charge[i]);
+        float dist_to_negative = distance(origin, negative_charge[i]+vec2(0.3, -0.1));
         float negative_decay = exp(-dist_to_negative * decay_factor) * 1.0;
         charge -= negative_decay;
         charge_normalized -= dist_to_negative;
@@ -620,16 +621,16 @@ void main(){
     vec3 color = vec3(0.0);
 
     if (charge > 0.0) {
-        color = mix(vec3(1, 1, 1), vec3(0.204, 0.443, 0.922), charge);
+        color = mix(vec3(0.98, 0.98, 0.98), vec3(0.204, 0.443, 0.922), charge);
     } else {
-        color = mix(vec3(1, 1, 1), vec3(0.922, 0.204, 0.204), -charge);
+        color = mix(vec3(0.98, 0.98, 0.98), vec3(0.922, 0.204, 0.204), -charge);
     }
 
     frag_color = vec4(color, 1);
 }`);
 
 ctx.scenes = {
-    "scene_charges": {el: null, width: 1000, height: 300, camera: null, dragging_rect: null, draggable_rects: {},
+    "scene_charges": {id: "scene_charges", el: null, width: 1000, height: 300, camera: null, dragging_rect: null, draggable_rects: {},
         camera: {
             fov: 50, z_near: 0.1, z_far: 1000,
             position: [0, 0, 0], rotation: [0, 0, 0],
@@ -642,7 +643,7 @@ ctx.scenes = {
             }
         },
         charges: []},
-    "scene_electric_field": {el: null, width: 1000, height: 400, camera: null, dragging_rect: null, draggable_rects: {},
+    "scene_electric_field": {id: "scene_electric_field", el: null, width: 1000, height: 400, camera: null, dragging_rect: null, draggable_rects: {},
         camera: {
             fov: 60, z_near: 0.1, z_far: 1000,
             position: [0, 0, 0], rotation: [0, 0, 0],
@@ -667,7 +668,7 @@ ctx.scenes = {
                 zoom: 3.0
             }
         }},
-    "scene_plane": {el: null, width: 600, height: 400, camera: null, dragging_rect: null, draggable_rects: {"scene": []},
+    "scene_field_gradient": {id: "scene_field_gradient", el: null, width: 600, height: 400, camera: null, dragging_rect: null, draggable_rects: {"scene": []},
         camera: {
             fov: 90, z_near: 0.1, z_far: 1000,
             position: [0, 0, 0], rotation: [0, 0, 0],
@@ -949,8 +950,10 @@ function update_drag_charges(scene){
         let arrow_length = 0.5;
         let arrow_thickness = magnitude;
 
-        // let new_mesh = create_arrow([0, 0, 0], vec3_scale(direction, arrow_length*arrow_thickness), vec2_scale([0.1, 0.15], arrow_thickness));
-        // ctx.update_drawable_mesh(charge1.arrow, new_mesh);
+        if(scene.id != "scene_electric_field"){
+            let new_mesh = create_arrow([0, 0, 0], vec3_scale(direction, arrow_length*arrow_thickness), vec2_scale([0.1, 0.15], arrow_thickness));
+            ctx.update_drawable_mesh(charge1.arrow, new_mesh);
+        }
     }
 
     scene.draggable_rects = [];
@@ -967,9 +970,8 @@ update_drag_charges(ctx.scenes["scene_charges"]);
 
 
 // scene_electric_field setup
-add_charge(ctx.scenes["scene_electric_field"], "negative", [1.8, 0, 0]);
-add_charge(ctx.scenes["scene_electric_field"], "positive", [-0.8, 0, 0]);
-
+add_charge(ctx.scenes["scene_electric_field"], "negative", [1.0, 0.8, 0]);
+add_charge(ctx.scenes["scene_electric_field"], "positive", [-1.0, -0.8, 0]);
 
 function update_electric_field(scene) {
     const lines = 32;
@@ -1078,11 +1080,11 @@ let z_axis = ctx.create_drawable("shader_line",
     [0.3, 0.3, 0.3], translate_3d([-1.5, 0, 0]));
 // scene_wave setup
 
-// scene_plane setup
+// scene_field_gradient setup
 let plane = ctx.create_drawable("shader_plane",
     create_plane([0, 0, 0], [6, 4]),
     [0, 0, 0], translate_3d([-3, -2, 0]));
-// scene_plane setup
+// scene_field_gradient setup
 
 function resize_event(ctc){
     ctx.gl.canvas.width = window.innerWidth;
@@ -1154,7 +1156,7 @@ function update() {
             ctx.draw(y_axis);
             ctx.draw(z_axis);
         }
-        else if(scene_id == "scene_plane"){
+        else if(scene_id == "scene_field_gradient"){
             ctx.draw(plane);
         }
     }

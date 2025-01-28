@@ -12,17 +12,29 @@
     <h1>Chapter 1: What is light?</h1>
     <h2>The Electric force</h2>
     <p>One of the fundamental properties of matter is the electric charge, and it comes in two types: <strong class="red">positive</strong> and <strong class="blue">negative</strong>.<br>Charges determine how particles interact: charges of the same type repel each other, while opposite charges attract.</p>
-    <p>You can <strong>move around</strong> these charges to see how the eletric force affects them:</p>
+    <p>The amount of force affecting charged particles is calculated using the <strong>Coulomb's law</strong></p>
+    <p>You can <strong>move around</strong> these charges to see how the electric force affects them:</p>
     <div class="canvas" id="scene_charges"></div>
-    <p>Every charge generates an <strong>electric field</strong>, an invisible region where it exerts forces on other charges.</p>
+    <p>Every charge generates an <strong>electric field</strong>, an invisible region where it exerts forces on other charges. We can visualize the electric field with a <strong>field line:</strong></p><br>
     <div class="canvas" id="scene_electric_field"></div>
     <br>
+    <p>Another way to visualize the electric field is by coloring each point in space with a <strong class="blue-red-gradient">color gradient</strong> representing the force experienced by a small charge at that point:
+    <div class="canvas" id="scene_field_gradient"></div>
+
+    <h2>Special relativity and magnetism</h2>
+    <p>Imagine an object carrying a <strong class="red">positive electric charge</strong> placed under a cable carrying an electrical current.<br>
+    In the reference frame of the cable, the charges in the wire are moving, and since the <strong class="red">positive</strong> and <strong class="blue">negative</strong> charges in the cable compensate each other, the object doesn't experience a force.</p>
+    <p>However in the reference frame of the object, special relativity comes into play. From this perspective, the moving charges in the wire appear "stretched" due to relativistic effects, causing a change in the distribution of charge. This stretching leads to a repulsive force between the object and the wire, which we interpret as magnetism.</p>
+    <div class="canvas" id="scene_relativity"></div>
+
+    <h2>Maxwell equations</h2>
+    <p>Maxwell's third equation, known as <strong>Faraday's law of induction</strong>, shows how changing magnetic fields can generate electric currents. For example, when a magnet moves, it creates an electric field. This is the principle behind electric generators.</p>
+    <p>Maxwell's fourth and final equation, <strong>Ampère's Law</strong>, illustrates how electric currents (moving charges) produce magnetic fields around them. This is the basis of how electromagnets function:</p>
     <br>
     <br>
     <br>
-    <div class="canvas" id="scene_plane"></div>
     <br>
-    <br>
+    <h2>The Electromagnetic force</h2>
     <div class="canvas-sliders">
         <div class="canvas" id="scene_wave"></div>
         <div class="canvas-sliders-right">
@@ -35,8 +47,10 @@
         </div>
     </div>
 
-    <h2>Special relativity and magnetism</h2>
-    <h2>The Electromagnetic spectrum</h2>
+    <h1>Chapter 2: Perceiving Light</h1>
+    <h1>Chapter 3: Radiometry</h1>
+    <h1>Chapter 4: Materials and Reflection Models</h1>
+    <h1>Chapter 5: The Microfacet Theory</h1>
 
 <script type="text/javascript" src="../js/math.js"></script>
 <script type="text/javascript" src="main.js"></script>
