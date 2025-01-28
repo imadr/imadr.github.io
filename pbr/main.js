@@ -680,6 +680,19 @@ ctx.scenes = {
                 zoom: 2.0
             }
         }},
+    "scene_relativity": {id: "scene_relativity", el: null, width: 1000, height: 600, camera: null, dragging_rect: null, draggable_rects: {},
+        camera: {
+            fov: 60, z_near: 0.1, z_far: 1000,
+            position: [0, 0, 0], rotation: [0, 0, 0],
+            up_vector: [0, 1, 0],
+            view_matrix: mat4_identity(),
+            orbit: {
+                rotation: [0, 0, 0],
+                pivot: [0, 0, 0],
+                zoom: 3.0
+            }
+        },
+        charges: []},
 };
 
 document.addEventListener("mouseup", function(e){
@@ -759,10 +772,7 @@ document.addEventListener("mousemove", function(e) {
             let new_pos = screen_to_world_space(scene, current_mouse, 3);
 
             charge.pos = new_pos;
-            charge.charge.transform = translate_3d(new_pos);
-            charge.charge_background.transform = translate_3d(new_pos);
-            charge.sign.transform = translate_3d(new_pos);
-            charge.arrow.transform = translate_3d(new_pos);
+            update_charge_pos(charge);
             update_drag_charges(scene);
             if(scene_id == "scene_electric_field"){
                 update_electric_field(scene);
@@ -885,29 +895,31 @@ const red = [0.922, 0.204, 0.204];
 const blue = [0.204, 0.443, 0.922];
 
 // scene_charges setup
-function add_charge(scene, type, pos){
-    const charge_size = 0.25;
-
+function add_charge(scene, type, pos, charge_size = 0.25, border_size = 0.21, sign_size = 0.16, sign_thickness = 0.04, start_pos){
     let charge_background = ctx.create_drawable("shader_line", create_circle([0, 0, 0], charge_size, 32), [0.1, 0.1, 0.1], mat4_identity());
-    let charge = ctx.create_drawable("shader_line", create_circle([0, 0, 0], charge_size-0.04, 32), type == "positive" ? red : blue, mat4_identity());
+    let charge = ctx.create_drawable("shader_line", create_circle([0, 0, 0], border_size, 32), type == "positive" ? red : blue, mat4_identity());
     let sign;
 
     if(type == "positive"){
-        sign = ctx.create_drawable("shader_line", create_plus_sign([0, 0, 0], charge_size-0.09, 0.04), [0.1, 0.1, 0.1], mat4_identity());
+        sign = ctx.create_drawable("shader_line", create_plus_sign([0, 0, 0], sign_size, sign_thickness), [0.1, 0.1, 0.1], mat4_identity());
     }
     else{
-        sign = ctx.create_drawable("shader_line", create_minus_sign([0, 0, 0], charge_size-0.09, 0.04), [0.1, 0.1, 0.1], mat4_identity());
+        sign = ctx.create_drawable("shader_line", create_minus_sign([0, 0, 0], sign_size, sign_thickness), [0.1, 0.1, 0.1], mat4_identity());
     }
 
     let arrow = ctx.create_drawable("shader_line",
         create_arrow([0, 0, 0], [0, 0, 0], [0, 0]), [0.3, 0.3, 0.3], translate_3d([0, 0, 0]));
 
-    charge.transform = translate_3d(pos);
-    charge_background.transform = translate_3d(pos);
-    sign.transform = translate_3d(pos);
-    arrow.transform = translate_3d(pos);
 
-    scene.charges.push({id: type+""+scene.charges.length, charge: charge, charge_background: charge_background, sign: sign, arrow: arrow, pos: pos, size: charge_size});
+    scene.charges.push({id: type+""+scene.charges.length, type: type, charge: charge, charge_background: charge_background, sign: sign, arrow: arrow, pos: pos, start_pos: start_pos, size: charge_size});
+    update_charge_pos(scene.charges[scene.charges.length-1]);
+}
+
+function update_charge_pos(charge){
+    charge.charge.transform = translate_3d(charge.pos);
+    charge.charge_background.transform = translate_3d(charge.pos);
+    charge.sign.transform = translate_3d(charge.pos);
+    charge.arrow.transform = translate_3d(charge.pos);
 }
 
 add_charge(ctx.scenes["scene_charges"], "positive", [0.5, 0.6, 0]);
@@ -1063,6 +1075,21 @@ update_drag_charges(ctx.scenes["scene_electric_field"]);
 update_electric_field(ctx.scenes["scene_electric_field"]);
 // scene_electric_field setup
 
+// scene_relativity setup
+function update_relativity_scene(scene){
+    for(let i = 0; i < 25; i++){
+        let positive_pos = [i/4.0-3.0, 0.6, 0];
+        let negative_pos = [i/4.0-3.0, 0.32, 0];
+        add_charge(scene, "positive", positive_pos, 0.12, 0.095, 0.10, 0.02, positive_pos[0]);
+        add_charge(scene, "negative", negative_pos, 0.12, 0.095, 0.10, 0.02, negative_pos[0]);
+    }
+}
+update_relativity_scene(ctx.scenes["scene_relativity"]);
+let cable = ctx.create_drawable("shader_line",
+    create_plane([-5, 0.16, 0], [10, 0.6]),
+    [0.5, 0.5, 0.5], translate_3d([0, 0, 0]));
+// scene_relativity setup
+
 // scene_wave setup
 let wave_3d = {vertex_buffer: null, shader: "shader_line"};
 ctx.update_wave_3d(wave_3d, wave_parms, lines_segments_3d);
@@ -1158,6 +1185,25 @@ function update() {
         }
         else if(scene_id == "scene_field_gradient"){
             ctx.draw(plane);
+        }
+        else if(scene_id == "scene_relativity"){
+            for(const charge of scene.charges){
+                ctx.draw(charge.sign);
+                ctx.draw(charge.charge);
+                ctx.draw(charge.charge_background);
+                ctx.draw(charge.arrow);
+
+                let delta = 0.004;
+                if(charge.type == "positive"){
+                    delta = 0;
+                }
+                charge.pos = vec3_add(charge.pos, [delta, 0, 0]);
+                if(charge.pos[0]-charge.start_pos > 0.25){
+                    charge.pos[0] = charge.start_pos;
+                }
+                update_charge_pos(charge);
+            }
+            ctx.draw(cable);
         }
     }
 
