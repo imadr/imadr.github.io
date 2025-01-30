@@ -23,30 +23,39 @@
 
     <h2>Special relativity and magnetism</h2>
     <p>Imagine an object carrying a <strong class="red">positive electric charge</strong> placed under a cable carrying an electrical current.<br>
-    In the reference frame of the cable, the charges in the wire are moving, and since the <strong class="red">positive</strong> and <strong class="blue">negative</strong> charges in the cable compensate each other, the object doesn't experience a force.</p>
-    <p>However in the reference frame of the object, special relativity comes into play. From this perspective, the moving charges in the wire appear "stretched" due to relativistic effects, causing a change in the distribution of charge. This stretching leads to a repulsive force between the object and the wire, which we interpret as magnetism.</p>
+    In the <button data-reference="0" class="button-reference-inline button-inline active">observer's frame of reference</button>, the negative charges in the wire are moving, and since the <strong class="red">positive</strong> and <strong class="blue">negative</strong> charges in the cable compensate each other, the object doesn't experience any force.</p>
+    <p>In the <button data-reference="1" class="button-reference-inline button-inline">object's frame of reference</button>, it appears to be static alongside the <strong class="blue">negative</strong> charges, while the <strong class="red">positive</strong> are charges moving to the left, and the object still doesn't get affected by a force.</p>
+    <p>Now if we consider <button data-reference="2" class="button-reference-inline button-inline">special relativity</button>, the moving charges in the wire appear "stretched" due to relativistic effects, causing a change in the distribution of charge. This stretching leads to a repulsive force between the object and the wire, which we interpret as <strong>magnetism.</strong></p>
     <div class="canvas" id="scene_relativity"></div>
-
-    <h2>Maxwell equations</h2>
-    <p>Maxwell's third equation, known as <strong>Faraday's law of induction</strong>, shows how changing magnetic fields can generate electric currents. For example, when a magnet moves, it creates an electric field. This is the principle behind electric generators.</p>
+    <div class="button-group">
+        <button data-reference="0" class="button-reference button active">Observer's frame of reference</button>
+        <button data-reference="1" class="button-reference button">Object's frame of reference</button>
+        <button data-reference="2" class="button-reference button">Special relativity</button>
+    </div>
+    <h2>Maxwell's equations</h2>
+    <p>Maxwell's equations describe how electric and magnetic fields are created and interact with each others. We will focus on the third and fourth equations.</p>
+    <p>Maxwell's third equation, known as <strong>Faraday's law of induction</strong>, shows how changing magnetic fields can generate electric currents. For example, when a magnet moves, it creates an electric field. This is the principle behind electric generators:</p>
+    <div class="canvas" id="scene_induction"></div>
+    <div class="slider-container">
+        <label style="font-weight: bold;">Slide the magnet</label><br><input id="magnet-input" type="range" min="-1" max="1" step="0.01" data-color="#888">
+    </div>
+    <br>
     <p>Maxwell's fourth and final equation, <strong>Ampère's Law</strong>, illustrates how electric currents (moving charges) produce magnetic fields around them. This is the basis of how electromagnets function:</p>
-    <br>
-    <br>
-    <br>
-    <br>
-    <h2>The Electromagnetic force</h2>
-    <div class="canvas-sliders">
-        <div class="canvas" id="scene_wave"></div>
-        <div class="canvas-sliders-right">
-            <div class="slider-container">
-                <label>Amplitude</label><input id="amplitude-input" type="range" min="0.2" max="1" step="0.01" data-color="#888">
-            </div>
-            <div class="slider-container">
-                <label>Frequency</label><input id="frequency-input" type="range" min="0.5" max="4" step="0.01" data-color="#888">
-            </div>
-        </div>
+    <div class="canvas" id="scene_ampere"></div>
+    <p>Together, these laws demonstrate how electric and magnetic fields are interdependent. A changing magnetic field generates an electric field, and a changing electric field generates a magnetic field. This continuous cycle enables <strong>self-sustaining electromagnetic waves</strong>, which can propagate through space without requiring a medium.</p>
+    <h2>Electromagnetic radiation</h2>
+    <p>Electromagnetic radiation consists of waves created by synchronized oscillations of electric and magnetic fields. These waves travel at the speed of light in a vacuum.</p>
+    <p>The <strong>amplitude</strong> of a wave determines the maximum strength of its electric or magnetic field. It represents the wave's intensity or "brightness." In quantum terms, a higher amplitude generally corresponds to a greater number of photons.</p>
+    <p>The <strong>frequency</strong> of a wave determines the energy of the individual photons that compose it. Higher frequencies correspond to shorter wavelengths and more energetic photons. When the wavelength falls between approximately 400 nm and 700 nm, the human eye perceives it as <strong>visible light</strong>.</p>
+    <div class="canvas" id="scene_wave"></div>
+    <div class="slider-container">
+        <label>Amplitude</label><input id="amplitude-input" type="range" min="0.2" max="1" step="0.01" data-color="#888">
+    </div>
+    <div class="slider-container">
+        <label>Frequency</label><input id="frequency-input" type="range" min="0.5" max="4" step="0.01" data-color="#888">
     </div>
 
+    <div class="canvas" id="scene_spectrum"></div>
     <h1>Chapter 2: Perceiving Light</h1>
     <h1>Chapter 3: Radiometry</h1>
     <h1>Chapter 4: Materials and Reflection Models</h1>
