@@ -101,3 +101,34 @@ h2{
     -webkit-background-clip: text;
     color: transparent;
 }
+.button-group {
+    display: flex;
+    gap: 1rem;
+    padding: 1rem;
+    justify-content: center;
+}
+.button {
+    background-color: #e2e2e2;
+    color: #666;
+    border: none;
+    padding: 1em 2em;
+    font-size: 1.5rem;
+    border-radius: 12px;
+    cursor: pointer;
+    font-weight: 600;
+    transition: all 0.2s ease;
+    min-width: 200px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+.button:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+}
+.button.active {
+    background-color: #2563eb;
+    color: white;
+    box-shadow: 0 4px 12px rgba(37, 99, 235, 0.2);
+}
+.button:not(.active):hover {
+    background-color: #f0f0f0;
+}

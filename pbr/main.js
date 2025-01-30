@@ -149,7 +149,7 @@ function line_intersection(p1, p2, p3, p4) {
 
     let determinant = a1 * b2 - a2 * b1;
 
-    if (determinant === 0) return null;
+    if (determinant == 0) return null;
 
     let x = (b2 * c1 - b1 * c2) / determinant;
     let y = (a1 * c2 - a2 * c1) / determinant;
@@ -504,7 +504,7 @@ function screen_to_world_space(scene, screen_pos, z_distance) {
 ctx.canvas = document.getElementById("main-canvas");
 ctx.gl = ctx.canvas.getContext("webgl2");
 ctx.shaders = {};
-ctx.shaders["shader_line"] = ctx.create_shader(`#version 300 es
+ctx.shaders["shader_basic"] = ctx.create_shader(`#version 300 es
 layout(location = 0) in vec3 position_attrib;
 layout(location = 1) in vec3 normal_attrib;
 
@@ -680,7 +680,7 @@ ctx.scenes = {
                 zoom: 2.0
             }
         }},
-    "scene_relativity": {id: "scene_relativity", el: null, width: 1000, height: 600, camera: null, dragging_rect: null, draggable_rects: {},
+    "scene_relativity": {id: "scene_relativity", el: null, width: 1000, height: 500, camera: null, dragging_rect: null, draggable_rects: {},
         camera: {
             fov: 60, z_near: 0.1, z_far: 1000,
             position: [0, 0, 0], rotation: [0, 0, 0],
@@ -692,7 +692,8 @@ ctx.scenes = {
                 zoom: 3.0
             }
         },
-        charges: []},
+        cable_y_pos: 1.3, num_charges: 100, set_charges_spacing: -1, spacing_positive: 0.28, spacing_negative: 0.28,
+        charges: [], reference_frame: 0},
 };
 
 document.addEventListener("mouseup", function(e){
@@ -764,8 +765,8 @@ document.addEventListener("mousemove", function(e) {
         let mouse_delta = vec2_sub(current_mouse, scene.last_mouse);
         let delta_angle = [2 * Math.PI / scene.width, Math.PI / scene.height];
 
-        if (scene_id == "scene_charges" || scene_id == "scene_electric_field") {
-            const charge = scene.charges.find(charge => charge.id === scene.dragging_rect);
+        if (scene_id == "scene_charges" || scene_id == "scene_electric_field" || scene_id == "scene_relativity") {
+            const charge = scene.charges.find(charge => charge.id == scene.dragging_rect);
             let padding = 50;
             current_mouse[0] = Math.max(padding, Math.min(scene.width - padding, current_mouse[0]));
             current_mouse[1] = Math.max(padding, Math.min(scene.height - padding, current_mouse[1]));
@@ -895,24 +896,26 @@ const red = [0.922, 0.204, 0.204];
 const blue = [0.204, 0.443, 0.922];
 
 // scene_charges setup
-function add_charge(scene, type, pos, charge_size = 0.25, border_size = 0.21, sign_size = 0.16, sign_thickness = 0.04, start_pos){
-    let charge_background = ctx.create_drawable("shader_line", create_circle([0, 0, 0], charge_size, 32), [0.1, 0.1, 0.1], mat4_identity());
-    let charge = ctx.create_drawable("shader_line", create_circle([0, 0, 0], border_size, 32), type == "positive" ? red : blue, mat4_identity());
+function add_charge(scene, type, pos, charge_size = 0.25, border_size = 0.21, sign_size = 0.16, sign_thickness = 0.04, start_pos = 0, draggable = false, show_arrow = false){
+    let charge_background = ctx.create_drawable("shader_basic", create_circle([0, 0, 0], charge_size, 32), [0.1, 0.1, 0.1], mat4_identity());
+    let charge = ctx.create_drawable("shader_basic", create_circle([0, 0, 0], border_size, 32), type == "positive" ? red : blue, mat4_identity());
     let sign;
 
     if(type == "positive"){
-        sign = ctx.create_drawable("shader_line", create_plus_sign([0, 0, 0], sign_size, sign_thickness), [0.1, 0.1, 0.1], mat4_identity());
+        sign = ctx.create_drawable("shader_basic", create_plus_sign([0, 0, 0], sign_size, sign_thickness), [0.1, 0.1, 0.1], mat4_identity());
     }
     else{
-        sign = ctx.create_drawable("shader_line", create_minus_sign([0, 0, 0], sign_size, sign_thickness), [0.1, 0.1, 0.1], mat4_identity());
+        sign = ctx.create_drawable("shader_basic", create_minus_sign([0, 0, 0], sign_size, sign_thickness), [0.1, 0.1, 0.1], mat4_identity());
     }
 
-    let arrow = ctx.create_drawable("shader_line",
+    let arrow = ctx.create_drawable("shader_basic",
         create_arrow([0, 0, 0], [0, 0, 0], [0, 0]), [0.3, 0.3, 0.3], translate_3d([0, 0, 0]));
 
-
-    scene.charges.push({id: type+""+scene.charges.length, type: type, charge: charge, charge_background: charge_background, sign: sign, arrow: arrow, pos: pos, start_pos: start_pos, size: charge_size});
+    let id = type+""+scene.charges.length;
+    scene.charges.push({id: id, draggable: draggable, show_arrow: show_arrow, type: type, charge: charge, charge_background: charge_background, sign: sign, arrow: arrow, pos: pos, start_pos: start_pos, size: charge_size});
     update_charge_pos(scene.charges[scene.charges.length-1]);
+
+    return id;
 }
 
 function update_charge_pos(charge){
@@ -922,9 +925,9 @@ function update_charge_pos(charge){
     charge.arrow.transform = translate_3d(charge.pos);
 }
 
-add_charge(ctx.scenes["scene_charges"], "positive", [0.5, 0.6, 0]);
-add_charge(ctx.scenes["scene_charges"], "negative", [-2, -0.3, 0]);
-add_charge(ctx.scenes["scene_charges"], "positive", [1.5, 0.3, 0]);
+add_charge(ctx.scenes["scene_charges"], "positive", [0.5, 0.6, 0], 0.25, 0.21, 0.16, 0.04, 0, true, true);
+add_charge(ctx.scenes["scene_charges"], "negative", [-2, -0.3, 0], 0.25, 0.21, 0.16, 0.04, 0, true, true);
+add_charge(ctx.scenes["scene_charges"], "positive", [1.5, 0.3, 0], 0.25, 0.21, 0.16, 0.04, 0, true, true);
 
 function update_drag_charges(scene){
     update_camera_projection_matrix(scene.camera, scene.width/scene.height);
@@ -932,18 +935,19 @@ function update_drag_charges(scene){
 
     const force_strength = 1.0;
     for (let i = 0; i < scene.charges.length; i++) {
-        let charge1 = scene.charges[i];
+        let charge = scene.charges[i];
         let force = [0, 0, 0];
 
         for (let j = 0; j < scene.charges.length; j++) {
-            if (i === j) continue;
+            if (i == j) continue;
 
             let charge2 = scene.charges[j];
-            let dir = vec3_sub(charge2.pos, charge1.pos);
+
+            let dir = vec3_sub(charge2.pos, charge.pos);
             let dist = vec3_magnitude(dir);
             dir = vec3_normalize(dir);
 
-            let strength = (charge1.id[0] === charge2.id[0]) ? -force_strength : force_strength;
+            let strength = (charge.type == charge2.type) ? -force_strength : force_strength;
             strength /= dist * dist;
 
             force = vec3_add(force, vec3_scale(dir, strength));
@@ -961,15 +965,15 @@ function update_drag_charges(scene){
         magnitude = Math.min(magnitude, 1.8);
         let arrow_length = 0.5;
         let arrow_thickness = magnitude;
-
-        if(scene.id != "scene_electric_field"){
+        if(scene.id != "scene_electric_field" && charge.show_arrow){
             let new_mesh = create_arrow([0, 0, 0], vec3_scale(direction, arrow_length*arrow_thickness), vec2_scale([0.1, 0.15], arrow_thickness));
-            ctx.update_drawable_mesh(charge1.arrow, new_mesh);
+            ctx.update_drawable_mesh(charge.arrow, new_mesh);
         }
     }
 
     scene.draggable_rects = [];
     for(const charge of scene.charges){
+        if(!charge.draggable) continue;
         let screen_space_charge = [
             ...world_to_screen_space(scene, [charge.pos[0]-charge.size, charge.pos[1]+charge.size, 0.1, 1]),
             ...world_to_screen_space(scene, [charge.pos[0]+charge.size, charge.pos[1]-charge.size, 0.1, 1])
@@ -982,8 +986,8 @@ update_drag_charges(ctx.scenes["scene_charges"]);
 
 
 // scene_electric_field setup
-add_charge(ctx.scenes["scene_electric_field"], "negative", [1.0, 0.8, 0]);
-add_charge(ctx.scenes["scene_electric_field"], "positive", [-1.0, -0.8, 0]);
+add_charge(ctx.scenes["scene_electric_field"], "negative", [1.0, 0.8, 0], 0.25, 0.21, 0.16, 0.04, 0, true);
+add_charge(ctx.scenes["scene_electric_field"], "positive", [-1.0, -0.8, 0], 0.25, 0.21, 0.16, 0.04, 0, true);
 
 function update_electric_field(scene) {
     const lines = 32;
@@ -1061,7 +1065,7 @@ function update_electric_field(scene) {
             let points = integrate_field_line(start_point, scene.charges);
             if (points.length > 10) {
                 scene.field_lines.push(ctx.create_drawable(
-                    "shader_line",
+                    "shader_basic",
                     create_line(points, 0.02, true),
                     [0.3, 0.3, 0.3],
                     translate_3d([0, 0, 0])
@@ -1076,33 +1080,100 @@ update_electric_field(ctx.scenes["scene_electric_field"]);
 // scene_electric_field setup
 
 // scene_relativity setup
-function update_relativity_scene(scene){
-    for(let i = 0; i < 25; i++){
-        let positive_pos = [i/4.0-3.0, 0.6, 0];
-        let negative_pos = [i/4.0-3.0, 0.32, 0];
+function update_drag_charges_relativity(scene){
+    update_camera_projection_matrix(scene.camera, scene.width/scene.height);
+    update_camera_orbit(scene.camera, scene.canvas);
+
+    const force_strength = 1.0;
+
+    let charge = scene.charges[0];
+    let force = [0, 0, 0];
+    let first_charge_y_pos = null;
+
+    for (let j = 0; j < scene.charges.length; j++) {
+        if (j == 0) continue;
+
+        let charge2 = scene.charges[j];
+        let charge2_pos = [charge2.pos[0], charge2.pos[1], charge2.pos[2]];
+        if(first_charge_y_pos == null){
+            first_charge_y_pos = charge2_pos[1];
+        }
+        charge2_pos[1] = first_charge_y_pos;
+
+        let dir = vec3_sub(charge2_pos, charge.pos);
+        let dist = vec3_magnitude(dir);
+        dir = vec3_normalize(dir);
+
+        let strength = (charge.type == charge2.type) ? -force_strength : force_strength;
+        strength /= dist * dist;
+
+        force = vec3_add(force, vec3_scale(dir, strength));
+    }
+
+
+    let direction = vec3_normalize(force);
+    let magnitude = vec3_magnitude(force);
+    magnitude = Math.min(magnitude, 10);
+    const old_min = 0;
+    const old_max = 0.6;
+    const min = 0;
+    const max = 1.8;
+    let normalized = (magnitude - old_min) / (old_max - old_min);
+    magnitude = min + normalized * (max - min);
+    magnitude = Math.min(magnitude, 1.8);
+    let arrow_length = magnitude/2;
+    let arrow_thickness = magnitude;
+
+    let new_mesh = create_arrow([0, 0, 0], vec3_scale(direction, arrow_length), vec2_scale([0.1, 0.15], arrow_thickness));
+    ctx.update_drawable_mesh(charge.arrow, new_mesh);
+}
+
+function setup_relativity_scene(scene){
+    for(let i = 0; i < scene.num_charges; i++){
+        let positive_pos = [i*scene.spacing_positive - (scene.num_charges-1)/2*scene.spacing_positive, scene.cable_y_pos, 0];
         add_charge(scene, "positive", positive_pos, 0.12, 0.095, 0.10, 0.02, positive_pos[0]);
+    }
+    for(let i = 0; i < scene.num_charges; i++){
+        let negative_pos = [i*scene.spacing_negative - (scene.num_charges-1)/2*scene.spacing_negative, scene.cable_y_pos-0.28, 0];
         add_charge(scene, "negative", negative_pos, 0.12, 0.095, 0.10, 0.02, negative_pos[0]);
     }
 }
-update_relativity_scene(ctx.scenes["scene_relativity"]);
-let cable = ctx.create_drawable("shader_line",
-    create_plane([-5, 0.16, 0], [10, 0.6]),
+// debugger;
+let big_charge_id = add_charge(ctx.scenes["scene_relativity"], "positive", [0, 0, 0], 0.25, 0.21, 0.2, 0.05, -3.75, false, true);
+let big_charge = ctx.scenes["scene_relativity"].charges.find(charge => charge.id == big_charge_id);
+setup_relativity_scene(ctx.scenes["scene_relativity"]);
+update_drag_charges_relativity(ctx.scenes["scene_relativity"]);
+let cable = ctx.create_drawable("shader_basic",
+    create_plane([-5, ctx.scenes["scene_relativity"].cable_y_pos-0.44, 0], [10, 0.6]),
     [0.5, 0.5, 0.5], translate_3d([0, 0, 0]));
+
+let position_range = {x: [-3.5, 3.5], y: [-1.7, 1.7]};
+let random_circles = [];
+let random_circles_pos = [];
+for(let i = 0; i < 60; i++){
+    let x = position_range.x[0] + Math.random() * (position_range.x[1] - position_range.x[0]);
+    let y = position_range.y[0] + Math.random() * (position_range.y[1] - position_range.y[0]);
+    let min_size = 0.02;
+    let max_size = 0.05;
+    let size = min_size + Math.random() * (max_size - min_size);
+    random_circles.push(ctx.create_drawable("shader_basic", create_circle([0, 0, 0], size, 32), [0.9, 0.9, 0.9], translate_3d([x, y, 0])));
+    random_circles_pos.push([x, y, 0]);
+}
 // scene_relativity setup
 
 // scene_wave setup
-let wave_3d = {vertex_buffer: null, shader: "shader_line"};
+let wave_3d = {vertex_buffer: null, shader: "shader_basic"};
 ctx.update_wave_3d(wave_3d, wave_parms, lines_segments_3d);
 
-let x_axis = ctx.create_drawable("shader_line",
+let x_axis = ctx.create_drawable("shader_basic",
     create_line_3d([[0, 0, 0], [6, 0, 0]], 0.02, lines_segments_3d),
     [0.3, 0.3, 0.3], translate_3d([-2.5, 0, 0]));
 
-let y_axis = ctx.create_drawable("shader_line",
+let y_axis = ctx.create_drawable("shader_basic",
     create_line_3d([[0, -1.5, 0], [0, 1.5, 0]], 0.02, lines_segments_3d),
     [0.3, 0.3, 0.3], translate_3d([-1.5, 0, 0]));
 
-let z_axis = ctx.create_drawable("shader_line",
+let z_axis = ctx.create_drawable("shader_basic",
     create_line_3d([[0, 0, -1.5], [0, 0, 1.5]], 0.02, lines_segments_3d),
     [0.3, 0.3, 0.3], translate_3d([-1.5, 0, 0]));
 // scene_wave setup
@@ -1187,23 +1258,102 @@ function update() {
             ctx.draw(plane);
         }
         else if(scene_id == "scene_relativity"){
+            if(scene.set_charges_spacing >= 0){
+                if(scene.set_charges_spacing == 2){
+                    scene.spacing_positive = 0.14;
+                    scene.spacing_negative = 0.45;
+                }
+                else{
+                    scene.spacing_positive = 0.28;
+                    scene.spacing_negative = 0.28;
+                }
+
+                let counter = 0;
+                for(let i = 0; i < scene.charges.length; i++){
+                    if(scene.charges[i].id === big_charge_id){
+                        continue;
+                    }
+                    if(scene.charges[i].id.includes("positive")){
+                        continue;
+                    }
+                    let start_pos = counter*scene.spacing_negative - (scene.num_charges-1)/2*scene.spacing_negative;
+                    charge_pos = [start_pos, scene.cable_y_pos-0.28, 0];
+                    scene.charges[i].pos = charge_pos;
+                    scene.charges[i].start_pos = start_pos;
+                    counter++;
+                }
+
+                counter = 0;
+                for(let i = 0; i < scene.charges.length; i++){
+                    if(scene.charges[i].id == big_charge_id){
+                        continue;
+                    }
+                    if(scene.charges[i].id.includes("negative")){
+                        continue;
+                    }
+                    let start_pos = counter*scene.spacing_positive - (scene.num_charges-1)/2*scene.spacing_positive;
+                    charge_pos = [start_pos, scene.cable_y_pos, 0];
+                    scene.charges[i].pos = charge_pos;
+                    scene.charges[i].start_pos = start_pos;
+                    counter++;
+                }
+
+                scene.set_charges_spacing = -1;
+            }
+
+            let speed = 0.015;
             for(const charge of scene.charges){
                 ctx.draw(charge.sign);
                 ctx.draw(charge.charge);
                 ctx.draw(charge.charge_background);
                 ctx.draw(charge.arrow);
 
-                let delta = 0.004;
-                if(charge.type == "positive"){
-                    delta = 0;
+                if(charge.id == big_charge_id) continue;
+
+                if(scene.reference_frame == 0){
+                    if(charge.type != "positive"){
+                        charge.pos[0] += speed;
+                    }
                 }
-                charge.pos = vec3_add(charge.pos, [delta, 0, 0]);
-                if(charge.pos[0]-charge.start_pos > 0.25){
+                else if(scene.reference_frame >= 1){
+                    if(charge.type != "negative"){
+                        charge.pos[0] -= speed;
+                    }
+                }
+
+                let spacing = charge.type == "negative" ? scene.spacing_negative : scene.spacing_positive;
+                if(Math.abs(charge.pos[0]-charge.start_pos) > spacing){
                     charge.pos[0] = charge.start_pos;
                 }
                 update_charge_pos(charge);
             }
+
+            if(scene.reference_frame == 0){
+                big_charge.pos[0] += speed;
+                if(big_charge.pos[0]-big_charge.start_pos > Math.abs(big_charge.start_pos)*2){
+                    big_charge.pos[0] = big_charge.start_pos;
+                }
+            }
+            else{
+                big_charge.pos[0] = 0;
+            }
+
+            update_charge_pos(big_charge);
+
+            update_drag_charges_relativity(ctx.scenes["scene_relativity"]);
+
             ctx.draw(cable);
+
+            for(let i = 0; i < random_circles.length; i++){
+                if(scene.reference_frame > 0){
+                        random_circles_pos[i][0] -= 0.01;
+                        if(random_circles_pos[i][0] < -3.5){
+                            random_circles_pos[i][0] = 3.5;
+                        }
+                }
+                random_circles[i].transform = translate_3d(random_circles_pos[i]);
+                ctx.draw(random_circles[i]);
+            }
         }
     }
 
@@ -1227,4 +1377,16 @@ function update_slider_background(slider) {
 sliders.forEach(slider => {
     update_slider_background(slider);
     slider.addEventListener("input", () => update_slider_background(slider));
+});
+
+const buttons_reference = document.querySelectorAll(".button-reference");
+buttons_reference.forEach(button => {
+    button.addEventListener("click", () => {
+        let scene = ctx.scenes["scene_relativity"];
+        scene.reference_frame = parseInt(button.getAttribute("data-reference"));
+        scene.set_charges_spacing = scene.reference_frame;
+        buttons_reference.forEach(b => b.classList.remove("active"));
+        button.classList.add("active");
+        button.classList.add("active");
+    });
 });
