@@ -23,9 +23,9 @@
 
     <h2>Special relativity and magnetism</h2>
     <p>Imagine an object carrying a <strong class="red">positive electric charge</strong> placed under a cable carrying an electrical current.<br>
-    In the <strong>observer's frame of reference</strong>, the negative charges in the wire are moving, and since the <strong class="red">positive</strong> and <strong class="blue">negative</strong> charges in the cable compensate each other, the object doesn't experience any force.</p>
-    <p>If we consider the <strong>object's frame of reference</strong>, it appears to be static alongside the <strong class="blue">negative</strong> charges, while the <strong class="red">positive</strong> are charges moving to the left, and the object still doesn't get affected by a force.</p>
-    <p>However special relativity comes into play. From this perspective, the moving charges in the wire appear "stretched" due to relativistic effects, causing a change in the distribution of charge. This stretching leads to a repulsive force between the object and the wire, which we interpret as magnetism.</p>
+    In the <button data-reference="0" class="button-reference-inline button-inline active">observer's frame of reference</button>, the negative charges in the wire are moving, and since the <strong class="red">positive</strong> and <strong class="blue">negative</strong> charges in the cable compensate each other, the object doesn't experience any force.</p>
+    <p>In the <button data-reference="1" class="button-reference-inline button-inline">object's frame of reference</button>, it appears to be static alongside the <strong class="blue">negative</strong> charges, while the <strong class="red">positive</strong> are charges moving to the left, and the object still doesn't get affected by a force.</p>
+    <p>Now if we consider <button data-reference="2" class="button-reference-inline button-inline">special relativity</button>, the moving charges in the wire appear "stretched" due to relativistic effects, causing a change in the distribution of charge. This stretching leads to a repulsive force between the object and the wire, which we interpret as <strong>magnetism.</strong></p>
     <div class="canvas" id="scene_relativity"></div>
     <div class="button-group">
         <button data-reference="0" class="button-reference button active">Observer's frame of reference</button>
@@ -34,22 +34,22 @@
     </div>
     <h2>Maxwell equations</h2>
     <p>Maxwell's third equation, known as <strong>Faraday's law of induction</strong>, shows how changing magnetic fields can generate electric currents. For example, when a magnet moves, it creates an electric field. This is the principle behind electric generators.</p>
+    <div class="canvas" id="scene_induction"></div>
+    <div class="slider-container">
+        <label style="font-weight: bold;">Slide the magnet</label><br><input id="magnet-input" type="range" min="-1" max="1" step="0.01" data-color="#888">
+    </div>
+    <br>
     <p>Maxwell's fourth and final equation, <strong>Ampère's Law</strong>, illustrates how electric currents (moving charges) produce magnetic fields around them. This is the basis of how electromagnets function:</p>
     <br>
     <br>
     <br>
-    <br>
     <h2>The Electromagnetic force</h2>
-    <div class="canvas-sliders">
-        <div class="canvas" id="scene_wave"></div>
-        <div class="canvas-sliders-right">
-            <div class="slider-container">
-                <label>Amplitude</label><input id="amplitude-input" type="range" min="0.2" max="1" step="0.01" data-color="#888">
-            </div>
-            <div class="slider-container">
-                <label>Frequency</label><input id="frequency-input" type="range" min="0.5" max="4" step="0.01" data-color="#888">
-            </div>
-        </div>
+    <div class="canvas" id="scene_wave"></div>
+    <div class="slider-container">
+        <label>Amplitude</label><input id="amplitude-input" type="range" min="0.2" max="1" step="0.01" data-color="#888">
+    </div>
+    <div class="slider-container">
+        <label>Frequency</label><input id="frequency-input" type="range" min="0.5" max="4" step="0.01" data-color="#888">
     </div>
 
     <h1>Chapter 2: Perceiving Light</h1>

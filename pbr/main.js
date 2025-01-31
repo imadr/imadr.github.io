@@ -387,6 +387,60 @@ function create_circle(center_position, radius, segments){
     return { vertices: vertices, indices: indices };
 }
 
+function create_coil_3d(turns, height, radius, tube_radius, segments, radial_segments) {
+    let points = [];
+    let coil_steps = turns * segments;
+    for (let i = 0; i <= coil_steps; i++) {
+        let t = (i / coil_steps) * Math.PI * 2 * turns;
+        let x = Math.cos(t) * radius;
+        let y = (i / coil_steps) * height;
+        let z = Math.sin(t) * radius;
+        points.push([x, y, z]);
+    }
+    return create_line_3d(points, tube_radius, radial_segments);
+}
+
+
+function create_box(width, height, depth) {
+    let vertices = [
+        -width / 2, -height / 2, -depth / 2, 0, 0, -1,
+        width / 2, -height / 2, -depth / 2, 0, 0, -1,
+        width / 2, height / 2, -depth / 2, 0, 0, -1,
+        -width / 2, height / 2, -depth / 2, 0, 0, -1,
+        -width / 2, -height / 2, depth / 2, 0, 0, 1,
+        width / 2, -height / 2, depth / 2, 0, 0, 1,
+        width / 2, height / 2, depth / 2, 0, 0, 1,
+        -width / 2, height / 2, depth / 2, 0, 0, 1,
+        width / 2, -height / 2, -depth / 2, 1, 0, 0,
+        width / 2, -height / 2, depth / 2, 1, 0, 0,
+        width / 2, height / 2, depth / 2, 1, 0, 0,
+        width / 2, height / 2, -depth / 2, 1, 0, 0,
+        -width / 2, -height / 2, -depth / 2, -1, 0, 0,
+        -width / 2, -height / 2, depth / 2, -1, 0, 0,
+        -width / 2, height / 2, depth / 2, -1, 0, 0,
+        -width / 2, height / 2, -depth / 2, -1, 0, 0,
+        -width / 2, height / 2, -depth / 2, 0, 1, 0,
+        width / 2, height / 2, -depth / 2, 0, 1, 0,
+        width / 2, height / 2, depth / 2, 0, 1, 0,
+        -width / 2, height / 2, depth / 2, 0, 1, 0,
+        -width / 2, -height / 2, -depth / 2, 0, -1, 0,
+        width / 2, -height / 2, -depth / 2, 0, -1, 0,
+        width / 2, -height / 2, depth / 2, 0, -1, 0,
+        -width / 2, -height / 2, depth / 2, 0, -1, 0
+    ];
+
+    let indices = [
+        0, 1, 2, 2, 3, 0,
+        4, 5, 6, 6, 7, 4,
+        8, 9, 10, 10, 11, 8,
+        12, 13, 14, 14, 15, 12,
+        16, 17, 18, 18, 19, 16,
+        20, 21, 22, 22, 23, 20
+    ];
+
+    return { vertices, indices };
+}
+
 function create_arrow(from, to, size) {
     let [x1, y1, z1] = from;
     let [x2, y2, z2] = to;
@@ -533,6 +587,40 @@ in vec3 normal;
 void main(){
     frag_color = vec4(color, 1);
 }`);
+ctx.shaders["shader_shaded"] = ctx.create_shader(`#version 300 es
+layout(location = 0) in vec3 position_attrib;
+layout(location = 1) in vec3 normal_attrib;
+
+uniform mat4 m;
+uniform mat4 v;
+uniform mat4 p;
+
+out vec3 position;
+out vec3 normal;
+
+void main(){
+    gl_Position = p*v*m*vec4(position_attrib, 1);
+    position = position_attrib;
+    normal = normal_attrib;
+}`,
+`#version 300 es
+precision highp float;
+
+uniform vec3 color;
+
+out vec4 frag_color;
+
+in vec3 position;
+in vec3 normal;
+
+void main(){
+    vec3 light_pos = vec3(0, 2, 1);
+    float angle = clamp(dot(normalize(light_pos), normal), 0.0, 1.0);
+    float dist = 1.0/distance(light_pos, position);
+    float light = angle*dist+0.7;
+    light = clamp(light, 0.0, 1.0);
+    frag_color = vec4(color*1.1*light, 1.0);
+}`);
 ctx.shaders["shader_plane"] = ctx.create_shader(`#version 300 es
 layout(location = 0) in vec3 position_attrib;
 layout(location = 1) in vec3 normal_attrib;
@@ -562,7 +650,7 @@ in vec3 normal;
 #define NUM_POSITIVE 10
 #define NUM_NEGATIVE 10
 void main(){
-    float aspect_ratio = 600.0/400.0;
+    float aspect_ratio = 1000.0/400.0;
     vec2 uv = normal.yz * vec2(aspect_ratio, 1);
     float time_scaled = time*2.0;
     vec2 positive_charge[NUM_POSITIVE] = vec2[](
@@ -598,7 +686,7 @@ void main(){
     float decay_factor = 2.0;
     float max_distance = 0.0;
     for (int i = 0; i < NUM_POSITIVE; i++) {
-        float dist_to_positive = distance(origin, positive_charge[i]+vec2(0.3, -0.1));
+        float dist_to_positive = distance(origin, positive_charge[i]+vec2(1, 0));
         float positive_decay = exp(-dist_to_positive * decay_factor) * 1.0;
         charge += positive_decay;
         charge_normalized += dist_to_positive;
@@ -608,7 +696,7 @@ void main(){
     }
 
     for (int i = 0; i < NUM_NEGATIVE; i++) {
-        float dist_to_negative = distance(origin, negative_charge[i]+vec2(0.3, -0.1));
+        float dist_to_negative = distance(origin, negative_charge[i]+vec2(1, 0));
         float negative_decay = exp(-dist_to_negative * decay_factor) * 1.0;
         charge -= negative_decay;
         charge_normalized -= dist_to_negative;
@@ -668,9 +756,9 @@ ctx.scenes = {
                 zoom: 3.0
             }
         }},
-    "scene_field_gradient": {id: "scene_field_gradient", el: null, width: 600, height: 400, camera: null, dragging_rect: null, draggable_rects: {"scene": []},
+    "scene_field_gradient": {id: "scene_field_gradient", el: null, width: 1000, height: 400, camera: null, dragging_rect: null, draggable_rects: {},
         camera: {
-            fov: 90, z_near: 0.1, z_far: 1000,
+            fov: 60, z_near: 0.1, z_far: 1000,
             position: [0, 0, 0], rotation: [0, 0, 0],
             up_vector: [0, 1, 0],
             view_matrix: mat4_identity(),
@@ -694,6 +782,18 @@ ctx.scenes = {
         },
         cable_y_pos: 1.3, num_charges: 100, set_charges_spacing: -1, spacing_positive: 0.28, spacing_negative: 0.28,
         charges: [], reference_frame: 0},
+    "scene_induction": {id: "scene_induction", el: null, width: 600, height: 500, camera: null, dragging_rect: null, draggable_rects: {"scene": [0, 0, 1000, 500]},
+        camera: {
+            fov: 60, z_near: 0.1, z_far: 1000,
+            position: [0, 0, 0], rotation: [0, 0, 0],
+            up_vector: [0, 1, 0],
+            view_matrix: mat4_identity(),
+            orbit: {
+                rotation: [-0.4, 0, 0],
+                pivot: [0, 0, 0],
+                zoom: 3.0
+            }
+        }},
 };
 
 document.addEventListener("mouseup", function(e){
@@ -752,7 +852,7 @@ for (let scene_id in ctx.scenes) {
 }
 
 document.addEventListener("mousemove", function(e) {
-    for (let scene_id in ctx.scenes) {
+    for(let scene_id in ctx.scenes){
         const scene = ctx.scenes[scene_id];
         if (!scene.is_dragging || !scene.last_mouse) continue;
 
@@ -765,7 +865,7 @@ document.addEventListener("mousemove", function(e) {
         let mouse_delta = vec2_sub(current_mouse, scene.last_mouse);
         let delta_angle = [2 * Math.PI / scene.width, Math.PI / scene.height];
 
-        if (scene_id == "scene_charges" || scene_id == "scene_electric_field" || scene_id == "scene_relativity") {
+        if(scene_id == "scene_charges" || scene_id == "scene_electric_field" || scene_id == "scene_relativity"){
             const charge = scene.charges.find(charge => charge.id == scene.dragging_rect);
             let padding = 50;
             current_mouse[0] = Math.max(padding, Math.min(scene.width - padding, current_mouse[0]));
@@ -779,7 +879,7 @@ document.addEventListener("mousemove", function(e) {
                 update_electric_field(scene);
             }
         }
-        if (scene.dragging_rect == "scene") {
+        if(scene.dragging_rect == "scene"){
             scene.camera.orbit.rotation = vec3_add(
                 scene.camera.orbit.rotation,
                 [-mouse_delta[1] * delta_angle[1], -mouse_delta[0] * delta_angle[0], 0]
@@ -789,6 +889,8 @@ document.addEventListener("mousemove", function(e) {
                 -Math.PI / 2,
                 Math.PI / 2
             );
+            update_camera_orbit(scene.camera, scene.canvas);
+            scene.camera_dirty = true;
         }
 
         scene.last_mouse = current_mouse;
@@ -799,7 +901,7 @@ ctx.draw = function(drawable){
     const gl = this.gl;
     const shader = ctx.shaders[drawable.shader];
 
-    if(this.previous_shader != drawable.shader || this.previous_scene != this.current_scene){
+    if(this.previous_shader != drawable.shader || this.previous_scene != this.current_scene || ctx.current_scene.camera_dirty){
         gl.useProgram(shader.program);
         const scene = ctx.current_scene;
         update_camera_projection_matrix(scene.camera, scene.width/scene.height);
@@ -808,6 +910,7 @@ ctx.draw = function(drawable){
         ctx.set_shader_uniform(shader, "v", scene.camera.view_matrix);
         this.previous_shader = drawable.shader;
         this.previous_scene = this.current_scene;
+        this.current_scene.camera_dirty = true;
     }
 
     ctx.set_shader_uniform(shader, "time", this.time);
@@ -1138,7 +1241,6 @@ function setup_relativity_scene(scene){
         add_charge(scene, "negative", negative_pos, 0.12, 0.095, 0.10, 0.02, negative_pos[0]);
     }
 }
-// debugger;
 let big_charge_id = add_charge(ctx.scenes["scene_relativity"], "positive", [0, 0, 0], 0.25, 0.21, 0.2, 0.05, -3.75, false, true);
 let big_charge = ctx.scenes["scene_relativity"].charges.find(charge => charge.id == big_charge_id);
 setup_relativity_scene(ctx.scenes["scene_relativity"]);
@@ -1180,9 +1282,132 @@ let z_axis = ctx.create_drawable("shader_basic",
 
 // scene_field_gradient setup
 let plane = ctx.create_drawable("shader_plane",
-    create_plane([0, 0, 0], [6, 4]),
-    [0, 0, 0], translate_3d([-3, -2, 0]));
+    create_plane([0, 0, 0], [6, 2.4]),
+    [0, 0, 0], translate_3d([-3, -1.2, 0]));
 // scene_field_gradient setup
+
+// scene_induction setup
+function update_magnetic_field(north_pole, south_pole) {
+    const lines = 31;
+    const step_size = 0.03;
+    const max_steps = 1000;
+
+    function calculate_field_at_point(point) {
+        let field = [0, 0, 0];
+
+        let dir_north = vec3_sub(north_pole, point);
+        let dist_north = vec3_magnitude(dir_north);
+        if (dist_north >= 0.1) {
+            let strength_north = -1 / (dist_north * dist_north);
+            field = vec3_add(field, vec3_scale(dir_north, strength_north));
+        }
+
+        let dir_south = vec3_sub(south_pole, point);
+        let dist_south = vec3_magnitude(dir_south);
+        if (dist_south >= 0.1) {
+            let strength_south = 1 / (dist_south * dist_south);
+            field = vec3_add(field, vec3_scale(dir_south, strength_south));
+        }
+
+        return vec3_normalize(field);
+    }
+
+    function rk4_step(point) {
+        let k1 = calculate_field_at_point(point);
+        let temp = vec3_add(point, vec3_scale(k1, step_size * 0.5));
+        let k2 = calculate_field_at_point(temp);
+        temp = vec3_add(point, vec3_scale(k2, step_size * 0.5));
+        let k3 = calculate_field_at_point(temp);
+        temp = vec3_add(point, vec3_scale(k3, step_size));
+        let k4 = calculate_field_at_point(temp);
+        return vec3_scale(
+            vec3_add(
+                vec3_add(
+                    vec3_scale(k1, 1 / 6),
+                    vec3_scale(k2, 1 / 3)
+                ),
+                vec3_add(
+                    vec3_scale(k3, 1 / 3),
+                    vec3_scale(k4, 1 / 6)
+                )
+            ),
+            step_size
+        );
+    }
+
+    function generate_circle_points(center, radius, num_points) {
+        let points = [];
+        for (let i = 0; i < num_points; i++) {
+            let angle = (i / num_points) * Math.PI * 2.0;
+            let x = center[0] + radius * Math.cos(angle);
+            let y = center[1] + radius * Math.sin(angle);
+            points.push([x, y, 0]);
+        }
+        return points;
+    }
+
+    function integrate_field_line(start_point) {
+        let points = [start_point];
+        let current_point = [...start_point];
+        for (let i = 0; i < max_steps; i++) {
+            let step = rk4_step(current_point);
+            current_point = vec3_add(current_point, step);
+            points.push([...current_point]);
+
+            let too_close_north = vec3_magnitude(vec3_sub(current_point, north_pole)) < 0.3;
+            let too_close_south = vec3_magnitude(vec3_sub(current_point, south_pole)) < 0.3;
+
+            if (too_close_north || too_close_south) break;
+            if (Math.abs(current_point[0]) > 5 || Math.abs(current_point[1]) > 5) break;
+        }
+        return points;
+    }
+
+    let field_lines = [];
+    let start_points = generate_circle_points(north_pole, 0.3, lines);
+    for (let start_point of start_points) {
+        let points = integrate_field_line(start_point);
+        if (points.length > 10) {
+            field_lines.push(ctx.create_drawable(
+                "shader_basic",
+                create_line_3d(points, 0.01, 16),
+                [0.3, 0.3, 0.3],
+                translate_3d([0, 0, 0])
+            ));
+        }
+    }
+    return field_lines;
+}
+
+let magnetic_field_drawables = update_magnetic_field([-0.25, 0, 0], [0.25, 0, 0]);
+
+let coil = ctx.create_drawable("shader_shaded",
+    create_coil_3d(15, 3, 0.5, 0.02, 32, 32),
+    [0.722, 0.451, 0.200],
+    mat4_mat4_mul(
+        translate_3d([0, -1.5, 0]),
+        mat4_mat4_mul(
+            rotate_3d(axis_angle_to_quat(vec3_normalize([1, 0, 0]), rad(90))),
+            rotate_3d(axis_angle_to_quat(vec3_normalize([0, 1, 0]), rad(90))),
+        )
+    )
+);
+let magnet_south = ctx.create_drawable("shader_shaded",
+    create_box(0.5, 0.5, 0.5), red, translate_3d([-0.25, 0, 0]));
+let magnet_north = ctx.create_drawable("shader_shaded",
+    create_box(0.5, 0.5, 0.5), blue, translate_3d([0.25, 0, 0]));
+let magnet_pos = 0;
+document.getElementById("magnet-input").value = magnet_pos;
+document.getElementById("magnet-input").addEventListener("input", (e) => {
+    magnet_pos = parseFloat(e.target.value);
+    magnet_south.transform = translate_3d([-0.25+magnet_pos, 0, 0]);
+    magnet_north.transform = translate_3d([0.25+magnet_pos, 0, 0]);
+
+    for(let line of magnetic_field_drawables){
+        line.transform = translate_3d([magnet_pos, 0, 0]);
+    }
+});
+// scene_induction setup
 
 function resize_event(ctc){
     ctx.gl.canvas.width = window.innerWidth;
@@ -1256,6 +1481,15 @@ function update() {
         }
         else if(scene_id == "scene_field_gradient"){
             ctx.draw(plane);
+        }
+        else if(scene_id == "scene_induction"){
+            ctx.draw(coil);
+            ctx.draw(magnet_south);
+            ctx.draw(magnet_north);
+
+            for(let line of magnetic_field_drawables){
+                ctx.draw(line);
+            }
         }
         else if(scene_id == "scene_relativity"){
             if(scene.set_charges_spacing >= 0){
@@ -1380,6 +1614,7 @@ sliders.forEach(slider => {
 });
 
 const buttons_reference = document.querySelectorAll(".button-reference");
+const buttons_reference_inline = document.querySelectorAll(".button-reference-inline");
 buttons_reference.forEach(button => {
     button.addEventListener("click", () => {
         let scene = ctx.scenes["scene_relativity"];
@@ -1387,6 +1622,26 @@ buttons_reference.forEach(button => {
         scene.set_charges_spacing = scene.reference_frame;
         buttons_reference.forEach(b => b.classList.remove("active"));
         button.classList.add("active");
+        buttons_reference_inline.forEach(b => b.classList.remove("active"));
+        for(let other_button of buttons_reference_inline){
+            if(other_button.getAttribute("data-reference") == button.getAttribute("data-reference")){
+                other_button.classList.add("active");
+            }
+        }
+    });
+});
+buttons_reference_inline.forEach(button => {
+    button.addEventListener("click", () => {
+        let scene = ctx.scenes["scene_relativity"];
+        scene.reference_frame = parseInt(button.getAttribute("data-reference"));
+        scene.set_charges_spacing = scene.reference_frame;
+        buttons_reference_inline.forEach(b => b.classList.remove("active"));
         button.classList.add("active");
+        buttons_reference.forEach(b => b.classList.remove("active"));
+        for(let other_button of buttons_reference){
+            if(other_button.getAttribute("data-reference") == button.getAttribute("data-reference")){
+                other_button.classList.add("active");
+            }
+        }
     });
 });
