@@ -3,16 +3,24 @@
     font-style:  normal;
     font-weight: 400;
     font-display: swap;
-    src: url("../css/Inter-Regular.woff2?v=3.19") format("woff2"),
-         url("../css/Inter-Regular.woff?v=3.19") format("woff");
+    src: url("../css/Inter-Regular.woff2") format("woff2"),
+         url("../css/Inter-Regular.woff") format("woff");
 }
 @font-face {
     font-family: "Inter";
     font-style:  normal;
     font-weight: 700;
     font-display: swap;
-    src: url("../css/Inter-Bold.woff2?v=3.19") format("woff2"),
-         url("../css/Inter-Bold.woff?v=3.19") format("woff");
+    src: url("../css/Inter-Bold.woff2") format("woff2"),
+         url("../css/Inter-Bold.woff") format("woff");
+}
+@font-face {
+    font-family: "Inter";
+    font-style:  normal;
+    font-weight: 1000;
+    font-display: swap;
+    src: url("../css/Inter-Black.woff2") format("woff2"),
+         url("../css/Inter-Black.woff") format("woff");
 }
 body{
     color: #333333;
@@ -152,4 +160,38 @@ h2{
 }
 .button-inline:not(.active):hover{
     background-color: #f0f0f0;
+}
+.wip-banner {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 30px;
+    background: repeating-linear-gradient(
+        45deg,
+        #ffcc00,
+        #ffcc00 60px,
+        #2d2d2d 60px,
+        #2d2d2d 120px
+    );
+    display: flex;
+    align-items: center;
+    overflow: hidden;
+    z-index: 9999;
+    justify-content: center;
+    align-items: center;
+}
+.wip-text {
+    font-weight: 1000;
+    font-size: 18px;
+    letter-spacing: 2px;
+    color: #ffffff;
+    text-transform: uppercase;
+    text-shadow: 0px 0px 3px rgba(0, 0, 0, 1);
+    padding: 0 60px;
+    white-space: nowrap;
+}
+.wip-container {
+    display: flex;
+    gap: 48px;
 }

@@ -7,6 +7,11 @@
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
+    <div class="wip-banner">
+      <div class="wip-container">
+        <div class="wip-text">Work in Progress</div>
+      </div>
+    </div>
     <canvas id="main-canvas"></canvas>
     <h1 id="main-title">Physically based rendering from first principles</h1>
     <h1>Chapter 1: What is light?</h1>
@@ -46,7 +51,7 @@
     <h2>Electromagnetic radiation</h2>
     <p>Electromagnetic radiation consists of waves created by synchronized oscillations of electric and magnetic fields. These waves travel at the speed of light in a vacuum.</p>
     <p>The <strong>amplitude</strong> of a wave determines the maximum strength of its electric or magnetic field. It represents the wave's intensity or "brightness." In quantum terms, a higher amplitude generally corresponds to a greater number of photons.</p>
-    <p>The <strong>frequency</strong> of a wave determines the energy of the individual photons that compose it. Higher frequencies correspond to shorter wavelengths and more energetic photons. When the wavelength falls between approximately 400 nm and 700 nm, the human eye perceives it as <strong>visible light</strong>.</p>
+    <p>The <strong>frequency</strong> of a wave determines the energy of the individual photons that compose it. Higher frequencies correspond to shorter wavelengths and more energetic photons.</p>
     <div class="canvas" id="scene_wave"></div>
     <div class="slider-container">
         <label>Amplitude</label><input id="amplitude-input" type="range" min="0.2" max="1" step="0.01" data-color="#888">
@@ -55,7 +60,11 @@
         <label>Frequency</label><input id="frequency-input" type="range" min="0.5" max="4" step="0.01" data-color="#888">
     </div>
 
+    <p>When the wavelength falls between approximately 400 nm and 700 nm, the human eye perceives it as <strong>visible light</strong>.</p>
     <div class="canvas" id="scene_spectrum"></div>
+    <div class="slider-container">
+        <label>Frequency</label><input id="frequency-input-spectrum" type="range" min="0" max="1" step="0.001" data-color="#888">
+    </div>
     <h1>Chapter 2: Perceiving Light</h1>
     <h1>Chapter 3: Radiometry</h1>
     <h1>Chapter 4: Materials and Reflection Models</h1>

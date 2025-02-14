@@ -387,6 +387,23 @@ function create_arrow_3d(points, radius, segments, arrow_length = 0.15, arrow_ra
     return {vertices: vertices, indices: indices};
 }
 
+function create_triangle(start_position, size) {
+    let [x, y, z] = start_position;
+    let [width, height] = size;
+
+    let vertices = [
+        x, y, z, 0, 0, 0,
+        x + width, y, z, 0, 1, 0,
+        x + width / 2, y + height, z, 0, 1, 1,
+    ];
+
+    let indices = [
+        0, 1, 2
+    ];
+
+    return { vertices: vertices, indices: indices };
+}
+
 function create_plane(start_position, size) {
     let [x, y, z] = start_position;
     let [width, height] = size;
@@ -666,8 +683,41 @@ out vec4 frag_color;
 in vec3 position;
 in vec3 normal;
 
+vec3 wavelength_to_rgb(float wavelength) {
+    float r = 0.0, g = 0.0, b = 0.0;
+
+    if (wavelength >= 380.0 && wavelength < 440.0) {
+        r = -(wavelength - 440.0) / (440.0 - 380.0);
+        g = 0.0;
+        b = 1.0;
+    } else if (wavelength >= 440.0 && wavelength < 490.0) {
+        r = 0.0;
+        g = (wavelength - 440.0) / (490.0 - 440.0);
+        b = 1.0;
+    } else if (wavelength >= 490.0 && wavelength < 510.0) {
+        r = 0.0;
+        g = 1.0;
+        b = -(wavelength - 510.0) / (510.0 - 490.0);
+    } else if (wavelength >= 510.0 && wavelength < 580.0) {
+        r = (wavelength - 510.0) / (580.0 - 510.0);
+        g = 1.0;
+        b = 0.0;
+    } else if (wavelength >= 580.0 && wavelength < 645.0) {
+        r = 1.0;
+        g = -(wavelength - 645.0) / (645.0 - 580.0);
+        b = 0.0;
+    } else if (wavelength >= 645.0 && wavelength <= 700.0) {
+        r = 1.0;
+        g = 0.0;
+        b = 0.0;
+    }
+
+    float fade = smoothstep(370.0, 420.0, wavelength)*smoothstep(700.0, 650.0, wavelength);
+    return vec3(r, g, b) * fade;
+}
+
 void main(){
-    frag_color = vec4(color, 1);
+    frag_color = vec4(wavelength_to_rgb(mix(450.0, 620.0, normal.y*2.0-0.5)), 1);
 }`);
 ctx.shaders["shader_field"] = ctx.create_shader(`#version 300 es
 layout(location = 0) in vec3 position_attrib;
@@ -869,14 +919,14 @@ ctx.scenes = {
                 zoom: 3.0
             }
         }},
-    "scene_spectrum": {el: null, width: 600, height: 400, camera: null, dragging_rect: null, draggable_rects: {},
+    "scene_spectrum": {el: null, width: 1000, height: 400, camera: null, dragging_rect: null, draggable_rects: {},
         camera: {
-            fov: 60, z_near: 0.1, z_far: 1000,
+            fov: 20, z_near: 0.1, z_far: 1000,
             position: [0, 0, 0], rotation: [0, 0, 0],
             up_vector: [0, 1, 0],
             view_matrix: mat4_identity(),
             orbit: {
-                rotation: [-0.4, 0, 0],
+                rotation: [0, 0, 0],
                 pivot: [0, 0, 0],
                 zoom: 3.0
             }
@@ -1084,19 +1134,19 @@ ctx.update_drawable_mesh = function(drawable, mesh){
                         ], mesh.indices);
 }
 
-ctx.update_wave_3d = function(drawable, wave_parms, lines_segments_3d) {
+ctx.update_wave_3d = function(drawable, wave_param, lines_segments_3d) {
     const gl = this.gl;
 
     let points = [];
-    for (let i = 0; i < wave_parms.num_points; i++) {
-        let t = i / (wave_parms.num_points - 1);
-        let x = t * wave_parms.width;
-        let y = Math.sin(x * wave_parms.frequency * Math.PI + wave_parms.time) * wave_parms.amplitude;
-        let z = t * wave_parms.z_range;
+    for (let i = 0; i < wave_param.num_points; i++) {
+        let t = i / (wave_param.num_points - 1);
+        let x = t * wave_param.width;
+        let y = Math.sin(x * wave_param.frequency * Math.PI + wave_param.time) * wave_param.amplitude;
+        let z = t * wave_param.z_range;
         points.push([x, y, z]);
     }
 
-    let mesh = create_line_3d(points, wave_parms.thickness, lines_segments_3d);
+    let mesh = create_line_3d(points, wave_param.thickness, lines_segments_3d);
 
     if(drawable.vertex_buffer == null){
         drawable.vertex_buffer = this.create_vertex_buffer(mesh.vertices, [
@@ -1112,7 +1162,7 @@ ctx.update_wave_3d = function(drawable, wave_parms, lines_segments_3d) {
 
 const lines_segments_3d = 8;
 
-let wave_parms = {
+let wave_param = {
     num_points: 500,
     width: 3.7,
     amplitude: 0.5,
@@ -1122,14 +1172,14 @@ let wave_parms = {
     time: 0,
 }
 
-document.getElementById("amplitude-input").value = wave_parms.amplitude;
+document.getElementById("amplitude-input").value = wave_param.amplitude;
 document.getElementById("amplitude-input").addEventListener("input", (e) => {
-    wave_parms.amplitude = parseFloat(e.target.value);
+    wave_param.amplitude = parseFloat(e.target.value);
 });
 
-document.getElementById("frequency-input").value = wave_parms.frequency;
+document.getElementById("frequency-input").value = wave_param.frequency;
 document.getElementById("frequency-input").addEventListener("input", (e) => {
-    wave_parms.frequency = parseFloat(e.target.value);
+    wave_param.frequency = parseFloat(e.target.value);
 });
 
 const red = [0.922, 0.204, 0.204];
@@ -1401,13 +1451,40 @@ for(let i = 0; i < 60; i++){
 // scene_relativity setup
 
 // scene_spectrum setup
+let wave_param_spectrum = {
+    num_points: 500,
+    width: 15,
+    amplitude: 0.5,
+    frequency: 2.75,
+    thickness: 0.03,
+    z_range: 0,
+    time: 0,
+};
+document.getElementById("frequency-input-spectrum").value = 0.5;
+document.getElementById("frequency-input-spectrum").addEventListener("input", (e) => {
+    let value = parseFloat(e.target.value);
+    wave_param_spectrum.frequency = 0.5 + (1-value) * (5-0.5);
+    arrow.transform = translate_3d([-1.43 + value * (1.43 - (-1.43)) -0.075, -0.55, -0.9]);
+});
+let spectrum_wave = {vertex_buffer: null, shader: "shader_basic"};
+spectrum_wave.transform = translate_3d([-7.5, 0.5, -10]);
+ctx.update_wave_3d(spectrum_wave, wave_param_spectrum, lines_segments_3d);
+let spectrum_bg = ctx.create_drawable("shader_basic",
+    create_plane([0, 0, 0], [3, 0.25 + 0.01 * 2]),
+    [0, 0, 0], translate_3d([-1.5, -0.4 - 0.01, -1]));
+let spectrum_bg2 = ctx.create_drawable("shader_basic",
+    create_plane([0, 0, 0], [3-0.02, 0.25]),
+    [1, 1, 1], translate_3d([-1.5 + 0.01, -0.4, -1]));
 let spectrum = ctx.create_drawable("shader_spectrum",
-    create_plane([0, 0, 0], [6, 2.4]),
-    [0, 0, 0], translate_3d([-3, -1.2, 0]));
+    create_plane([0, 0, 0], [0.8, 0.25]),
+    [0, 0, 0], translate_3d([-0.4, -0.4, -1]));
+let arrow = ctx.create_drawable("shader_basic",
+    create_triangle([0, 0, 0], [0.15, 0.15]),
+    [0, 0, 0], translate_3d([-0.075, -0.55, -0.9]));
 // scene_spectrum setup
 // scene_wave setup
 let wave_3d = {vertex_buffer: null, shader: "shader_basic"};
-ctx.update_wave_3d(wave_3d, wave_parms, lines_segments_3d);
+ctx.update_wave_3d(wave_3d, wave_param, lines_segments_3d);
 
 let x_axis = ctx.create_drawable("shader_basic",
     create_arrow_3d([[0, 0, 0], [4.5, 0, 0]], 0.02, 32),
@@ -1625,9 +1702,16 @@ function update() {
         }
         else if(scene_id == "scene_spectrum"){
             ctx.draw(spectrum);
+            ctx.draw(spectrum_bg2);
+            ctx.draw(spectrum_bg);
+            wave_param_spectrum.time += 0.05;
+            spectrum_wave.color = blue;
+            ctx.update_wave_3d(spectrum_wave, wave_param_spectrum, lines_segments_3d);
+            ctx.draw(spectrum_wave);
+            ctx.draw(arrow);
         }
         else if(scene_id == "scene_wave"){
-            ctx.update_wave_3d(wave_3d, wave_parms, lines_segments_3d);
+            ctx.update_wave_3d(wave_3d, wave_param, lines_segments_3d);
 
             wave_3d.color = blue;
             wave_3d.transform = translate_3d([-2, 0, 0]);
@@ -1637,7 +1721,7 @@ function update() {
             wave_3d.transform = mat4_mat4_mul(translate_3d([-2, 0, 0]), rotate_3d(axis_angle_to_quat([1, 0, 0], rad(90))));
             ctx.draw(wave_3d);
 
-            wave_parms.time += 0.05;
+            wave_param.time += 0.05;
 
             ctx.draw(x_axis);
             ctx.draw(y_axis);
