@@ -5,6 +5,10 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Physically based rendering from first principles</title>
     <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.21/dist/katex.min.css" integrity="sha384-zh0CIslj+VczCZtlzBcjt5ppRcsAmDnRem7ESsYwWwg3m/OaJ2l4x7YBZl9Kxxib" crossorigin="anonymous">
+    <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.21/dist/katex.min.js" integrity="sha384-Rma6DA2IPUwhNxmrB/7S3Tno0YY7sFu9WSYMCuulLhIqYSGZ2gKCJWIqhBWqMQfh" crossorigin="anonymous"></script>
+    <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.21/dist/contrib/auto-render.min.js" integrity="sha384-hCXGrW6PitJEwbkoStFjeJxv+fSOOQKOPbJxSfM6G5sWZjAyWhXiTIIAmQqnlLlh" crossorigin="anonymous"
+        onload="renderMathInElement(document.body);"></script>
 </head>
 <body>
     <div class="wip-banner">
@@ -14,11 +18,19 @@
     </div>
     <canvas id="main-canvas"></canvas>
     <h1 id="main-title">Physically based rendering from first principles</h1>
+    <p class="intro">In this interactive book, we will explore the physical phenomena that create light and the fundamental laws governing its interaction with matter. We will learn how our human eyes capture light and how our brains interpret it as visual information. We will then model approximations of these physical interactions and learn how to create physically realistic renderings of various materials.</p>
     <h1>Chapter 1: What is light?</h1>
     <h2>The Electric force</h2>
     <p>One of the fundamental properties of matter is the electric charge, and it comes in two types: <strong class="red">positive</strong> and <strong class="blue">negative</strong>.<br>Charges determine how particles interact: charges of the same type repel each other, while opposite charges attract.</p>
-    <p>The amount of force affecting charged particles is calculated using the <strong>Coulomb's law</strong></p>
-    <p>You can <strong>move around</strong> these charges to see how the electric force affects them:</p>
+    <p>The amount of force affecting two charged particles is calculated using the <strong>Coulomb's law:</strong></p>
+
+$$
+F = k_e \frac{q_1 q_2}{r^2}
+$$
+
+<p>Where \( k_e \) is a constant, \( q_1 \) and \( q_2 \) are the magnitudes of the two charges, and \( r \) is the distance between them.</p>
+
+    <p>You can <strong>drag around</strong> these charges to see how the electric force affects them:</p>
     <div class="canvas" id="scene_charges"></div>
     <p>Every charge generates an <strong>electric field</strong>, an invisible region where it exerts forces on other charges. We can visualize the electric field with a <strong>field line:</strong></p><br>
     <div class="canvas" id="scene_electric_field"></div>

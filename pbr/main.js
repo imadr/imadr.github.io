@@ -881,7 +881,7 @@ void main(){
 }`);
 
 ctx.scenes = {
-    "scene_charges": {id: "scene_charges", el: null, width: 1000, height: 300, camera: null, dragging_rect: null, draggable_rects: {},
+    "scene_charges": {id: "scene_charges", el: null, ratio: 3, camera: null, dragging_rect: null, draggable_rects: {},
         camera: {
             fov: 50, z_near: 0.1, z_far: 1000,
             position: [0, 0, 0], rotation: [0, 0, 0],
@@ -894,7 +894,7 @@ ctx.scenes = {
             }
         },
         charges: []},
-    "scene_electric_field": {id: "scene_electric_field", el: null, width: 1000, height: 400, camera: null, dragging_rect: null, draggable_rects: {},
+    "scene_electric_field": {id: "scene_electric_field", el: null, ratio: 2.5, camera: null, dragging_rect: null, draggable_rects: {},
         camera: {
             fov: 60, z_near: 0.1, z_far: 1000,
             position: [0, 0, 0], rotation: [0, 0, 0],
@@ -907,19 +907,19 @@ ctx.scenes = {
             }
         },
         charges: [], field_lines: []},
-    "scene_wave": {el: null, width: 600, height: 400, camera: null, dragging_rect: null, draggable_rects: {"scene": [0, 0, 600, 400]},
+    "scene_wave": {el: null, ratio: 1.8, camera: null, dragging_rect: null, draggable_rects: {"scene": []},
         camera: {
             fov: 60, z_near: 0.1, z_far: 1000,
             position: [0, 0, 0], rotation: [0, 0, 0],
             up_vector: [0, 1, 0],
             view_matrix: mat4_identity(),
             orbit: {
-                rotation: [-0.4, 0, 0],
+                rotation: [-0.4, 0.2, 0],
                 pivot: [0, 0, 0],
                 zoom: 3.0
             }
         }},
-    "scene_spectrum": {el: null, width: 1000, height: 400, camera: null, dragging_rect: null, draggable_rects: {},
+    "scene_spectrum": {el: null, ratio: 2.5, camera: null, dragging_rect: null, draggable_rects: {},
         camera: {
             fov: 20, z_near: 0.1, z_far: 1000,
             position: [0, 0, 0], rotation: [0, 0, 0],
@@ -931,7 +931,7 @@ ctx.scenes = {
                 zoom: 3.0
             }
         }},
-    "scene_field_gradient": {id: "scene_field_gradient", el: null, width: 1000, height: 400, camera: null, dragging_rect: null, draggable_rects: {},
+    "scene_field_gradient": {id: "scene_field_gradient", el: null, ratio: 2.5, camera: null, dragging_rect: null, draggable_rects: {},
         camera: {
             fov: 60, z_near: 0.1, z_far: 1000,
             position: [0, 0, 0], rotation: [0, 0, 0],
@@ -943,7 +943,7 @@ ctx.scenes = {
                 zoom: 2.0
             }
         }},
-    "scene_relativity": {id: "scene_relativity", el: null, width: 1000, height: 500, camera: null, dragging_rect: null, draggable_rects: {},
+    "scene_relativity": {id: "scene_relativity", el: null, ratio: 2, camera: null, dragging_rect: null, draggable_rects: {},
         camera: {
             fov: 60, z_near: 0.1, z_far: 1000,
             position: [0, 0, 0], rotation: [0, 0, 0],
@@ -957,7 +957,7 @@ ctx.scenes = {
         },
         cable_y_pos: 1.3, num_charges: 100, set_charges_spacing: -1, spacing_positive: 0.28, spacing_negative: 0.28,
         charges: [], reference_frame: 0},
-    "scene_induction": {id: "scene_induction", el: null, width: 600, height: 500, camera: null, dragging_rect: null, draggable_rects: {"scene": [0, 0, 1000, 500]},
+    "scene_induction": {id: "scene_induction", el: null, ratio: 1.7, camera: null, dragging_rect: null, draggable_rects: {"scene": []},
         camera: {
             fov: 70, z_near: 0.1, z_far: 1000,
             position: [0, 0, 0], rotation: [0, 0, 0],
@@ -969,7 +969,7 @@ ctx.scenes = {
                 zoom: 3.0
             }
         }},
-    "scene_ampere": {id: "scene_ampere", el: null, width: 600, height: 500, camera: null, dragging_rect: null, draggable_rects: {"scene": [0, 0, 1000, 500]},
+    "scene_ampere": {id: "scene_ampere", el: null, ratio: 1.7, camera: null, dragging_rect: null, draggable_rects: {"scene": []},
         camera: {
             fov: 70, z_near: 0.1, z_far: 1000,
             position: [0, 0, 0], rotation: [0, 0, 0],
@@ -995,8 +995,6 @@ document.addEventListener("mouseup", function(e){
 for (let scene_id in ctx.scenes) {
     const scene = ctx.scenes[scene_id];
     scene.el = document.getElementById(scene_id);
-    scene.el.style.width = scene.width + "px";
-    scene.el.style.height = scene.height + "px";
 
     (function(scene_id, scene){
         scene.el.addEventListener("mousemove", (e) => {
@@ -1007,7 +1005,7 @@ for (let scene_id in ctx.scenes) {
 
             for (let rect_id in scene.draggable_rects) {
                 const rect = scene.draggable_rects[rect_id];
-                if (mouse_x >= rect[0] && mouse_x <= rect[2] &&
+                if (rect_id == "scene" || mouse_x >= rect[0] && mouse_x <= rect[2] &&
                     mouse_y >= rect[1] && mouse_y <= rect[3]) {
                     hovered = true;
                     break;
@@ -1025,7 +1023,7 @@ for (let scene_id in ctx.scenes) {
 
                 for (let rect_id in scene.draggable_rects) {
                     const rect = scene.draggable_rects[rect_id];
-                    if (mouse_x >= rect[0] && mouse_x <= rect[2] &&
+                    if (rect_id == "scene" || mouse_x >= rect[0] && mouse_x <= rect[2] &&
                         mouse_y >= rect[1] && mouse_y <= rect[3]) {
                         scene.dragging_rect = rect_id;
                         scene.is_dragging = true;
@@ -1159,6 +1157,24 @@ ctx.update_wave_3d = function(drawable, wave_param, lines_segments_3d) {
         gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(mesh.vertices), gl.DYNAMIC_DRAW);
     }
 }
+
+
+function resize_event(ctc){
+    ctx.gl.canvas.width = window.innerWidth;
+    ctx.gl.canvas.height = window.innerHeight;
+    let width = document.body.clientWidth - parseInt(window.getComputedStyle(document.body).paddingLeft) - parseInt(window.getComputedStyle(document.body).paddingRight);
+    for (let scene_id in ctx.scenes) {
+        const scene = ctx.scenes[scene_id];
+        scene.el = document.getElementById(scene_id);
+        let height = width/scene.ratio;
+        scene.el.style.width = width + "px";
+        scene.el.style.height = height + "px";
+        scene.width = width;
+        scene.height = height;
+    }
+}
+resize_event(ctx);
+addEventListener("resize", resize_event);
 
 const lines_segments_3d = 8;
 
@@ -1647,13 +1663,6 @@ let coil2 = ctx.create_drawable("shader_shaded",
 );
 // scene_ampere setup
 
-function resize_event(ctc){
-    ctx.gl.canvas.width = window.innerWidth;
-    ctx.gl.canvas.height = window.innerHeight
-}
-resize_event(ctx);
-addEventListener("resize", resize_event);
-
 ctx.time = 0.0;
 function update() {
     ctx.time += 0.01;
@@ -1669,6 +1678,7 @@ function update() {
         const scene = ctx.scenes[scene_id];
         ctx.current_scene = scene;
         const rect = scene.el.getBoundingClientRect();
+        if(scene_id == "scene_electric_field") console.log(rect)
         if (rect.bottom < 0 || rect.top  > gl.canvas.clientHeight ||
             rect.right  < 0 || rect.left > gl.canvas.clientWidth) {
             continue;
