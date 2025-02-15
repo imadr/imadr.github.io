@@ -45,6 +45,7 @@ body{
     display: block;
 }
 .canvas{
+    touch-action: none;
     position: relative;
     left: 50%;
     transform: translateX(-50%);
@@ -214,5 +215,11 @@ h2{
     h2{
         font-size: 1.4em;
         margin-top: 1em;
+    }
+    .button{
+        font-size: 1.1rem;
+    }
+    .button-group {
+        flex-wrap: wrap;
     }
 }

@@ -983,91 +983,110 @@ ctx.scenes = {
         }},
 };
 
-document.addEventListener("mouseup", function(e){
+function get_event_coordinates(e, element) {
+    const rect = element.getBoundingClientRect();
+    const is_touch = e.touches ? true : false;
+    const client_x = is_touch ? e.touches[0].clientX : e.clientX;
+    const client_y = is_touch ? e.touches[0].clientY : e.clientY;
+
+    return {
+        x: client_x - rect.left,
+        y: client_y - rect.top
+    };
+}
+
+function handle_interaction_end(e) {
     for (let scene_id in ctx.scenes) {
         const scene = ctx.scenes[scene_id];
         scene.dragging_rect = null;
         scene.is_dragging = false;
-        scene.last_mouse = null;
+        scene.last_pos = null;
     }
-});
+}
 
-for (let scene_id in ctx.scenes) {
-    const scene = ctx.scenes[scene_id];
-    scene.el = document.getElementById(scene_id);
+function setup_scene_listeners(){
+    for (let scene_id in ctx.scenes) {
+        const scene = ctx.scenes[scene_id];
+        scene.el = document.getElementById(scene_id);
 
-    (function(scene_id, scene){
-        scene.el.addEventListener("mousemove", (e) => {
-            let rect_bounds = scene.el.getBoundingClientRect();
-            let mouse_x = e.clientX - rect_bounds.left;
-            let mouse_y = e.clientY - rect_bounds.top;
-            let hovered = false;
+        (function(scene_id, scene) {
+            function handle_move(e) {
+                if (e.touches) e.preventDefault();
 
-            for (let rect_id in scene.draggable_rects) {
-                const rect = scene.draggable_rects[rect_id];
-                if (rect_id == "scene" || mouse_x >= rect[0] && mouse_x <= rect[2] &&
-                    mouse_y >= rect[1] && mouse_y <= rect[3]) {
-                    hovered = true;
-                    break;
-                }
-            }
-            scene.el.style.cursor = hovered ? "move" : "default";
-        });
-
-        scene.el.addEventListener("mousedown", function(e){
-            if (e.which == 1) {
-                e.preventDefault();
-                let rect_bounds = scene.el.getBoundingClientRect();
-                let mouse_x = e.clientX - rect_bounds.left;
-                let mouse_y = e.clientY - rect_bounds.top;
+                const coords = get_event_coordinates(e, scene.el);
+                let hovered = false;
 
                 for (let rect_id in scene.draggable_rects) {
                     const rect = scene.draggable_rects[rect_id];
-                    if (rect_id == "scene" || mouse_x >= rect[0] && mouse_x <= rect[2] &&
-                        mouse_y >= rect[1] && mouse_y <= rect[3]) {
+                    if (rect_id == "scene" || coords.x >= rect[0] && coords.x <= rect[2] &&
+                        coords.y >= rect[1] && coords.y <= rect[3]) {
+                        hovered = true;
+                        break;
+                    }
+                }
+                scene.el.style.cursor = hovered ? "move" : "default";
+            }
+
+            function handle_start(e) {
+                e.preventDefault();
+                if (!e.touches && e.which !== 1) return;
+
+                const coords = get_event_coordinates(e, scene.el);
+
+                for (let rect_id in scene.draggable_rects) {
+                    const rect = scene.draggable_rects[rect_id];
+                    if (rect_id == "scene" || coords.x >= rect[0] && coords.x <= rect[2] &&
+                        coords.y >= rect[1] && coords.y <= rect[3]) {
                         scene.dragging_rect = rect_id;
                         scene.is_dragging = true;
-                        scene.last_mouse = [mouse_x, mouse_y];
+                        scene.last_pos = [coords.x, coords.y];
                         break;
                     }
                 }
             }
-        });
-    })(scene_id, scene);
+
+            scene.el.removeEventListener("mousemove", scene.event_listener_mousemove);
+            scene.el.removeEventListener("touchmove", scene.event_listener_touchmove);
+            scene.el.removeEventListener("mousedown", scene.event_listener_mousedown);
+            scene.el.removeEventListener("touchstart", scene.event_listener_touchstart);
+            scene.event_listener_mousemove = scene.el.addEventListener("mousemove", handle_move);
+            scene.event_listener_touchmove = scene.el.addEventListener("touchmove", handle_move);
+            scene.event_listener_mousedown = scene.el.addEventListener("mousedown", handle_start);
+            scene.event_listener_touchstart = scene.el.addEventListener("touchstart", handle_start);
+        })(scene_id, scene);
+    }
 }
 
-document.addEventListener("mousemove", function(e) {
-    for(let scene_id in ctx.scenes){
+function handle_global_move(e) {
+    if (e.touches) e.preventDefault();
+
+    for(let scene_id in ctx.scenes) {
         const scene = ctx.scenes[scene_id];
-        if (!scene.is_dragging || !scene.last_mouse) continue;
+        if (!scene.is_dragging || !scene.last_pos) continue;
 
-        let rect_bounds = scene.el.getBoundingClientRect();
-        let current_mouse = [
-            e.clientX - rect_bounds.left,
-            e.clientY - rect_bounds.top
-        ];
-
-        let mouse_delta = vec2_sub(current_mouse, scene.last_mouse);
+        const coords = get_event_coordinates(e, scene.el);
+        let current_pos = [coords.x, coords.y];
+        let pos_delta = vec2_sub(current_pos, scene.last_pos);
         let delta_angle = [2 * Math.PI / scene.width, Math.PI / scene.height];
 
-        if(scene_id == "scene_charges" || scene_id == "scene_electric_field" || scene_id == "scene_relativity"){
+        if(scene_id == "scene_charges" || scene_id == "scene_electric_field" || scene_id == "scene_relativity") {
             const charge = scene.charges.find(charge => charge.id == scene.dragging_rect);
-            let padding = 50;
-            current_mouse[0] = Math.max(padding, Math.min(scene.width - padding, current_mouse[0]));
-            current_mouse[1] = Math.max(padding, Math.min(scene.height - padding, current_mouse[1]));
-            let new_pos = screen_to_world_space(scene, current_mouse, 3);
-
+            let padding = scene.width/10-30;
+            current_pos[0] = Math.max(padding, Math.min(scene.width - padding, current_pos[0]));
+            current_pos[1] = Math.max(padding, Math.min(scene.height - padding, current_pos[1]));
+            let new_pos = screen_to_world_space(scene, current_pos, 3);
             charge.pos = new_pos;
             update_charge_pos(charge);
             update_drag_charges(scene);
-            if(scene_id == "scene_electric_field"){
+            if(scene_id == "scene_electric_field") {
                 update_electric_field(scene);
             }
         }
-        if(scene.dragging_rect == "scene"){
+
+        if(scene.dragging_rect == "scene") {
             scene.camera.orbit.rotation = vec3_add(
                 scene.camera.orbit.rotation,
-                [-mouse_delta[1] * delta_angle[1], -mouse_delta[0] * delta_angle[0], 0]
+                [-pos_delta[1] * delta_angle[1], -pos_delta[0] * delta_angle[0], 0]
             );
             scene.camera.orbit.rotation[0] = clamp(
                 scene.camera.orbit.rotation[0],
@@ -1077,10 +1096,15 @@ document.addEventListener("mousemove", function(e) {
             update_camera_orbit(scene.camera, scene.canvas);
             scene.camera_dirty = true;
         }
-
-        scene.last_mouse = current_mouse;
+        scene.last_pos = current_pos;
     }
-});
+}
+
+document.addEventListener("mousemove", handle_global_move);
+document.addEventListener("touchmove", handle_global_move);
+document.addEventListener("mouseup", handle_interaction_end);
+document.addEventListener("touchend", handle_interaction_end);
+setup_scene_listeners();
 
 ctx.draw = function(drawable){
     const gl = this.gl;
@@ -1172,6 +1196,10 @@ function resize_event(ctc){
         scene.width = width;
         scene.height = height;
     }
+    setup_scene_listeners();
+    update_drag_charges(ctx.scenes["scene_charges"]);
+    update_drag_charges(ctx.scenes["scene_electric_field"]);
+    
 }
 resize_event(ctx);
 addEventListener("resize", resize_event);
@@ -1678,7 +1706,6 @@ function update() {
         const scene = ctx.scenes[scene_id];
         ctx.current_scene = scene;
         const rect = scene.el.getBoundingClientRect();
-        if(scene_id == "scene_electric_field") console.log(rect)
         if (rect.bottom < 0 || rect.top  > gl.canvas.clientHeight ||
             rect.right  < 0 || rect.left > gl.canvas.clientWidth) {
             continue;
