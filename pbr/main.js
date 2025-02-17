@@ -417,7 +417,7 @@ function create_plane(start_position, size) {
 
     let indices = [
         0, 1, 2,
-        0, 3, 2
+        0, 2, 3
     ];
 
     return { vertices: vertices, indices: indices };
@@ -457,19 +457,93 @@ function create_coil_3d(turns, height, radius, tube_radius, segments, radial_seg
     return create_line_3d(points, tube_radius, radial_segments);
 }
 
-function create_coil_electrons(turns, height, radius, tube_radius, segments, radial_segments) {
-    let points = [];
-    let coil_steps = turns * segments;
-    for (let i = 0; i <= coil_steps; i++) {
-        let t = (i / coil_steps) * Math.PI * 2 * turns;
-        let x = Math.cos(t) * radius;
-        let y = (i / coil_steps) * height;
-        let z = Math.sin(t) * radius;
-        points.push([x, y, z]);
-    }
-    return create_line_3d(points, tube_radius, radial_segments);
-}
+function create_bulb(center_position, height, segments, smooth_factor = 40) {
+    let [cx, cy, cz] = center_position;
+    let bottom_radius = 0.3;
+    let mid_radius = 0.7;
 
+    function lerp(a, b, t) {
+        let f = (1 - Math.cos(t * Math.PI)) / 2;
+        return a + (b - a) * f;
+    }
+
+    let profile_points = [];
+    for (let i = 0; i <= smooth_factor * 3; i++) {
+        let t = i / (smooth_factor * 3);
+        let radius;
+        if (t < 0.5) {
+            let u = t / 0.5;
+            radius = lerp(bottom_radius, mid_radius, u);
+        } else {
+            let u = (t - 0.5) / 0.5;
+            let r = mid_radius;
+            let y = u * r;
+            radius = Math.sqrt(r * r - y * y);
+        }
+        let y = cy + t * height;
+        profile_points.push([radius, y]);
+    }
+
+    let vertices = [];
+    let indices = [];
+
+    for (let i = 0; i < profile_points.length; i++) {
+        let [radius, y] = profile_points[i];
+        for (let j = 0; j <= segments; j++) {
+            let angle = (j / segments) * Math.PI * 2;
+            let x = cx + radius * Math.cos(angle);
+            let z = cz + radius * Math.sin(angle);
+
+            let nx = Math.cos(angle);
+            let nz = Math.sin(angle);
+            let ny = 0;
+
+            if (i === profile_points.length - 1) {
+                ny = 1;
+                nx = 0;
+                nz = 0;
+            } else if (i > 0) {
+                let [prev_radius, prev_y] = profile_points[i - 1];
+                let [next_radius, next_y] = profile_points[i + 1];
+
+                let dx = next_radius - prev_radius;
+                let dy = next_y - prev_y;
+
+                let tangent_x = dx * Math.cos(angle);
+                let tangent_y = dy;
+                let tangent_z = dx * Math.sin(angle);
+
+                let binormal_x = -Math.sin(angle);
+                let binormal_y = 0;
+                let binormal_z = Math.cos(angle);
+
+                nx = tangent_y * binormal_z - tangent_z * binormal_y;
+                ny = tangent_z * binormal_x - tangent_x * binormal_z;
+                nz = tangent_x * binormal_y - tangent_y * binormal_x;
+
+                let normal_length = Math.sqrt(nx * nx + ny * ny + nz * nz);
+                nx /= normal_length;
+                ny /= normal_length;
+                nz /= normal_length;
+            }
+
+            vertices.push(x, y, z, nx, ny, nz);
+        }
+    }
+
+    for (let i = 0; i < profile_points.length - 1; i++) {
+        for (let j = 0; j < segments; j++) {
+            let current = i * (segments + 1) + j;
+            let next = (i + 1) * (segments + 1) + j;
+            let current_next = i * (segments + 1) + ((j + 1) % (segments + 1));
+            let next_next = (i + 1) * (segments + 1) + ((j + 1) % (segments + 1));
+            indices.push(current, next, next_next);
+            indices.push(current, next_next, current_next);
+        }
+    }
+
+    return { vertices: vertices, indices: indices };
+}
 
 function create_box(width, height, depth) {
     let vertices = [
@@ -511,6 +585,52 @@ function create_box(width, height, depth) {
     return { vertices, indices };
 }
 
+function create_cylinder(radius, height, segments){
+    let vertices = [];
+    let indices = [];
+
+    for (let i = 0; i <= segments; i++) {
+        let theta = (i / segments) * Math.PI * 2;
+        let x = Math.cos(theta) * radius;
+        let z = Math.sin(theta) * radius;
+
+        vertices.push(x, -height / 2, z, x, 0, z);
+        vertices.push(x, height / 2, z, x, 0, z);
+    }
+
+    for (let i = 0; i < segments; i++) {
+        let a = i * 2;
+        let b = a + 1;
+        let c = (a + 2) % (segments * 2);
+        let d = (a + 3) % (segments * 2);
+
+        indices.push(a, b, c);
+        indices.push(b, d, c);
+    }
+
+    let top_center = vertices.length / 6;
+    let bottom_center = top_center + 1;
+
+    vertices.push(0, height / 2, 0, 0, 1, 0);
+    vertices.push(0, -height / 2, 0, 0, -1, 0);
+
+    for (let i = 0; i < segments; i++) {
+        let a = i * 2 + 1;
+        let b = (a + 2) % (segments * 2);
+
+        indices.push(top_center, a, b);
+    }
+
+    for (let i = 0; i < segments; i++) {
+        let a = i * 2;
+        let b = (a + 2) % (segments * 2);
+
+        indices.push(bottom_center, b, a);
+    }
+
+    return { vertices, indices };
+}
+
 function create_arrow(from, to, size) {
     let [x1, y1, z1] = from;
     let [x2, y2, z2] = to;
@@ -536,7 +656,7 @@ function create_arrow(from, to, size) {
     ];
     let indices = [
         0, 1, 2,
-        0, 3, 2,
+        0, 2, 3,
         4, 5, 6,
     ];
     return { vertices: vertices, indices: indices };
@@ -557,7 +677,7 @@ function create_minus_sign(center_position, size, thickness){
 
     let indices = [
         0, 1, 2,
-        0, 3, 2,
+        0, 2, 3,
     ];
 
     return { vertices: vertices, indices: indices };
@@ -581,9 +701,9 @@ function create_plus_sign(center_position, size, thickness){
 
     let indices = [
         0, 1, 2,
-        0, 3, 2,
+        0, 2, 3,
         4, 5, 6,
-        4, 7, 6
+        4, 6, 7
     ];
 
     return { vertices: vertices, indices: indices };
@@ -784,6 +904,45 @@ void main(){
     light = clamp(light, 0.0, 1.0);
     frag_color = vec4(color*1.1*light, 1.0);
 }`);
+ctx.shaders["shader_glass"] = ctx.create_shader(`#version 300 es
+layout(location = 0) in vec3 position_attrib;
+layout(location = 1) in vec3 normal_attrib;
+
+uniform mat4 m;
+uniform mat4 v;
+uniform mat4 p;
+
+out vec3 world_position;
+out vec3 normal;
+out vec3 world_normal;
+out vec3 camera_pos;
+
+void main(){
+    gl_Position = p*v*m*vec4(position_attrib, 1);
+    mat3 inv_m = mat3(transpose(inverse(m)));
+    world_normal = inv_m * normal_attrib;
+    world_position = (m*vec4(position_attrib, 1)).xyz;
+    normal = normal_attrib;
+    camera_pos = -transpose(mat3(v)) * v[3].xyz;
+}`,
+`#version 300 es
+precision highp float;
+
+uniform vec3 color;
+
+out vec4 frag_color;
+
+in vec3 world_position;
+in vec3 normal;
+in vec3 world_normal;
+in vec3 camera_pos;
+
+void main(){
+    vec3 view_dir = normalize(world_position - camera_pos);
+    float fresnel = pow(1.0 - max(dot(normalize(normal), -view_dir), 0.0), 1.0);
+    // frag_color = vec4(0, 0, 0, max(fresnel, 0.3)*1.5+0.1);
+    frag_color = vec4(0, 0, 0, 0.5);
+}`);
 ctx.shaders["shader_plane"] = ctx.create_shader(`#version 300 es
 layout(location = 0) in vec3 position_attrib;
 layout(location = 1) in vec3 normal_attrib;
@@ -977,6 +1136,18 @@ ctx.scenes = {
             view_matrix: mat4_identity(),
             orbit: {
                 rotation: [-0.4, 0, 0],
+                pivot: [0, 0, 0],
+                zoom: 3.0
+            }
+        }},
+    "scene_bulb": {id: "scene_bulb", el: null, ratio: 1.7, camera: null, dragging_rect: null, draggable_rects: {"scene": []},
+        camera: {
+            fov: 70, z_near: 0.1, z_far: 1000,
+            position: [0, 0, 0], rotation: [0, 0, 0],
+            up_vector: [0, 1, 0],
+            view_matrix: mat4_identity(),
+            orbit: {
+                rotation: [0, 0, 0],
                 pivot: [0, 0, 0],
                 zoom: 3.0
             }
@@ -1199,7 +1370,7 @@ function resize_event(ctc){
     setup_scene_listeners();
     update_drag_charges(ctx.scenes["scene_charges"]);
     update_drag_charges(ctx.scenes["scene_electric_field"]);
-    
+
 }
 resize_event(ctx);
 addEventListener("resize", resize_event);
@@ -1691,6 +1862,17 @@ let coil2 = ctx.create_drawable("shader_shaded",
 );
 // scene_ampere setup
 
+// scene_bulb
+let bulb = ctx.create_drawable("shader_glass",
+    create_bulb([0, 0, 0], 1.7, 32, 40),
+    [0, 0, 0],
+    translate_3d([0, -0.8, 0]),
+);
+let bulb_cap = ctx.create_drawable("shader_shaded",
+    create_cylinder(0.5, 0.4, 8),
+    [0.5, 0.5, 0.5], translate_3d([0, 0, 0]));
+// scene_bulb
+
 ctx.time = 0.0;
 function update() {
     ctx.time += 0.01;
@@ -1699,6 +1881,7 @@ function update() {
     gl.canvas.style.transform = "translateY("+window.scrollY+"px)";
     gl.enable(gl.SCISSOR_TEST);
     gl.enable(gl.DEPTH_TEST);
+    gl.enable(gl.CULL_FACE);
     gl.clearColor(0, 0, 0, 0);
     gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
 
@@ -1779,6 +1962,12 @@ function update() {
         }
         else if(scene_id == "scene_ampere"){
             ctx.draw(coil2);
+        }
+        else if(scene_id == "scene_bulb"){
+            gl.enable(gl.BLEND);
+            gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
+            ctx.draw(bulb_cap);
+            ctx.draw(bulb);
         }
         else if(scene_id == "scene_relativity"){
             if(scene.set_charges_spacing >= 0){
