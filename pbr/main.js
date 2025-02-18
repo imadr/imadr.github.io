@@ -316,8 +316,8 @@ function create_line_3d(points, radius, segments) {
                 let v2 = prev_circle_vertices[j];
                 let v3 = prev_circle_vertices[next_j];
 
-                indices.push(v2, v3, v0);
-                indices.push(v3, v1, v0);
+                indices.push(v2, v0, v3);
+                indices.push(v3, v0, v1);
             }
         }
 
@@ -337,8 +337,8 @@ function create_line_3d(points, radius, segments) {
             let v2 = current_circle_vertices[j + segments];
             let v3 = current_circle_vertices[next_j + segments];
 
-            indices.push(v0, v1, v2);
-            indices.push(v1, v3, v2);
+            indices.push(v0, v2, v1);
+            indices.push(v1, v2, v3);
         }
 
         prev_circle_vertices = current_circle_vertices.slice(segments);
@@ -379,8 +379,8 @@ function create_arrow_3d(points, radius, segments, arrow_length = 0.15, arrow_ra
         let next = (i + 1) % segments;
         indices.push(
             base_vertices[i],
+            tip_vertex,
             base_vertices[next],
-            tip_vertex
         );
     }
 
@@ -618,14 +618,14 @@ function create_cylinder(radius, height, segments){
         let a = i * 2 + 1;
         let b = (a + 2) % (segments * 2);
 
-        indices.push(top_center, a, b);
+        indices.push(top_center, b, a);
     }
 
     for (let i = 0; i < segments; i++) {
         let a = i * 2;
         let b = (a + 2) % (segments * 2);
 
-        indices.push(bottom_center, b, a);
+        indices.push(bottom_center, a, b);
     }
 
     return { vertices, indices };
@@ -1863,18 +1863,25 @@ let coil2 = ctx.create_drawable("shader_shaded",
 // scene_ampere setup
 
 // scene_bulb
-let bulb = ctx.create_drawable("shader_glass",
-    create_bulb([0, 0, 0], 1.7, 32, 40),
-    [0, 0, 0],
-    translate_3d([0, -0.8, 0]),
-);
-let bulb_cap = ctx.create_drawable("shader_shaded",
-    create_cylinder(0.5, 0.4, 8),
-    [0.5, 0.5, 0.5], translate_3d([0, 0, 0]));
+
+let test = ctx.create_drawable("shader_shaded",
+    create_line_3d([[0,0,0], [1, 0,0]], 0.5, 16), [0.5, 0.5, 0.5], translate_3d([0, 0, 0]));
+// let bulb = ctx.create_drawable("shader_glass",
+//     create_bulb([0, 0, 0], 1.7, 32, 40),
+//     [0, 0, 0],
+//     translate_3d([0, -0.8, 0]),
+// );
+// let bulb_cap = ctx.create_drawable("shader_shaded",
+//     create_cylinder(0.4, 0.4, 8),
+//     [0.5, 0.5, 0.5], translate_3d([0, -0.8, 0]));
 // scene_bulb
 
 ctx.time = 0.0;
-function update() {
+ctx.last_time = 0.0;
+function update(current_time){
+    let delta_time = (current_time - ctx.last_time) / 1000;
+    delta_time = Math.min(delta_time, 0.1);
+
     ctx.time += 0.01;
 
     const gl = ctx.gl;
@@ -1941,7 +1948,7 @@ function update() {
             wave_3d.transform = mat4_mat4_mul(translate_3d([-2, 0, 0]), rotate_3d(axis_angle_to_quat([1, 0, 0], rad(90))));
             ctx.draw(wave_3d);
 
-            wave_param.time += 0.05;
+            wave_param.time += 0.2*delta_time;
 
             ctx.draw(x_axis);
             ctx.draw(y_axis);
@@ -1964,10 +1971,11 @@ function update() {
             ctx.draw(coil2);
         }
         else if(scene_id == "scene_bulb"){
-            gl.enable(gl.BLEND);
-            gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
-            ctx.draw(bulb_cap);
-            ctx.draw(bulb);
+            // gl.enable(gl.BLEND);
+            // gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
+            // ctx.draw(bulb_cap);
+            // ctx.draw(bulb);
+            ctx.draw(test);
         }
         else if(scene_id == "scene_relativity"){
             if(scene.set_charges_spacing >= 0){
@@ -2013,7 +2021,8 @@ function update() {
                 scene.set_charges_spacing = -1;
             }
 
-            let speed = 0.015;
+            let stuff_speed = 0.08; // this needs to be a multiple of 2 (?) for some reason
+            let speed = stuff_speed*delta_time;
             for(const charge of scene.charges){
                 ctx.draw(charge.sign);
                 ctx.draw(charge.charge);
@@ -2058,7 +2067,7 @@ function update() {
 
             for(let i = 0; i < random_circles.length; i++){
                 if(scene.reference_frame > 0){
-                        random_circles_pos[i][0] -= 0.01;
+                        random_circles_pos[i][0] -= stuff_speed*delta_time;
                         if(random_circles_pos[i][0] < -3.5){
                             random_circles_pos[i][0] = 3.5;
                         }
