@@ -59,10 +59,11 @@ $$
     <br>
     <p>Maxwell's fourth and final equation, <strong>Ampère's Law</strong>, illustrates how electric currents (moving charges) produce magnetic fields around them. This is the basis of how electromagnets function:</p>
     <div class="canvas" id="scene_ampere"></div>
-    <p>Together, these laws demonstrate how electric and magnetic fields are interdependent. A changing magnetic field generates an electric field, and a changing electric field generates a magnetic field. This continuous cycle enables <strong>self-sustaining electromagnetic waves</strong>, which can propagate through space without requiring a medium.</p>
+    <p>Together, these laws demonstrate how electric and magnetic fields are interdependent. A changing magnetic field generates an electric field, and a changing electric field generates a magnetic field.</p>
+    <p>This continuous cycle enables <strong>self-sustaining, self-propagating electromagnetic waves</strong>, which can travel through space without requiring a medium.</p>
     <h2>Electromagnetic radiation</h2>
     <p>Electromagnetic radiation consists of waves created by synchronized oscillations of electric and magnetic fields. These waves travel at the speed of light in a vacuum.</p>
-    <p>The <strong>amplitude</strong> of a wave determines the maximum strength of its electric or magnetic field. It represents the wave's intensity or "brightness." In quantum terms, a higher amplitude generally corresponds to a greater number of photons.</p>
+    <p>The <strong>amplitude</strong> of a wave determines the maximum strength of its electric or magnetic field. It represents the wave's intensity or "brightness". In quantum terms, a higher amplitude generally corresponds to a greater number of photons.</p>
     <p>The <strong>frequency</strong> of a wave determines the energy of the individual photons that compose it. Higher frequencies correspond to shorter wavelengths and more energetic photons.</p>
     <div class="canvas" id="scene_wave"></div>
     <div class="slider-container">
@@ -78,7 +79,31 @@ $$
         <label>Frequency</label><input id="frequency-input-spectrum" type="range" min="0" max="1" step="0.001" data-color="#888">
     </div>
 
+    <h2>Generating Light</h2>
+    <p>There are multiple ways for light to be generated.</p>
 
+    <h3>Incandescence</h3>
+    <p>One of them is <strong>incandescence</strong>, the process by which a material emits visible light due to high temperature. It is how incandescent lightbulbs and the <strong>sun</strong> generates light.</p>
+    <p>An incandescent lightbulb produces light through the heating of a filament until it starts glowing. The filament is made of <strong>tungsten</strong>, an element with a high melting point, high durability, and a positive temperature coefficient of resistance, which means its resistance increases with temperature.</p>
+    <p>The current flowing throught the filament follows <strong>Ohm's Law</strong>:</p>
+$$
+V = IR
+$$
+<p>Where \( V \) is the voltage, \( I \) the current and \( R \) the resistance of the filament.</p>
+<p>The filament starts heating due to <strong>Joule heating</strong>:</p>
+$$
+P = I^{2}R
+$$
+<p>Where \( P \) is the dissipated power.</p>
+<p>As power is dissipated in the filament, it heats up to  about 2500 Kelvin, and starts behaving like a <strong>blackbody radiator</strong> emitting a spectrum of light given by <strong>Planck’s Law</strong>:</p>
+$$
+B_{\lambda}(T) = \frac{2hc^2}{\lambda^5} \frac{1}{e^{\frac{hc}{\lambda k_B T}} - 1}
+$$
+<p>Where \( B_{\lambda}(T) \) is the spectral radiance per unit wavelength, \( h \) is Planck's constant, \( c \) is the speed of light, \( \lambda \) is the wavelength, \( k_B \) is Boltzmann's constant, and \( T \) is the temperature of the body.</p>
+<p><strong>The Sun</strong> also generates light by incandescence, but unlike the lightbulb's filament glowing via Joule heating, the Sun’s energy is produced by nuclear fusion in the core, where hydrogen nuclei fuse to form helium. This energy heats the Sun’s plasma to extreme temperatures, causing incandescence.</p>
+
+    <h3>Electroluminescence</h3>
+    <p>Another way to generate light is by <strong>electroluminescence</strong>, this is the phenomenon that powers LEDs
     <div class="canvas" id="scene_bulb"></div>
     <h1>Chapter 2: Perceiving Light</h1>
     <h1>Chapter 3: Radiometry</h1>

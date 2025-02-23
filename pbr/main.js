@@ -285,25 +285,39 @@ function create_line_3d(points, radius, segments) {
     let vertices = [];
     let indices = [];
     let vertex_count = 0;
-
     let circle = generate_circle(radius, segments);
     let prev_circle_vertices = null;
 
+    let start = points[0];
+    let direction = vec3_normalize(vec3_sub(points[1], points[0]));
+    let rot_mat = get_rotation_matrix(direction);
+
+    vertices.push(start[0], start[1], start[2], -direction[0], -direction[1], -direction[2]);
+    let center_start = vertex_count++;
+
+    let start_circle_vertices = [];
+    for (let j = 0; j < segments; j++) {
+        let transformed = transform_point(circle[j], rot_mat, start);
+        vertices.push(transformed[0], transformed[1], transformed[2], -direction[0], -direction[1], -direction[2]);
+        start_circle_vertices.push(vertex_count++);
+    }
+
+    for (let j = 0; j < segments; j++) {
+        let next_j = (j + 1) % segments;
+        indices.push(center_start, start_circle_vertices[j], start_circle_vertices[next_j]);
+    }
+
     for (let i = 0; i < points.length - 1; i++) {
-        let start = points[i];
+        start = points[i];
         let end = points[i + 1];
-
-        let direction = vec3_normalize(vec3_sub(end, start));
-        let rot_mat = get_rotation_matrix(direction);
-
+        direction = vec3_normalize(vec3_sub(end, start));
+        rot_mat = get_rotation_matrix(direction);
         let current_circle_vertices = [];
 
         for (let j = 0; j < segments; j++) {
             let transformed_start = transform_point(circle[j], rot_mat, start);
-            vertices.push(
-                transformed_start[0], transformed_start[1], transformed_start[2],
-                circle[j][0] / radius, circle[j][1] / radius, 0
-            );
+            let normal = vec3_normalize(transform_point([circle[j][0] / radius, circle[j][1] / radius, 0], rot_mat, [0, 0, 0]));
+            vertices.push(transformed_start[0], transformed_start[1], transformed_start[2], normal[0], normal[1], normal[2]);
             current_circle_vertices.push(vertex_count++);
         }
 
@@ -311,11 +325,9 @@ function create_line_3d(points, radius, segments) {
             let next_j = (j + 1) % segments;
             let v0 = current_circle_vertices[j];
             let v1 = current_circle_vertices[next_j];
-
             if (prev_circle_vertices) {
                 let v2 = prev_circle_vertices[j];
                 let v3 = prev_circle_vertices[next_j];
-
                 indices.push(v2, v0, v3);
                 indices.push(v3, v0, v1);
             }
@@ -323,10 +335,8 @@ function create_line_3d(points, radius, segments) {
 
         for (let j = 0; j < segments; j++) {
             let transformed_end = transform_point(circle[j], rot_mat, end);
-            vertices.push(
-                transformed_end[0], transformed_end[1], transformed_end[2],
-                circle[j][0] / radius, circle[j][1] / radius, 0
-            );
+            let normal = vec3_normalize(transform_point([circle[j][0] / radius, circle[j][1] / radius, 0], rot_mat, [0, 0, 0]));
+            vertices.push(transformed_end[0], transformed_end[1], transformed_end[2], normal[0], normal[1], normal[2]);
             current_circle_vertices.push(vertex_count++);
         }
 
@@ -336,12 +346,31 @@ function create_line_3d(points, radius, segments) {
             let v1 = current_circle_vertices[next_j];
             let v2 = current_circle_vertices[j + segments];
             let v3 = current_circle_vertices[next_j + segments];
-
             indices.push(v0, v2, v1);
             indices.push(v1, v2, v3);
         }
-
         prev_circle_vertices = current_circle_vertices.slice(segments);
+    }
+
+    let end = points[points.length - 1];
+    direction = vec3_normalize(vec3_sub(points[points.length - 1], points[points.length - 2]));
+    rot_mat = get_rotation_matrix(direction);
+
+    vertices.push(end[0], end[1], end[2], direction[0], direction[1], direction[2]);
+    let center_end = vertex_count++;
+
+    let end_circle_vertices = prev_circle_vertices;
+
+    for (let j = 0; j < segments; j++) {
+        let idx = end_circle_vertices[j] * 6;
+        vertices[idx + 3] = direction[0];
+        vertices[idx + 4] = direction[1];
+        vertices[idx + 5] = direction[2];
+    }
+
+    for (let j = 0; j < segments; j++) {
+        let next_j = (j + 1) % segments;
+        indices.push(center_end, end_circle_vertices[next_j], end_circle_vertices[j]);
     }
 
     return {vertices: vertices, indices: indices};
@@ -380,11 +409,29 @@ function create_arrow_3d(points, radius, segments, arrow_length = 0.15, arrow_ra
         indices.push(
             base_vertices[i],
             tip_vertex,
-            base_vertices[next],
+            base_vertices[next]
         );
     }
 
-    return {vertices: vertices, indices: indices};
+    let reversed_base_vertices = base_vertices.slice().reverse();
+
+    let base_center_normal = vec3_scale(direction, -1);
+    vertices.push(
+        arrow_base[0], arrow_base[1], arrow_base[2],
+        base_center_normal[0], base_center_normal[1], base_center_normal[2]
+    );
+    let base_center_index = vertex_count++;
+
+    for (let i = 0; i < segments; i++) {
+        let next = (i + 1) % segments;
+        indices.push(
+            base_center_index,
+            reversed_base_vertices[next],
+            reversed_base_vertices[i]
+        );
+    }
+
+    return { vertices: vertices, indices: indices };
 }
 
 function create_triangle(start_position, size) {
@@ -574,12 +621,18 @@ function create_box(width, height, depth) {
     ];
 
     let indices = [
-        0, 1, 2, 2, 3, 0,
-        4, 5, 6, 6, 7, 4,
-        8, 9, 10, 10, 11, 8,
-        12, 13, 14, 14, 15, 12,
-        16, 17, 18, 18, 19, 16,
-        20, 21, 22, 22, 23, 20
+        0,  2,  1,
+        0,  3,  2,
+        4,  5,  6,
+        4,  6,  7,
+        8, 10,  9,
+        8, 11, 10,
+        12, 13, 14,
+        12, 14, 15,
+        16, 18, 17,
+        16, 19, 18,
+        20, 21, 22,
+        20, 22, 23
     ];
 
     return { vertices, indices };
@@ -1679,23 +1732,64 @@ document.getElementById("frequency-input-spectrum").value = 0.5;
 document.getElementById("frequency-input-spectrum").addEventListener("input", (e) => {
     let value = parseFloat(e.target.value);
     wave_param_spectrum.frequency = 0.5 + (1-value) * (5-0.5);
-    arrow.transform = translate_3d([-1.43 + value * (1.43 - (-1.43)) -0.075, -0.55, -0.9]);
+    arrow.transform = translate_3d([-1.43 + value * (1.43 - (-1.43)) -0.075, -0.64, -0.9]);
 });
 let spectrum_wave = {vertex_buffer: null, shader: "shader_basic"};
-spectrum_wave.transform = translate_3d([-7.5, 0.5, -10]);
+spectrum_wave.transform = translate_3d([-7.5, 0.9, -10]);
 ctx.update_wave_3d(spectrum_wave, wave_param_spectrum, lines_segments_3d);
-let spectrum_bg = ctx.create_drawable("shader_basic",
-    create_plane([0, 0, 0], [3, 0.25 + 0.01 * 2]),
-    [0, 0, 0], translate_3d([-1.5, -0.4 - 0.01, -1]));
-let spectrum_bg2 = ctx.create_drawable("shader_basic",
-    create_plane([0, 0, 0], [3-0.02, 0.25]),
-    [1, 1, 1], translate_3d([-1.5 + 0.01, -0.4, -1]));
 let spectrum = ctx.create_drawable("shader_spectrum",
-    create_plane([0, 0, 0], [0.8, 0.25]),
-    [0, 0, 0], translate_3d([-0.4, -0.4, -1]));
+    create_plane([0, 0, 0], [0.8, 0.4]),
+    [0, 0, 0], translate_3d([-0.4, -0.5, -1]));
+let arrow_spectrum_1 = ctx.create_drawable("shader_basic",
+   create_arrow([0, 0, 0], [1.2, 0, 0], [0.015, 0.04]), [0, 0, 0], translate_3d([0, -0.07, 0]));
+let arrow_spectrum_2 = ctx.create_drawable("shader_basic",
+   create_arrow([0, 0, 0], [-1.2, 0, 0], [0.015, 0.04]), [0, 0, 0], translate_3d([0, -0.07, 0]));
+let arrow_spectrum_3 = ctx.create_drawable("shader_basic",
+   create_arrow([0, 0, 0], [1.2, 0, 0], [0.015, 0.04]), [0, 0, 0], translate_3d([0, -0.37, 0]));
+let arrow_spectrum_4 = ctx.create_drawable("shader_basic",
+   create_arrow([0, 0, 0], [-1.2, 0, 0], [0.015, 0.04]), [0, 0, 0], translate_3d([0, -0.37, 0]));
 let arrow = ctx.create_drawable("shader_basic",
     create_triangle([0, 0, 0], [0.15, 0.15]),
-    [0, 0, 0], translate_3d([-0.075, -0.55, -0.9]));
+    [0, 0, 0], translate_3d([-0.075, -0.64, -0.9]));
+
+function wavelength_to_rgb(value, start, end) {
+    let wavelength = 380 + (700 - 380) * ((start - value) / (start - end));
+    let r = 0, g = 0, b = 0;
+
+    if (wavelength >= 380 && wavelength < 440) {
+        r = -(wavelength - 440) / (440 - 380);
+        g = 0;
+        b = 1;
+    } else if (wavelength >= 440 && wavelength < 490) {
+        r = 0;
+        g = (wavelength - 440) / (490 - 440);
+        b = 1;
+    } else if (wavelength >= 490 && wavelength < 510) {
+        r = 0;
+        g = 1;
+        b = -(wavelength - 510) / (510 - 490);
+    } else if (wavelength >= 510 && wavelength < 580) {
+        r = (wavelength - 510) / (580 - 510);
+        g = 1;
+        b = 0;
+    } else if (wavelength >= 580 && wavelength < 645) {
+        r = 1;
+        g = -(wavelength - 645) / (645 - 580);
+        b = 0;
+    } else if (wavelength >= 645 && wavelength <= 700) {
+        r = 1;
+        g = 0;
+        b = 0;
+    }
+
+    function smoothstep(edge0, edge1, x) {
+        let t = Math.max(0, Math.min(1, (x - edge0) / (edge1 - edge0)));
+        return t * t * (3 - 2 * t);
+    }
+
+    let fade = smoothstep(370, 420, wavelength) * smoothstep(700, 650, wavelength);
+    return [r * fade, g * fade, b * fade];
+}
 // scene_spectrum setup
 // scene_wave setup
 let wave_3d = {vertex_buffer: null, shader: "shader_basic"};
@@ -1865,7 +1959,8 @@ let coil2 = ctx.create_drawable("shader_shaded",
 // scene_bulb
 
 let test = ctx.create_drawable("shader_shaded",
-    create_line_3d([[0,0,0], [1, 0,0]], 0.5, 16), [0.5, 0.5, 0.5], translate_3d([0, 0, 0]));
+    // create_line_3d([[0,0,0], [1, 0,0]], 0.5, 16), [0.5, 0.5, 0.5], translate_3d([0, 0, 0]));
+    create_arrow_3d([[0,0,0], [1, 0,0]], 0.5, 16,  1, 0.7), [0.5, 0.5, 0.5], translate_3d([0, 0, 0]));
 // let bulb = ctx.create_drawable("shader_glass",
 //     create_bulb([0, 0, 0], 1.7, 32, 40),
 //     [0, 0, 0],
@@ -1929,10 +2024,12 @@ function update(current_time){
         }
         else if(scene_id == "scene_spectrum"){
             ctx.draw(spectrum);
-            ctx.draw(spectrum_bg2);
-            ctx.draw(spectrum_bg);
+            ctx.draw(arrow_spectrum_1);
+            ctx.draw(arrow_spectrum_2);
+            ctx.draw(arrow_spectrum_3);
+            ctx.draw(arrow_spectrum_4);
             wave_param_spectrum.time += 0.05;
-            spectrum_wave.color = blue;
+            spectrum_wave.color = wavelength_to_rgb(wave_param_spectrum.frequency, 3.35, 2.14);
             ctx.update_wave_3d(spectrum_wave, wave_param_spectrum, lines_segments_3d);
             ctx.draw(spectrum_wave);
             ctx.draw(arrow);
@@ -2132,3 +2229,72 @@ buttons_reference_inline.forEach(button => {
         }
     });
 });
+
+function get_uint32(data_view, offset, little_endian = true) {
+    return data_view.getUint32(offset, little_endian);
+}
+
+function get_uint64(data_view, offset, little_endian = true) {
+    let low = data_view.getUint32(offset, little_endian);
+    let high = data_view.getUint32(offset + 4, little_endian);
+    return little_endian ? high * 2 ** 32 + low : low * 2 ** 32 + high;
+}
+
+function get_string(data_view, offset, size) {
+    let bytes = new Uint8Array(data_view.buffer, offset, size);
+    return new TextDecoder().decode(bytes);
+}
+
+function get_uint32_buffer(data_view, offset, size, little_endian = true) {
+    let uints = [];
+    for (let i = 0; i < size; i += 4) {
+        uints.push(data_view.getUint32(offset + i, little_endian));
+    }
+    return uints;
+}
+
+function get_float_buffer(data_view, offset, size, little_endian = true) {
+    let floats = [];
+    for (let i = 0; i < size; i += 4) {
+        floats.push(data_view.getFloat32(offset + i, little_endian));
+    }
+    return floats;
+}
+
+async function get_mesh_from_file(path) {
+    try {
+        let res = await fetch(path);
+        let data = await res.arrayBuffer();
+        let view = new DataView(data);
+        let ptr = 0;
+        const name_size = get_uint64(view, ptr);
+        ptr += 8;
+        ptr += name_size;
+        const num_attribs = get_uint64(view, ptr);
+        ptr += 8;
+        for(let i = 0; i < num_attribs; i++){
+            const attrib_name_size = get_uint64(view, ptr);
+            ptr += 8;
+            const attrib_name = get_string(view, ptr, attrib_name_size);
+            ptr += attrib_name_size;
+            const attrib_size = get_uint32(view, ptr);
+            ptr += 4;
+        }
+
+        const vertices_size = get_uint64(view, ptr);
+        ptr += 8;
+        const vertices = get_float_buffer(view, ptr, vertices_size * 4);
+        ptr += vertices_size * 4;
+
+        const indices_size = get_uint64(view, ptr);
+        ptr += 8;
+        const indices = get_uint32_buffer(view, ptr, indices_size * 4);
+        ptr += indices_size * 4;
+
+        console.log(indices)
+
+    } catch (err) {
+        console.error(err);
+    }
+}
+get_mesh_from_file("triangle.mesh");
