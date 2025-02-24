@@ -848,11 +848,13 @@ uniform mat4 p;
 
 out vec3 position;
 out vec3 normal;
+out vec3 camera_pos;
 
 void main(){
     gl_Position = p*v*m*vec4(position_attrib, 1);
     position = position_attrib;
     normal = normal_attrib;
+    camera_pos = -transpose(mat3(v)) * v[3].xyz;
 }`,
 `#version 300 es
 precision highp float;
@@ -864,16 +866,35 @@ out vec4 frag_color;
 
 in vec3 position;
 in vec3 normal;
+in vec3 camera_pos;
 
 void main(){
-    vec3 light_pos = vec3(0, 2, 1);
-    float angle = clamp(dot(normalize(light_pos), normal), 0.0, 1.0);
-    float dist = 1.0/distance(light_pos, position);
-    float light = angle*dist+0.7;
-    light = clamp(light, 0.0, 1.0);
-    frag_color = vec4(color*1.1*light, 1.0);
     if(metallic == 1){
-        frag_color = vec4(1, 0, 1, 1.0);
+        vec3 light_pos = vec3(0, 2, 1);
+        vec3 light_dir = normalize(light_pos - position);
+        vec3 view_dir = normalize(camera_pos - position);
+        vec3 reflect_dir = reflect(-light_dir, normal);
+        float angle = max(dot(normal, light_dir), 0.0);
+        float dist = 1.0 / distance(light_pos, position);
+        float diff = angle * dist;
+        float spec = pow(max(dot(view_dir, reflect_dir), 0.0), 8.0);
+        float light = clamp(diff + spec + 0.8, 0.0, 1.0);
+        vec3 envmap = normalize(reflect(-view_dir, normal));
+        float env_intensity = 0.5 + 0.5 * dot(envmap, vec3(0.0, 0.0, 1.0));
+        vec3 env_color = vec3(env_intensity) * 0.35;
+        vec3 metal_color = color * diff + env_color * (spec * 3.5);
+        frag_color = vec4(metal_color + 0.4, 1.0);
+    }
+    else{
+        vec3 light_pos = vec3(0, 2, 1);
+        float angle = clamp(dot(normalize(light_pos), normal), 0.0, 1.0);
+        float dist = 1.0/distance(light_pos, position);
+        float light = angle*dist+0.7;
+        light = clamp(light, 0.0, 1.0);
+        frag_color = vec4(color*1.1*light, 1.0);
+        if(metallic == 1){
+            frag_color = vec4(1, 0, 1, 1.0);
+        }
     }
 }`);
 ctx.shaders["shader_glass"] = ctx.create_shader(`#version 300 es
@@ -910,10 +931,12 @@ in vec3 world_normal;
 in vec3 camera_pos;
 
 void main(){
-    vec3 view_dir = normalize(world_position - camera_pos);
-    float fresnel = pow(1.0 - max(dot(normalize(normal), -view_dir), 0.0), 1.0);
-    // frag_color = vec4(0, 0, 0, max(fresnel, 0.3)*1.5+0.1);
-    frag_color = vec4(0, 0, 0, 0.5);
+    vec3 view_dir = normalize(camera_pos - world_position);
+    vec3 reflect_dir = reflect(-view_dir, normalize(world_normal));
+    float fresnel = pow(1.0 - max(dot(normalize(world_normal), view_dir), 0.0), 2.0);
+    vec3 refract_dir = refract(-view_dir, normalize(world_normal), 0.95);
+
+    frag_color = vec4(vec3(max(0.3-fresnel, 0.2)), 0.4);
 }`);
 ctx.shaders["shader_plane"] = ctx.create_shader(`#version 300 es
 layout(location = 0) in vec3 position_attrib;
@@ -1991,9 +2014,9 @@ function update(current_time){
         else if(scene_id == "scene_bulb"){
             gl.enable(gl.BLEND);
             gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
-            ctx.draw(bulb_screw, {"metallic": 2});
-            ctx.draw(bulb_screw_black);
-            ctx.draw(bulb_wire);
+            ctx.draw(bulb_screw, {"metallic": 1});
+            ctx.draw(bulb_screw_black, {"metallic": 0});
+            ctx.draw(bulb_wire, {"metallic": 0});
             ctx.draw(bulb2);
             ctx.draw(bulb);
         }
