@@ -72,6 +72,9 @@ ctx.set_shader_uniform = function(shader, uniform, value){
         case gl.UNSIGNED_INT:
             gl.uniform1ui(shader.uniforms[uniform].location, value);
             break;
+        case gl.INT:
+            gl.uniform1i(shader.uniforms[uniform].location, value);
+            break;
         case gl.FLOAT:
             gl.uniform1f(shader.uniforms[uniform].location, value);
             break;
@@ -504,94 +507,6 @@ function create_coil_3d(turns, height, radius, tube_radius, segments, radial_seg
     return create_line_3d(points, tube_radius, radial_segments);
 }
 
-function create_bulb(center_position, height, segments, smooth_factor = 40) {
-    let [cx, cy, cz] = center_position;
-    let bottom_radius = 0.3;
-    let mid_radius = 0.7;
-
-    function lerp(a, b, t) {
-        let f = (1 - Math.cos(t * Math.PI)) / 2;
-        return a + (b - a) * f;
-    }
-
-    let profile_points = [];
-    for (let i = 0; i <= smooth_factor * 3; i++) {
-        let t = i / (smooth_factor * 3);
-        let radius;
-        if (t < 0.5) {
-            let u = t / 0.5;
-            radius = lerp(bottom_radius, mid_radius, u);
-        } else {
-            let u = (t - 0.5) / 0.5;
-            let r = mid_radius;
-            let y = u * r;
-            radius = Math.sqrt(r * r - y * y);
-        }
-        let y = cy + t * height;
-        profile_points.push([radius, y]);
-    }
-
-    let vertices = [];
-    let indices = [];
-
-    for (let i = 0; i < profile_points.length; i++) {
-        let [radius, y] = profile_points[i];
-        for (let j = 0; j <= segments; j++) {
-            let angle = (j / segments) * Math.PI * 2;
-            let x = cx + radius * Math.cos(angle);
-            let z = cz + radius * Math.sin(angle);
-
-            let nx = Math.cos(angle);
-            let nz = Math.sin(angle);
-            let ny = 0;
-
-            if (i === profile_points.length - 1) {
-                ny = 1;
-                nx = 0;
-                nz = 0;
-            } else if (i > 0) {
-                let [prev_radius, prev_y] = profile_points[i - 1];
-                let [next_radius, next_y] = profile_points[i + 1];
-
-                let dx = next_radius - prev_radius;
-                let dy = next_y - prev_y;
-
-                let tangent_x = dx * Math.cos(angle);
-                let tangent_y = dy;
-                let tangent_z = dx * Math.sin(angle);
-
-                let binormal_x = -Math.sin(angle);
-                let binormal_y = 0;
-                let binormal_z = Math.cos(angle);
-
-                nx = tangent_y * binormal_z - tangent_z * binormal_y;
-                ny = tangent_z * binormal_x - tangent_x * binormal_z;
-                nz = tangent_x * binormal_y - tangent_y * binormal_x;
-
-                let normal_length = Math.sqrt(nx * nx + ny * ny + nz * nz);
-                nx /= normal_length;
-                ny /= normal_length;
-                nz /= normal_length;
-            }
-
-            vertices.push(x, y, z, nx, ny, nz);
-        }
-    }
-
-    for (let i = 0; i < profile_points.length - 1; i++) {
-        for (let j = 0; j < segments; j++) {
-            let current = i * (segments + 1) + j;
-            let next = (i + 1) * (segments + 1) + j;
-            let current_next = i * (segments + 1) + ((j + 1) % (segments + 1));
-            let next_next = (i + 1) * (segments + 1) + ((j + 1) % (segments + 1));
-            indices.push(current, next, next_next);
-            indices.push(current, next_next, current_next);
-        }
-    }
-
-    return { vertices: vertices, indices: indices };
-}
-
 function create_box(width, height, depth) {
     let vertices = [
         -width / 2, -height / 2, -depth / 2, 0, 0, -1,
@@ -943,6 +858,7 @@ void main(){
 precision highp float;
 
 uniform vec3 color;
+uniform int metallic;
 
 out vec4 frag_color;
 
@@ -956,6 +872,9 @@ void main(){
     float light = angle*dist+0.7;
     light = clamp(light, 0.0, 1.0);
     frag_color = vec4(color*1.1*light, 1.0);
+    if(metallic == 1){
+        frag_color = vec4(1, 0, 1, 1.0);
+    }
 }`);
 ctx.shaders["shader_glass"] = ctx.create_shader(`#version 300 es
 layout(location = 0) in vec3 position_attrib;
@@ -1195,7 +1114,7 @@ ctx.scenes = {
         }},
     "scene_bulb": {id: "scene_bulb", el: null, ratio: 1.7, camera: null, dragging_rect: null, draggable_rects: {"scene": []},
         camera: {
-            fov: 70, z_near: 0.1, z_far: 1000,
+            fov: 40, z_near: 0.1, z_far: 1000,
             position: [0, 0, 0], rotation: [0, 0, 0],
             up_vector: [0, 1, 0],
             view_matrix: mat4_identity(),
@@ -1330,7 +1249,9 @@ document.addEventListener("mouseup", handle_interaction_end);
 document.addEventListener("touchend", handle_interaction_end);
 setup_scene_listeners();
 
-ctx.draw = function(drawable){
+ctx.draw = function(drawable, custom_uniforms){
+    if(drawable.vertex_buffer == null) return;
+
     const gl = this.gl;
     const shader = ctx.shaders[drawable.shader];
 
@@ -1346,6 +1267,12 @@ ctx.draw = function(drawable){
         this.current_scene.camera_dirty = true;
     }
 
+    if(custom_uniforms){
+        for(let custom_uniform in custom_uniforms){
+            ctx.set_shader_uniform(shader, custom_uniform, custom_uniforms[custom_uniform]);
+        }
+    }
+
     ctx.set_shader_uniform(shader, "time", this.time);
     gl.bindVertexArray(drawable.vertex_buffer.vao);
     this.set_shader_uniform(this.shaders[drawable.shader], "color", drawable.color);
@@ -1358,7 +1285,7 @@ ctx.drawables = [];
 ctx.create_drawable = function(shader, mesh, color, transform){
     let drawable = {
         shader: shader,
-        vertex_buffer : this.create_vertex_buffer(mesh.vertices, [
+        vertex_buffer : mesh == null ? null : this.create_vertex_buffer(mesh.vertices, [
                             { name: 'position_attrib', size: 3 },
                             { name: 'normal_attrib', size: 3 }
                         ], mesh.indices),
@@ -1957,18 +1884,12 @@ let coil2 = ctx.create_drawable("shader_shaded",
 // scene_ampere setup
 
 // scene_bulb
-
-let test = ctx.create_drawable("shader_shaded",
-    // create_line_3d([[0,0,0], [1, 0,0]], 0.5, 16), [0.5, 0.5, 0.5], translate_3d([0, 0, 0]));
-    create_arrow_3d([[0,0,0], [1, 0,0]], 0.5, 16,  1, 0.7), [0.5, 0.5, 0.5], translate_3d([0, 0, 0]));
-// let bulb = ctx.create_drawable("shader_glass",
-//     create_bulb([0, 0, 0], 1.7, 32, 40),
-//     [0, 0, 0],
-//     translate_3d([0, -0.8, 0]),
-// );
-// let bulb_cap = ctx.create_drawable("shader_shaded",
-//     create_cylinder(0.4, 0.4, 8),
-//     [0.5, 0.5, 0.5], translate_3d([0, -0.8, 0]));
+let bulb_transform = scale_3d([1.0, 1.0, 1.0]);
+let bulb = ctx.create_drawable("shader_glass", null, [0.5, 0.5, 0.5], bulb_transform);
+let bulb2 = ctx.create_drawable("shader_glass", null, [0.4, 0.4, 0.4], bulb_transform);
+let bulb_screw = ctx.create_drawable("shader_shaded", null, [0.8, 0.8, 0.8], bulb_transform);
+let bulb_screw_black = ctx.create_drawable("shader_shaded", null, [0.3, 0.3, 0.3], bulb_transform);
+let bulb_wire = ctx.create_drawable("shader_shaded", null, [0.2, 0.2, 0.2], bulb_transform);
 // scene_bulb
 
 ctx.time = 0.0;
@@ -2068,11 +1989,13 @@ function update(current_time){
             ctx.draw(coil2);
         }
         else if(scene_id == "scene_bulb"){
-            // gl.enable(gl.BLEND);
-            // gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
-            // ctx.draw(bulb_cap);
-            // ctx.draw(bulb);
-            ctx.draw(test);
+            gl.enable(gl.BLEND);
+            gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
+            ctx.draw(bulb_screw, {"metallic": 2});
+            ctx.draw(bulb_screw_black);
+            ctx.draw(bulb_wire);
+            ctx.draw(bulb2);
+            ctx.draw(bulb);
         }
         else if(scene_id == "scene_relativity"){
             if(scene.set_charges_spacing >= 0){
@@ -2272,6 +2195,7 @@ async function get_mesh_from_file(path) {
         ptr += name_size;
         const num_attribs = get_uint64(view, ptr);
         ptr += 8;
+        let attribs = [];
         for(let i = 0; i < num_attribs; i++){
             const attrib_name_size = get_uint64(view, ptr);
             ptr += 8;
@@ -2279,6 +2203,7 @@ async function get_mesh_from_file(path) {
             ptr += attrib_name_size;
             const attrib_size = get_uint32(view, ptr);
             ptr += 4;
+            attribs.push({name: attrib_name, size: attrib_size});
         }
 
         const vertices_size = get_uint64(view, ptr);
@@ -2290,11 +2215,23 @@ async function get_mesh_from_file(path) {
         ptr += 8;
         const indices = get_uint32_buffer(view, ptr, indices_size * 4);
         ptr += indices_size * 4;
-
-        console.log(indices)
-
+        return { vertices: vertices, indices: indices, attribs: attribs };
     } catch (err) {
         console.error(err);
     }
 }
-get_mesh_from_file("triangle.mesh");
+get_mesh_from_file("bulb.mesh").then(function(mesh){
+    bulb.vertex_buffer = ctx.create_vertex_buffer(mesh.vertices, mesh.attribs, mesh.indices);
+});
+get_mesh_from_file("bulb2.mesh").then(function(mesh){
+    bulb2.vertex_buffer = ctx.create_vertex_buffer(mesh.vertices, mesh.attribs, mesh.indices);
+});
+get_mesh_from_file("bulb_screw.mesh").then(function(mesh){
+    bulb_screw.vertex_buffer = ctx.create_vertex_buffer(mesh.vertices, mesh.attribs, mesh.indices);
+});
+get_mesh_from_file("bulb_screw_black.mesh").then(function(mesh){
+    bulb_screw_black.vertex_buffer = ctx.create_vertex_buffer(mesh.vertices, mesh.attribs, mesh.indices);
+});
+get_mesh_from_file("bulb_wire.mesh").then(function(mesh){
+    bulb_wire.vertex_buffer = ctx.create_vertex_buffer(mesh.vertices, mesh.attribs, mesh.indices);
+});
