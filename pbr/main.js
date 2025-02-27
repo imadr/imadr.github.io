@@ -247,6 +247,70 @@ function create_line(points, thickness, use_miter = true) {
     return {vertices: vertices, indices: indices};
 }
 
+function create_line_dashed(points, thickness, dash_length = 0.1, gap_length = 0.1, use_miter = true) {
+    let dashed_points = [];
+    
+    for (let i = 1; i < points.length; i++) {
+        let p1 = points[i - 1];
+        let p2 = points[i];
+        let dx = p2[0] - p1[0];
+        let dy = p2[1] - p1[1];
+        let segment_length = Math.sqrt(dx * dx + dy * dy);
+        let dir = [dx / segment_length, dy / segment_length];
+        let distance = 0;
+
+        while (distance + dash_length <= segment_length) {
+            let dash_start = [
+                p1[0] + dir[0] * distance,
+                p1[1] + dir[1] * distance
+            ];
+            dashed_points.push(dash_start);
+            
+            let dash_end = [
+                p1[0] + dir[0] * (distance + dash_length),
+                p1[1] + dir[1] * (distance + dash_length)
+            ];
+            dashed_points.push(dash_end);
+            
+            distance += dash_length + gap_length;
+        }
+        
+        if (distance < segment_length && segment_length - distance > 0.01) {
+            let remaining = segment_length - distance;
+            if (remaining <= dash_length) {
+                dashed_points.push([
+                    p1[0] + dir[0] * distance,
+                    p1[1] + dir[1] * distance
+                ]);
+                dashed_points.push([
+                    p1[0] + dir[0] * segment_length,
+                    p1[1] + dir[1] * segment_length
+                ]);
+            }
+        }
+    }
+    
+    let all_vertices = [];
+    let all_indices = [];
+    let vertex_offset = 0;
+    
+    for (let i = 0; i < dashed_points.length; i += 2) {
+        if (i + 1 < dashed_points.length) {
+            let dash = [dashed_points[i], dashed_points[i + 1]];
+            let line = create_line(dash, thickness, use_miter);
+            all_vertices.push(...line.vertices);
+            
+            for (let j = 0; j < line.indices.length; j++) {
+                all_indices.push(line.indices[j] + vertex_offset);
+            }
+            
+            vertex_offset += line.vertices.length / 6;
+        }
+    }
+    
+    return { vertices: all_vertices, indices: all_indices };
+}
+
 function get_rotation_matrix(direction) {
     let up = [0, 1, 0];
     let right = vec3_normalize(vec3_cross(direction, up));
@@ -492,6 +556,21 @@ function create_circle(center_position, radius, segments){
     }
     indices[indices.length - 1] = 1;
     return { vertices: vertices, indices: indices };
+}
+
+function create_circle_stroke(center_position, radius, segments, stroke_width){
+    let [cx, cy, cz] = center_position;
+    let points = [];
+
+    for (let i = 0; i <= segments; i++) {
+        let angle = (i / segments) * Math.PI * 2;
+        let x = cx + radius * Math.cos(angle);
+        let y = cy + radius * Math.sin(angle);
+        points.push([x, y]);
+    }
+
+    points.push(points[0]);
+    return create_line(points, stroke_width);
 }
 
 function create_coil_3d(turns, height, radius, tube_radius, segments, radial_segments) {
@@ -1135,18 +1214,19 @@ ctx.scenes = {
                 zoom: 3.0
             }
         }},
-    "scene_bulb": {id: "scene_bulb", el: null, ratio: 1.7, camera: null, dragging_rect: null, draggable_rects: {"scene": []},
+    "scene_bulb": {id: "scene_bulb", el: null, ratio: 1.7, camera: null, dragging_rect: null, draggable_rects: {},
         camera: {
-            fov: 40, z_near: 0.1, z_far: 1000,
+            fov: 50, z_near: 0.1, z_far: 1000,
             position: [0, 0, 0], rotation: [0, 0, 0],
             up_vector: [0, 1, 0],
             view_matrix: mat4_identity(),
             orbit: {
-                rotation: [0, 0, 0],
+                rotation: [-0.2, -0.6, 0],
                 pivot: [0, 0, 0],
                 zoom: 3.0
             }
-        }},
+        },
+        particles: []},
 };
 
 function get_event_coordinates(e, element) {
@@ -1272,7 +1352,7 @@ document.addEventListener("mouseup", handle_interaction_end);
 document.addEventListener("touchend", handle_interaction_end);
 setup_scene_listeners();
 
-ctx.draw = function(drawable, custom_uniforms){
+ctx.draw = function(drawable, custom_uniforms, custom_camera){
     if(drawable.vertex_buffer == null) return;
 
     const gl = this.gl;
@@ -1281,10 +1361,19 @@ ctx.draw = function(drawable, custom_uniforms){
     if(this.previous_shader != drawable.shader || this.previous_scene != this.current_scene || ctx.current_scene.camera_dirty){
         gl.useProgram(shader.program);
         const scene = ctx.current_scene;
-        update_camera_projection_matrix(scene.camera, scene.width/scene.height);
-        update_camera_orbit(scene.camera, scene.canvas);
-        ctx.set_shader_uniform(shader, "p", scene.camera.projection_matrix);
-        ctx.set_shader_uniform(shader, "v", scene.camera.view_matrix);
+
+        if(custom_camera){
+            update_camera_projection_matrix(custom_camera, scene.width/scene.height);
+            update_camera_orbit(custom_camera, custom_camera.canvas);
+            ctx.set_shader_uniform(shader, "p", custom_camera.projection_matrix);
+            ctx.set_shader_uniform(shader, "v", custom_camera.view_matrix);
+        }
+        else{
+            update_camera_projection_matrix(scene.camera, scene.width/scene.height);
+            update_camera_orbit(scene.camera, scene.canvas);
+            ctx.set_shader_uniform(shader, "p", scene.camera.projection_matrix);
+            ctx.set_shader_uniform(shader, "v", scene.camera.view_matrix);
+        }
         this.previous_shader = drawable.shader;
         this.previous_scene = this.current_scene;
         this.current_scene.camera_dirty = true;
@@ -1907,12 +1996,73 @@ let coil2 = ctx.create_drawable("shader_shaded",
 // scene_ampere setup
 
 // scene_bulb
-let bulb_transform = scale_3d([1.0, 1.0, 1.0]);
+let bulb_transform =
+mat4_mat4_mul(
+    translate_3d([-0.5, 0, 0]),
+    scale_3d([1.3, 1.3, 1.3])
+);
 let bulb = ctx.create_drawable("shader_glass", null, [0.5, 0.5, 0.5], bulb_transform);
 let bulb2 = ctx.create_drawable("shader_glass", null, [0.4, 0.4, 0.4], bulb_transform);
 let bulb_screw = ctx.create_drawable("shader_shaded", null, [0.8, 0.8, 0.8], bulb_transform);
 let bulb_screw_black = ctx.create_drawable("shader_shaded", null, [0.3, 0.3, 0.3], bulb_transform);
 let bulb_wire = ctx.create_drawable("shader_shaded", null, [0.2, 0.2, 0.2], bulb_transform);
+let zoom_circle_pos = [1.5, 0, 0];
+let zoom_circle_radius = 0.8;
+let zoom_circle = ctx.create_drawable("shader_basic", create_circle_stroke(zoom_circle_pos, zoom_circle_radius, 64, 0.01), [0.4, 0.4, 0.4], translate_3d([0, 0, 0]));
+let zoom_point = [-0.6, 0.545, 0];
+let dx = zoom_circle_pos[0] - zoom_point[0];
+let dy = zoom_circle_pos[1] - zoom_point[1];
+let dist = Math.sqrt(dx*dx + dy*dy);
+let angle = Math.acos(zoom_circle_radius/dist);
+let base_angle = Math.atan2(dy, dx);
+let tangent1_angle = base_angle + angle;
+let tangent2_angle = base_angle - angle;
+let tangent1_point = [
+    zoom_circle_pos[0] - zoom_circle_radius * Math.cos(tangent1_angle),
+    zoom_circle_pos[1] - zoom_circle_radius * Math.sin(tangent1_angle),
+    zoom_circle_pos[2]
+];
+let tangent2_point = [
+    zoom_circle_pos[0] - zoom_circle_radius * Math.cos(tangent2_angle),
+    zoom_circle_pos[1] - zoom_circle_radius * Math.sin(tangent2_angle),
+    zoom_circle_pos[2]
+];
+let zoom_line_1 = ctx.create_drawable("shader_basic", create_line_dashed([tangent1_point, zoom_point], 0.01, 0.03, 0.015), [0.4, 0.4, 0.4], translate_3d([0, 0, 0]));
+let zoom_line_2 = ctx.create_drawable("shader_basic", create_line_dashed([tangent2_point, zoom_point], 0.01, 0.03, 0.015), [0.4, 0.4, 0.4], translate_3d([0, 0, 0]));
+let ui_camera = {
+    fov: 50, z_near: 0.1, z_far: 1000,
+    position: [0, 0, 0], rotation: [0, 0, 0],
+    up_vector: [0, 1, 0],
+    view_matrix: mat4_identity(),
+    orbit: {rotation: [0, 0, 0], pivot: [0, 0, 0], zoom: 3.0}
+};
+
+
+function update_particle_pos(particle){
+    particle.particle.transform = translate_3d(particle.pos);
+    particle.particle_background.transform = translate_3d(particle.pos);
+}
+
+function add_particle(scene, pos, particle_size = 0.25, border_size = 0.21, draggable = false){
+    let particle_background = ctx.create_drawable("shader_basic", create_circle([0, 0, 0], particle_size, 32), [0.1, 0.1, 0.1], mat4_identity());
+    let particle = ctx.create_drawable("shader_basic", create_circle([0, 0, 0], border_size, 32), blue, mat4_identity());
+    // let sign;
+
+    // if(type == "positive"){
+    //     sign = ctx.create_drawable("shader_basic", create_plus_sign([0, 0, 0], sign_size, sign_thickness), [0.1, 0.1, 0.1], mat4_identity());
+    // }
+    // else{
+    //     sign = ctx.create_drawable("shader_basic", create_minus_sign([0, 0, 0], sign_size, sign_thickness), [0.1, 0.1, 0.1], mat4_identity());
+    // }
+
+
+    let id = scene.particles.length;
+    scene.particles.push({id: id, draggable: draggable, particle: particle, particle_background: particle_background, pos: pos, size: particle_size});
+    update_particle_pos(scene.particles[scene.particles.length-1]);
+
+    return id;
+}
+let particle = add_particle(ctx.scenes["scene_bulb"], [0, 0, 0], 0.25, 0.21, false);
 // scene_bulb
 
 ctx.time = 0.0;
@@ -2019,6 +2169,17 @@ function update(current_time){
             ctx.draw(bulb_wire, {"metallic": 0});
             ctx.draw(bulb2);
             ctx.draw(bulb);
+
+            gl.depthFunc(gl.ALWAYS);
+            ctx.draw(zoom_circle, {"metallic": 0}, ui_camera);
+            ctx.draw(zoom_line_1, {"metallic": 0}, ui_camera);
+            ctx.draw(zoom_line_2, {"metallic": 0}, ui_camera);
+
+            for(const particle of scene.particles){
+                ctx.draw(particle.particle, {"metallic": 0}, ui_camera);
+                ctx.draw(particle.particle_background, {"metallic": 0}, ui_camera);
+            }
+            gl.depthFunc(gl.LESS);
         }
         else if(scene_id == "scene_relativity"){
             if(scene.set_charges_spacing >= 0){
