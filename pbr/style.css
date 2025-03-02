@@ -223,3 +223,8 @@ h2{
         flex-wrap: wrap;
     }
 }
+.text-container-content{
+    position: absolute;
+    top: 0;
+    left: 0;
+}

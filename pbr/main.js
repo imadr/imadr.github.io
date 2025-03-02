@@ -249,7 +249,7 @@ function create_line(points, thickness, use_miter = true) {
 
 function create_line_dashed(points, thickness, dash_length = 0.1, gap_length = 0.1, use_miter = true) {
     let dashed_points = [];
-    
+
     for (let i = 1; i < points.length; i++) {
         let p1 = points[i - 1];
         let p2 = points[i];
@@ -265,16 +265,16 @@ function create_line_dashed(points, thickness, dash_length = 0.1, gap_length = 0
                 p1[1] + dir[1] * distance
             ];
             dashed_points.push(dash_start);
-            
+
             let dash_end = [
                 p1[0] + dir[0] * (distance + dash_length),
                 p1[1] + dir[1] * (distance + dash_length)
             ];
             dashed_points.push(dash_end);
-            
+
             distance += dash_length + gap_length;
         }
-        
+
         if (distance < segment_length && segment_length - distance > 0.01) {
             let remaining = segment_length - distance;
             if (remaining <= dash_length) {
@@ -289,25 +289,25 @@ function create_line_dashed(points, thickness, dash_length = 0.1, gap_length = 0
             }
         }
     }
-    
+
     let all_vertices = [];
     let all_indices = [];
     let vertex_offset = 0;
-    
+
     for (let i = 0; i < dashed_points.length; i += 2) {
         if (i + 1 < dashed_points.length) {
             let dash = [dashed_points[i], dashed_points[i + 1]];
             let line = create_line(dash, thickness, use_miter);
             all_vertices.push(...line.vertices);
-            
+
             for (let j = 0; j < line.indices.length; j++) {
                 all_indices.push(line.indices[j] + vertex_offset);
             }
-            
+
             vertex_offset += line.vertices.length / 6;
         }
     }
-    
+
     return { vertices: all_vertices, indices: all_indices };
 }
 
@@ -730,6 +730,7 @@ function create_minus_sign(center_position, size, thickness){
     return { vertices: vertices, indices: indices };
 }
 
+
 function create_plus_sign(center_position, size, thickness){
     let [cx, cy, cz] = center_position;
     let half_size = size / 2;
@@ -756,10 +757,10 @@ function create_plus_sign(center_position, size, thickness){
     return { vertices: vertices, indices: indices };
 }
 
-function world_to_screen_space(scene, point){
+function world_to_screen_space(scene, camera, point){
     point = [...point, 1];
-    let view_space = mat4_vec4_mul(mat4_transpose(scene.camera.view_matrix), point);
-    let clip_space = mat4_vec4_mul(mat4_transpose(scene.camera.projection_matrix), view_space);
+    let view_space = mat4_vec4_mul(mat4_transpose(camera.view_matrix), point);
+    let clip_space = mat4_vec4_mul(mat4_transpose(camera.projection_matrix), view_space);
 
     let ndc = [
         clip_space[0] / clip_space[3],
@@ -1572,8 +1573,8 @@ function update_drag_charges(scene){
     for(const charge of scene.charges){
         if(!charge.draggable) continue;
         let screen_space_charge = [
-            ...world_to_screen_space(scene, [charge.pos[0]-charge.size, charge.pos[1]+charge.size, 0.1, 1]),
-            ...world_to_screen_space(scene, [charge.pos[0]+charge.size, charge.pos[1]-charge.size, 0.1, 1])
+            ...world_to_screen_space(scene, scene.camera, [charge.pos[0]-charge.size, charge.pos[1]+charge.size, 0.1]),
+            ...world_to_screen_space(scene, scene.camera, [charge.pos[0]+charge.size, charge.pos[1]-charge.size, 0.1])
         ];
         scene.draggable_rects[charge.id] = [...screen_space_charge];
     }
@@ -2009,6 +2010,7 @@ let bulb_wire = ctx.create_drawable("shader_shaded", null, [0.2, 0.2, 0.2], bulb
 let zoom_circle_pos = [1.5, 0, 0];
 let zoom_circle_radius = 0.8;
 let zoom_circle = ctx.create_drawable("shader_basic", create_circle_stroke(zoom_circle_pos, zoom_circle_radius, 64, 0.01), [0.4, 0.4, 0.4], translate_3d([0, 0, 0]));
+let mask_circle = ctx.create_drawable("shader_basic", create_circle(zoom_circle_pos, zoom_circle_radius, 64), [0, 0, 0], translate_3d([0, 0, 0]));
 let zoom_point = [-0.6, 0.545, 0];
 let dx = zoom_circle_pos[0] - zoom_point[0];
 let dy = zoom_circle_pos[1] - zoom_point[1];
@@ -2036,33 +2038,62 @@ let ui_camera = {
     view_matrix: mat4_identity(),
     orbit: {rotation: [0, 0, 0], pivot: [0, 0, 0], zoom: 3.0}
 };
-
+update_camera_orbit(ui_camera);
+update_camera_projection_matrix(ui_camera, ctx.scenes["scene_bulb"].width/ctx.scenes["scene_bulb"].height);
 
 function update_particle_pos(particle){
     particle.particle.transform = translate_3d(particle.pos);
     particle.particle_background.transform = translate_3d(particle.pos);
 }
 
-function add_particle(scene, pos, particle_size = 0.25, border_size = 0.21, draggable = false){
+function add_particle(scene, pos, particle_size = 0.25, border_size = 0.21, custom_camera){
     let particle_background = ctx.create_drawable("shader_basic", create_circle([0, 0, 0], particle_size, 32), [0.1, 0.1, 0.1], mat4_identity());
-    let particle = ctx.create_drawable("shader_basic", create_circle([0, 0, 0], border_size, 32), blue, mat4_identity());
-    // let sign;
-
-    // if(type == "positive"){
-    //     sign = ctx.create_drawable("shader_basic", create_plus_sign([0, 0, 0], sign_size, sign_thickness), [0.1, 0.1, 0.1], mat4_identity());
-    // }
-    // else{
-    //     sign = ctx.create_drawable("shader_basic", create_minus_sign([0, 0, 0], sign_size, sign_thickness), [0.1, 0.1, 0.1], mat4_identity());
-    // }
-
+    let particle = ctx.create_drawable("shader_basic", create_circle([0, 0, 0], border_size, 32), [0.7, 0.7, 0.7], mat4_identity());
 
     let id = scene.particles.length;
-    scene.particles.push({id: id, draggable: draggable, particle: particle, particle_background: particle_background, pos: pos, size: particle_size});
-    update_particle_pos(scene.particles[scene.particles.length-1]);
+    let text_container = scene.el.querySelector(".text-container");
+    let text = document.createElement("div");
+    let screen_pos = world_to_screen_space(scene, custom_camera, [pos[0], pos[1], 0.1]);
+    text.className = "text-container-content";
+    text.textContent = "W";
+    text.style.fontWeight = "bold";
+    text.style.fontSize = "20px";
+    text_container.appendChild(text);
 
+    let text_height = text.getBoundingClientRect().height;
+    let text_width = text.getBoundingClientRect().width;
+    
+    let origin_size = world_to_screen_space(scene, custom_camera, [0, 0, 0.1]);
+    let particle_size_to_screen_size = world_to_screen_space(scene, custom_camera, [particle_size, particle_size, 0.1]);
+    let particle_width_screen = Math.abs(origin_size[0] - particle_size_to_screen_size[0]);
+
+    text.style.top = (screen_pos[1]-text_height/2)+"px";
+    text.style.left = (screen_pos[0]-text_width/2-particle_width_screen/2)+"px";
+    scene.particles.push({id: id, particle: particle, particle_background: particle_background, pos: pos, size: particle_size});
+    update_particle_pos(scene.particles[scene.particles.length-1]);
     return id;
 }
-let particle = add_particle(ctx.scenes["scene_bulb"], [0, 0, 0], 0.25, 0.21, false);
+
+let zoom_circle_particles = [];
+let spacing = 0.2;
+let start_x = zoom_circle_pos[0] - zoom_circle_radius + spacing;
+let start_y = zoom_circle_pos[1] - zoom_circle_radius + spacing;
+
+for(let i = 0; i < 8; i++) {
+    for(let j = 0; j < 4; j++) {
+        let x = start_x + spacing * i;
+        let y = start_y + spacing * j;
+
+        let particle_id = add_particle(
+            ctx.scenes["scene_bulb"], 
+            [x-0.15, y-0.1, 0.1], 
+            0.1,
+            0.08,
+            ui_camera
+        );
+        zoom_circle_particles.push(particle_id);
+    }
+}
 // scene_bulb
 
 ctx.time = 0.0;
@@ -2170,16 +2201,31 @@ function update(current_time){
             ctx.draw(bulb2);
             ctx.draw(bulb);
 
+            gl.clear(gl.STENCIL_BUFFER_BIT);
+            gl.enable(gl.STENCIL_TEST);
+            
+            // Configure stencil writing
+            gl.stencilMask(0xFF);         // Allow writing to stencil buffer
+            gl.stencilFunc(gl.ALWAYS, 1, 0xFF); // Always pass, write 1 to the stencil buffer
+            gl.stencilOp(gl.REPLACE, gl.REPLACE, gl.REPLACE); // Replace stencil value
+            
+            gl.depthMask(false); // Disable depth writing (optional if you only care about stencil)
+            ctx.draw(mask_circle, { "metallic": 0 }, ui_camera);
+            
+            // Configure stencil testing (masking)
+            gl.colorMask(true, true, true, true);
+            gl.depthMask(true);
+            gl.stencilFunc(gl.EQUAL, 1, 0xFF); // Only draw where stencil == 1
+            gl.stencilMask(0x00); // Prevent further writes to stencil
+            
             gl.depthFunc(gl.ALWAYS);
-            ctx.draw(zoom_circle, {"metallic": 0}, ui_camera);
-            ctx.draw(zoom_line_1, {"metallic": 0}, ui_camera);
-            ctx.draw(zoom_line_2, {"metallic": 0}, ui_camera);
-
-            for(const particle of scene.particles){
-                ctx.draw(particle.particle, {"metallic": 0}, ui_camera);
-                ctx.draw(particle.particle_background, {"metallic": 0}, ui_camera);
+            for (const particle of scene.particles) {
+                ctx.draw(particle.particle_background, { "metallic": 0 }, ui_camera);
+                ctx.draw(particle.particle, { "metallic": 0 }, ui_camera);
             }
+            
             gl.depthFunc(gl.LESS);
+            gl.disable(gl.STENCIL_TEST);
         }
         else if(scene_id == "scene_relativity"){
             if(scene.set_charges_spacing >= 0){
