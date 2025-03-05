@@ -802,6 +802,7 @@ ctx.canvas = document.getElementById("main-canvas");
 ctx.gl = ctx.canvas.getContext("webgl2", {stencil: true});
 ctx.font_texture = ctx.gl.createTexture();
 ctx.font = {chars:{}, data: {}};
+ctx.text_buffers = {};
 
 function create_text_buffer(ctx, text, start_x = 0, start_y = 0) {
     let vertices = [];
@@ -1554,7 +1555,7 @@ ctx.create_drawable = function(shader, mesh, color, transform, custom_vertex_att
 
 ctx.update_drawable_mesh = function(drawable, mesh){
     const gl = this.gl;
-    if(drawable.vertex_buffer != null){    
+    if(drawable.vertex_buffer != null){
         gl.deleteVertexArray(drawable.vertex_buffer.vao);
         gl.deleteBuffer(drawable.vertex_buffer.vbo);
         gl.deleteBuffer(drawable.vertex_buffer.ebo);
@@ -2216,7 +2217,7 @@ let scene_bulb_graph_lines = [];
 scene_bulb_graph_lines.push(ctx.create_drawable("shader_basic", create_arrow([0, 0, 0], [1.5, 0, 0], [0.02, 0.04]), [0.4, 0.4, 0.4], translate_3d([0, 0, 0])));
 scene_bulb_graph_lines.push(ctx.create_drawable("shader_basic", create_arrow([0, 0, 0], [0, 1, 0], [0.02, 0.04]), [0.4, 0.4, 0.4], translate_3d([0, 0, 0])));
 
-let voltage_graph_num_points = 100;
+let voltage_graph_num_points = 200;
 let voltage_graph = [];
 for(let i = 0; i < voltage_graph_num_points; i++){
     voltage_graph.push(0.1);
@@ -2234,6 +2235,15 @@ document.getElementById("voltage-input").value = 0;
 document.getElementById("voltage-input").addEventListener("input", (e) => {
     current_voltage = parseFloat(e.target.value);
 });
+ctx.text_buffers["graph_voltage_y_axis"] = {text: "Voltage", color: [0, 0, 0], transform: mat4_mat4_mul(
+                    scale_3d([0.0025, 0.0025, 0.0025]),
+                    translate_3d([-0.22, 1.05, 0]))};
+ctx.text_buffers["graph_voltage_y_max"] = {text: "220", color: [0, 0, 0], transform: mat4_mat4_mul(
+                    scale_3d([0.0025, 0.0025, 0.0025]),
+                    translate_3d([-0.26, 0.75, 0]))};
+ctx.text_buffers["graph_voltage_y_min"] = {text: "0", color: [0, 0, 0], transform: mat4_mat4_mul(
+                    scale_3d([0.0025, 0.0025, 0.0025]),
+                    translate_3d([-0.13, 0.1, 0]))};
 
 // scene_bulb_graphs
 // scene_bulb
@@ -2280,8 +2290,6 @@ let ui_camera = {
 };
 update_camera_orbit(ui_camera);
 update_camera_projection_matrix(ui_camera, ctx.scenes["scene_bulb"].width/ctx.scenes["scene_bulb"].height);
-
-ctx.text_buffers = {};
 
 function update_particle_pos(particle){
     particle.particle.transform = translate_3d(particle.pos);
@@ -2453,7 +2461,7 @@ function update(current_time){
                 ctx.draw(drawable);
             }
 
-            let current_voltage_mapped = remap_value(current_voltage, 0, 220, 0.1, 0.9);
+            let current_voltage_mapped = remap_value(current_voltage, 0, 220, 0.1, 0.8);
             voltage_graph.push(current_voltage_mapped);
             voltage_graph.shift();
 
@@ -2465,6 +2473,9 @@ function update(current_time){
             ctx.update_drawable_mesh(voltage_graph_drawable, create_line(voltage_graph_drawable_points, 0.03, false));
 
             ctx.draw(voltage_graph_drawable);
+            ctx.draw(ctx.text_buffers["graph_voltage_y_axis"], {"metallic": 0}, ui_camera);
+            ctx.draw(ctx.text_buffers["graph_voltage_y_max"], {"metallic": 0}, ui_camera);
+            ctx.draw(ctx.text_buffers["graph_voltage_y_min"], {"metallic": 0}, ui_camera);
         }
         else if(scene_id == "scene_bulb"){
             gl.enable(gl.BLEND);
