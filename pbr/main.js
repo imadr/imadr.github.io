@@ -1,5 +1,10 @@
 let ctx = {};
 
+function remap_value(value, from_min, from_max, to_min, to_max) {
+    const normalized = (value - from_min) / (from_max - from_min)
+    return to_min + (normalized * (to_max - to_min))
+}
+
 ctx.compile_shader = function(shader_source, shader_type){
     const gl = this.gl;
     let shader = gl.createShader(shader_type);
@@ -518,7 +523,7 @@ function create_triangle(start_position, size) {
     return { vertices: vertices, indices: indices };
 }
 
-function create_plane(start_position, size) {
+function create_rect(start_position, size) {
     let [x, y, z] = start_position;
     let [width, height] = size;
 
@@ -794,8 +799,83 @@ function screen_to_world_space(scene, screen_pos, z_distance) {
 }
 
 ctx.canvas = document.getElementById("main-canvas");
-ctx.gl = ctx.canvas.getContext("webgl2");
+ctx.gl = ctx.canvas.getContext("webgl2", {stencil: true});
+ctx.font_texture = ctx.gl.createTexture();
+ctx.font = {chars:{}, data: {}};
+
+function create_text_buffer(ctx, text, start_x = 0, start_y = 0) {
+    let vertices = [];
+    let indices = [];
+    let offset_x = start_x;
+
+    for (let i = 0; i < text.length; i++) {
+        const char = ctx.font.chars[text[i]];
+        if (!char) {
+            continue;
+        }
+
+        const x = offset_x + char.xoffset;
+        const y = start_y + (ctx.font.data.base - char.yoffset - char.height);
+        const w = char.width;
+        const h = char.height;
+        const u1 = char.x / ctx.font.data.scale_w;
+        const v1 = (char.y + char.height) / ctx.font.data.scale_h;
+        const u2 = (char.x + char.width) / ctx.font.data.scale_w;
+        const v2 = char.y / ctx.font.data.scale_h;
+        const index_offset = vertices.length / 4;
+
+        const is_space = text[i] === " ";
+        vertices.push(
+            x, y, u1, v1,
+            x + w, y, u2, v1,
+            x + w, y + h, u2, v2,
+            x, y + h, u1, v2
+        );
+        indices.push(
+            index_offset, index_offset + 1, index_offset + 2,
+            index_offset, index_offset + 2, index_offset + 3
+        );
+        const start_idx = indices.length - 6;
+
+        offset_x += char.xadvance;
+    }
+
+    return { vertices, indices };
+}
+
 ctx.shaders = {};
+ctx.shaders["shader_text"] = ctx.create_shader(`#version 300 es
+layout(location = 0) in vec2 position_attrib;
+layout(location = 1) in vec2 texcoord_attrib;
+
+uniform mat4 m;
+uniform mat4 v;
+uniform mat4 p;
+
+out vec2 position;
+out vec2 texcoord;
+
+void main(){
+    gl_Position = p*v*m*vec4(vec3(position_attrib, 0.0), 1);
+    position = position_attrib;
+    texcoord = texcoord_attrib;
+}`,
+`#version 300 es
+precision highp float;
+
+uniform vec3 color;
+
+uniform sampler2D font_texture;
+
+out vec4 frag_color;
+
+in vec2 position;
+in vec2 texcoord;
+
+void main(){
+    vec4 font = texture(font_texture, texcoord);
+    frag_color = vec4(0, 0, 0, font.a);
+}`);
 ctx.shaders["shader_basic"] = ctx.create_shader(`#version 300 es
 layout(location = 0) in vec3 position_attrib;
 layout(location = 1) in vec3 normal_attrib;
@@ -972,10 +1052,47 @@ void main(){
         float light = angle*dist+0.7;
         light = clamp(light, 0.0, 1.0);
         frag_color = vec4(color*1.1*light, 1.0);
-        if(metallic == 1){
-            frag_color = vec4(1, 0, 1, 1.0);
-        }
     }
+}`);
+ctx.shaders["shader_apple"] = ctx.create_shader(`#version 300 es
+layout(location = 0) in vec3 position_attrib;
+layout(location = 1) in vec3 normal_attrib;
+
+uniform mat4 m;
+uniform mat4 v;
+uniform mat4 p;
+
+out vec3 position;
+out vec3 normal;
+out vec3 camera_pos;
+
+void main(){
+    gl_Position = p*v*m*vec4(position_attrib, 1);
+    position = position_attrib;
+    normal = normal_attrib;
+    camera_pos = -transpose(mat3(v)) * v[3].xyz;
+}`,
+`#version 300 es
+precision highp float;
+
+uniform vec3 color;
+uniform int metallic;
+
+out vec4 frag_color;
+
+in vec3 position;
+in vec3 normal;
+in vec3 camera_pos;
+
+void main(){
+    vec3 light_pos = vec3(0, 1, 1);
+    vec3 light_dir = normalize(light_pos - position);
+    vec3 view_dir = normalize(camera_pos - position);
+    vec3 reflect_dir = reflect(-light_dir, normal);
+    float specular = pow(max(dot(view_dir, reflect_dir), 0.0), 8.0);
+    float angle = clamp(dot(normalize(light_pos), normal), 0.0, 1.0);
+    float diffuse = angle;
+    frag_color = vec4(color*(diffuse*0.6+ 0.4) + vec3(specular)*0.5, 1.0);
 }`);
 ctx.shaders["shader_glass"] = ctx.create_shader(`#version 300 es
 layout(location = 0) in vec3 position_attrib;
@@ -1228,6 +1345,31 @@ ctx.scenes = {
             }
         },
         particles: []},
+    "scene_bulb_graphs": {id: "scene_bulb_graphs", el: null, ratio: 2, camera: null, dragging_rect: null, draggable_rects: {},
+        camera: {
+            fov: 50, z_near: 0.1, z_far: 1000,
+            position: [0, 0, 0], rotation: [0, 0, 0],
+            up_vector: [0, 1, 0],
+            view_matrix: mat4_identity(),
+            orbit: {
+                rotation: [0, 0, 0],
+                pivot: [0, 0, 0],
+                zoom: 3.0
+            }
+        }},
+    "scene_apple": {id: "scene_apple", el: null, ratio: 1.7, camera: null, dragging_rect: null, draggable_rects: {"scene": []},
+        camera: {
+            fov: 70, z_near: 0.1, z_far: 1000,
+            position: [0, 0, 0], rotation: [0, 0, 0],
+            up_vector: [0, 1, 0],
+            view_matrix: mat4_identity(),
+            orbit: {
+                rotation: [-0.3, 0.3, 0],
+                pivot: [0, 0, 0],
+                zoom: 3.0
+            }
+        },
+        particles: []},
 };
 
 function get_event_coordinates(e, element) {
@@ -1354,6 +1496,7 @@ document.addEventListener("touchend", handle_interaction_end);
 setup_scene_listeners();
 
 ctx.draw = function(drawable, custom_uniforms, custom_camera){
+    if(drawable == null) return;
     if(drawable.vertex_buffer == null) return;
 
     const gl = this.gl;
@@ -1395,13 +1538,13 @@ ctx.draw = function(drawable, custom_uniforms, custom_camera){
 
 ctx.drawables = [];
 
-ctx.create_drawable = function(shader, mesh, color, transform){
+ctx.create_drawable = function(shader, mesh, color, transform, custom_vertex_attribs){
     let drawable = {
         shader: shader,
-        vertex_buffer : mesh == null ? null : this.create_vertex_buffer(mesh.vertices, [
+        vertex_buffer : mesh == null ? null : this.create_vertex_buffer(mesh.vertices, custom_vertex_attribs == null ? [
                             { name: 'position_attrib', size: 3 },
                             { name: 'normal_attrib', size: 3 }
-                        ], mesh.indices),
+                        ] : custom_vertex_attribs, mesh.indices),
         color: color,
         transform: transform
     };
@@ -1411,9 +1554,11 @@ ctx.create_drawable = function(shader, mesh, color, transform){
 
 ctx.update_drawable_mesh = function(drawable, mesh){
     const gl = this.gl;
-    gl.deleteVertexArray(drawable.vertex_buffer.vao);
-    gl.deleteBuffer(drawable.vertex_buffer.vbo);
-    gl.deleteBuffer(drawable.vertex_buffer.ebo);
+    if(drawable.vertex_buffer != null){    
+        gl.deleteVertexArray(drawable.vertex_buffer.vao);
+        gl.deleteBuffer(drawable.vertex_buffer.vbo);
+        gl.deleteBuffer(drawable.vertex_buffer.ebo);
+    }
     drawable.vertex_buffer = this.create_vertex_buffer(mesh.vertices, [
                             { name: 'position_attrib', size: 3 },
                             { name: 'normal_attrib', size: 3 }
@@ -1492,6 +1637,7 @@ document.getElementById("frequency-input").addEventListener("input", (e) => {
 
 const red = [0.922, 0.204, 0.204];
 const blue = [0.204, 0.443, 0.922];
+const green = [0.143, 0.867, 0.095];
 
 // scene_charges setup
 function add_charge(scene, type, pos, charge_size = 0.25, border_size = 0.21, sign_size = 0.16, sign_thickness = 0.04, start_pos = 0, draggable = false, show_arrow = false){
@@ -1741,7 +1887,7 @@ let big_charge = ctx.scenes["scene_relativity"].charges.find(charge => charge.id
 setup_relativity_scene(ctx.scenes["scene_relativity"]);
 update_drag_charges_relativity(ctx.scenes["scene_relativity"]);
 let cable = ctx.create_drawable("shader_basic",
-    create_plane([-5, ctx.scenes["scene_relativity"].cable_y_pos-0.44, 0], [10, 0.6]),
+    create_rect([-5, ctx.scenes["scene_relativity"].cable_y_pos-0.44, 0], [10, 0.6]),
     [0.5, 0.5, 0.5], translate_3d([0, 0, 0]));
 
 let position_range = {x: [-3.5, 3.5], y: [-1.7, 1.7]};
@@ -1778,7 +1924,7 @@ let spectrum_wave = {vertex_buffer: null, shader: "shader_basic"};
 spectrum_wave.transform = translate_3d([-7.5, 0.9, -10]);
 ctx.update_wave_3d(spectrum_wave, wave_param_spectrum, lines_segments_3d);
 let spectrum = ctx.create_drawable("shader_spectrum",
-    create_plane([0, 0, 0], [0.8, 0.4]),
+    create_rect([0, 0, 0], [0.8, 0.4]),
     [0, 0, 0], translate_3d([-0.4, -0.5, -1]));
 let arrow_spectrum_1 = ctx.create_drawable("shader_basic",
    create_arrow([0, 0, 0], [1.2, 0, 0], [0.015, 0.04]), [0, 0, 0], translate_3d([0, -0.07, 0]));
@@ -1850,7 +1996,7 @@ let z_axis = ctx.create_drawable("shader_basic",
 
 // scene_field_gradient setup
 let plane = ctx.create_drawable("shader_plane",
-    create_plane([0, 0, 0], [6, 2.4]),
+    create_rect([0, 0, 0], [6, 2.4]),
     [0, 0, 0], translate_3d([-3, -1.2, 0]));
 // scene_field_gradient setup
 
@@ -1996,6 +2142,100 @@ let coil2 = ctx.create_drawable("shader_shaded",
 );
 // scene_ampere setup
 
+// scene_apple
+let apple_transform = mat4_identity();
+let apple = ctx.create_drawable("shader_apple", null, [1, 0, 0], apple_transform);
+let apple_stem = ctx.create_drawable("shader_apple", null, [0.467, 0.318, 0.251], apple_transform);
+let apple_leaf = ctx.create_drawable("shader_apple", null, [0.380, 0.627, 0.149], apple_transform);
+
+let wave_param_apple = {
+    num_points: 500,
+    width: 3.7,
+    amplitude: 0.1,
+    frequency: 6,
+    thickness: 0.02,
+    z_range: 0,
+    time: 0,
+};
+let wave_param_2_apple = {
+    num_points: 500,
+    width: 3.7,
+    amplitude: 0.1,
+    frequency: 6,
+    thickness: 0.02,
+    z_range: 0,
+    time: 0,
+};
+let wave_blue_3d = {vertex_buffer: null, shader: "shader_basic"};
+let wave_violet_3d = {vertex_buffer: null, shader: "shader_basic"};
+let wave_red_3d = {vertex_buffer: null, shader: "shader_basic"};
+let wave_red_2_3d = {vertex_buffer: null, shader: "shader_basic"};
+let wave_green_3d = {vertex_buffer: null, shader: "shader_basic"};
+let wave_1_pos = [0.6, 0.0, 0];
+wave_red_2_3d.transform =
+mat4_mat4_mul(
+    rotate_3d(axis_angle_to_quat(vec3_normalize([0, 0, 1]), rad(-20))),
+    translate_3d([0.5, 0.3, 0]),
+    );
+
+wave_blue_3d.transform =
+mat4_mat4_mul(
+mat4_mat4_mul(
+    translate_3d([0.0, 0.08, 0.0]),
+    rotate_3d(axis_angle_to_quat(vec3_normalize([0, 0, 1]), rad(45))),
+    ),
+    translate_3d(vec3_add(wave_1_pos, [0.0, 0.0, 0.0])),
+    );
+wave_violet_3d.transform =
+mat4_mat4_mul(
+mat4_mat4_mul(
+    translate_3d([0.0, 0.1, 0.0]),
+    rotate_3d(axis_angle_to_quat(vec3_normalize([0, 0, 1]), rad(45))),
+    ),
+    translate_3d(vec3_add(wave_1_pos, [0.0, 0.0, 0.0])),
+    );
+wave_green_3d.transform =
+mat4_mat4_mul(
+mat4_mat4_mul(
+    translate_3d([0.0, 0.04, 0.0]),
+    rotate_3d(axis_angle_to_quat(vec3_normalize([0, 0, 1]), rad(45))),
+    ),
+    translate_3d(vec3_add(wave_1_pos, [0.0, 0.0, 0.0])),
+    );
+wave_red_3d.transform =
+mat4_mat4_mul(
+mat4_mat4_mul(
+    translate_3d([0.0, 0.00, 0.0]),
+    rotate_3d(axis_angle_to_quat(vec3_normalize([0, 0, 1]), rad(45))),
+    ),
+    translate_3d(vec3_add(wave_1_pos, [0.0, 0.0, 0.0])),
+    );
+// scene_apple
+// scene_bulb_graphs
+let scene_bulb_graph_lines = [];
+scene_bulb_graph_lines.push(ctx.create_drawable("shader_basic", create_arrow([0, 0, 0], [1.5, 0, 0], [0.02, 0.04]), [0.4, 0.4, 0.4], translate_3d([0, 0, 0])));
+scene_bulb_graph_lines.push(ctx.create_drawable("shader_basic", create_arrow([0, 0, 0], [0, 1, 0], [0.02, 0.04]), [0.4, 0.4, 0.4], translate_3d([0, 0, 0])));
+
+let voltage_graph_num_points = 100;
+let voltage_graph = [];
+for(let i = 0; i < voltage_graph_num_points; i++){
+    voltage_graph.push(0.1);
+}
+let voltage_graph_drawable_points = [];
+for(let i = 0; i < voltage_graph.length; i++){
+    let x = i * 1.3 / (voltage_graph_num_points-1);
+    voltage_graph_drawable_points.push([x, voltage_graph[i], 0]);
+}
+let voltage_graph_drawable = ctx.create_drawable("shader_basic", null, [0.2, 0.2, 0.2], translate_3d([0, 0, 0]));
+ctx.update_drawable_mesh(voltage_graph_drawable, create_line(voltage_graph_drawable_points, 0.03, false));
+
+let current_voltage = 0;
+document.getElementById("voltage-input").value = 0;
+document.getElementById("voltage-input").addEventListener("input", (e) => {
+    current_voltage = parseFloat(e.target.value);
+});
+
+// scene_bulb_graphs
 // scene_bulb
 let bulb_transform =
 mat4_mat4_mul(
@@ -2007,8 +2247,8 @@ let bulb2 = ctx.create_drawable("shader_glass", null, [0.4, 0.4, 0.4], bulb_tran
 let bulb_screw = ctx.create_drawable("shader_shaded", null, [0.8, 0.8, 0.8], bulb_transform);
 let bulb_screw_black = ctx.create_drawable("shader_shaded", null, [0.3, 0.3, 0.3], bulb_transform);
 let bulb_wire = ctx.create_drawable("shader_shaded", null, [0.2, 0.2, 0.2], bulb_transform);
-let zoom_circle_pos = [1.5, 0, 0];
-let zoom_circle_radius = 0.8;
+let zoom_circle_pos = [1.4, 0, 0];
+let zoom_circle_radius = 0.9;
 let zoom_circle = ctx.create_drawable("shader_basic", create_circle_stroke(zoom_circle_pos, zoom_circle_radius, 64, 0.01), [0.4, 0.4, 0.4], translate_3d([0, 0, 0]));
 let mask_circle = ctx.create_drawable("shader_basic", create_circle(zoom_circle_pos, zoom_circle_radius, 64), [0, 0, 0], translate_3d([0, 0, 0]));
 let zoom_point = [-0.6, 0.545, 0];
@@ -2041,6 +2281,8 @@ let ui_camera = {
 update_camera_orbit(ui_camera);
 update_camera_projection_matrix(ui_camera, ctx.scenes["scene_bulb"].width/ctx.scenes["scene_bulb"].height);
 
+ctx.text_buffers = {};
+
 function update_particle_pos(particle){
     particle.particle.transform = translate_3d(particle.pos);
     particle.particle_background.transform = translate_3d(particle.pos);
@@ -2051,24 +2293,12 @@ function add_particle(scene, pos, particle_size = 0.25, border_size = 0.21, cust
     let particle = ctx.create_drawable("shader_basic", create_circle([0, 0, 0], border_size, 32), [0.7, 0.7, 0.7], mat4_identity());
 
     let id = scene.particles.length;
-    let text_container = scene.el.querySelector(".text-container");
-    let text = document.createElement("div");
-    let screen_pos = world_to_screen_space(scene, custom_camera, [pos[0], pos[1], 0.1]);
-    text.className = "text-container-content";
-    text.textContent = "W";
-    text.style.fontWeight = "bold";
-    text.style.fontSize = "20px";
-    text_container.appendChild(text);
 
-    let text_height = text.getBoundingClientRect().height;
-    let text_width = text.getBoundingClientRect().width;
-    
-    let origin_size = world_to_screen_space(scene, custom_camera, [0, 0, 0.1]);
-    let particle_size_to_screen_size = world_to_screen_space(scene, custom_camera, [particle_size, particle_size, 0.1]);
-    let particle_width_screen = Math.abs(origin_size[0] - particle_size_to_screen_size[0]);
+    ctx.text_buffers["tungsten_w_"+id] = {text: "W", color: [0, 0, 0], transform: mat4_mat4_mul(
+                    scale_3d([0.0025, 0.0025, 0.0025]),
+                    translate_3d(vec3_sub(pos, [0.06, 0.04, 0.0])),
+                )};
 
-    text.style.top = (screen_pos[1]-text_height/2)+"px";
-    text.style.left = (screen_pos[0]-text_width/2-particle_width_screen/2)+"px";
     scene.particles.push({id: id, particle: particle, particle_background: particle_background, pos: pos, size: particle_size});
     update_particle_pos(scene.particles[scene.particles.length-1]);
     return id;
@@ -2079,14 +2309,14 @@ let spacing = 0.2;
 let start_x = zoom_circle_pos[0] - zoom_circle_radius + spacing;
 let start_y = zoom_circle_pos[1] - zoom_circle_radius + spacing;
 
-for(let i = 0; i < 8; i++) {
+for(let i = 0; i < 9; i++) {
     for(let j = 0; j < 4; j++) {
         let x = start_x + spacing * i;
         let y = start_y + spacing * j;
 
         let particle_id = add_particle(
-            ctx.scenes["scene_bulb"], 
-            [x-0.15, y-0.1, 0.1], 
+            ctx.scenes["scene_bulb"],
+            [x-0.15, y-0.1, 0.1],
             0.1,
             0.08,
             ui_camera
@@ -2111,6 +2341,10 @@ function update(current_time){
     gl.enable(gl.CULL_FACE);
     gl.clearColor(0, 0, 0, 0);
     gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
+    gl.depthFunc(gl.LESS);
+
+    gl.activeTexture(gl.TEXTURE0);
+    gl.bindTexture(gl.TEXTURE_2D, ctx.font_texture);
 
     for(let scene_id in ctx.scenes){
         const scene = ctx.scenes[scene_id];
@@ -2192,9 +2426,50 @@ function update(current_time){
         else if(scene_id == "scene_ampere"){
             ctx.draw(coil2);
         }
+        else if(scene_id == "scene_apple"){
+            wave_red_2_3d.color = red;
+            wave_red_3d.color = red;
+            wave_blue_3d.color = [0.000, 0.493, 1.000];
+            wave_green_3d.color = green;
+            wave_violet_3d.color = [0.557, 0.000, 1.000];
+            wave_param_apple.time += 0.05;
+            wave_param_2_apple.time -= 0.05;
+            ctx.update_wave_3d(wave_red_2_3d, wave_param_2_apple, lines_segments_3d);
+            ctx.update_wave_3d(wave_red_3d, wave_param_apple, lines_segments_3d);
+            ctx.update_wave_3d(wave_green_3d, wave_param_apple, lines_segments_3d);
+            ctx.update_wave_3d(wave_blue_3d, wave_param_apple, lines_segments_3d);
+            ctx.update_wave_3d(wave_violet_3d, wave_param_apple, lines_segments_3d);
+            ctx.draw(wave_red_2_3d);
+            ctx.draw(wave_red_3d);
+            ctx.draw(wave_green_3d);
+            ctx.draw(wave_blue_3d);
+            ctx.draw(wave_violet_3d);
+            ctx.draw(apple);
+            ctx.draw(apple_stem);
+            ctx.draw(apple_leaf);
+        }
+        else if(scene_id == "scene_bulb_graphs"){
+            for(let drawable of scene_bulb_graph_lines){
+                ctx.draw(drawable);
+            }
+
+            let current_voltage_mapped = remap_value(current_voltage, 0, 220, 0.1, 0.9);
+            voltage_graph.push(current_voltage_mapped);
+            voltage_graph.shift();
+
+            voltage_graph_drawable_points = [];
+            for(let i = 0; i < voltage_graph.length; i++){
+                let x = i * 1.3 / (voltage_graph_num_points-1);
+                voltage_graph_drawable_points.push([x, voltage_graph[i], 0]);
+            }
+            ctx.update_drawable_mesh(voltage_graph_drawable, create_line(voltage_graph_drawable_points, 0.03, false));
+
+            ctx.draw(voltage_graph_drawable);
+        }
         else if(scene_id == "scene_bulb"){
             gl.enable(gl.BLEND);
             gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
+
             ctx.draw(bulb_screw, {"metallic": 1});
             ctx.draw(bulb_screw_black, {"metallic": 0});
             ctx.draw(bulb_wire, {"metallic": 0});
@@ -2203,29 +2478,43 @@ function update(current_time){
 
             gl.clear(gl.STENCIL_BUFFER_BIT);
             gl.enable(gl.STENCIL_TEST);
-            
-            // Configure stencil writing
-            gl.stencilMask(0xFF);         // Allow writing to stencil buffer
-            gl.stencilFunc(gl.ALWAYS, 1, 0xFF); // Always pass, write 1 to the stencil buffer
-            gl.stencilOp(gl.REPLACE, gl.REPLACE, gl.REPLACE); // Replace stencil value
-            
-            gl.depthMask(false); // Disable depth writing (optional if you only care about stencil)
+
+            gl.stencilMask(0xFF);
+            gl.stencilFunc(gl.ALWAYS, 1, 0xFF);
+            gl.stencilOp(gl.REPLACE, gl.REPLACE, gl.REPLACE);
+
+            gl.colorMask(false, false, false, false);
+            gl.depthMask(false);
             ctx.draw(mask_circle, { "metallic": 0 }, ui_camera);
-            
-            // Configure stencil testing (masking)
+
             gl.colorMask(true, true, true, true);
             gl.depthMask(true);
-            gl.stencilFunc(gl.EQUAL, 1, 0xFF); // Only draw where stencil == 1
-            gl.stencilMask(0x00); // Prevent further writes to stencil
-            
+            gl.stencilFunc(gl.EQUAL, 1, 0xFF);
+            gl.stencilMask(0x00);
+
             gl.depthFunc(gl.ALWAYS);
+
+
             for (const particle of scene.particles) {
                 ctx.draw(particle.particle_background, { "metallic": 0 }, ui_camera);
                 ctx.draw(particle.particle, { "metallic": 0 }, ui_camera);
             }
-            
-            gl.depthFunc(gl.LESS);
+
+            for(let key in ctx.text_buffers){
+                if(key.indexOf("tungsten_w") > -1){
+                    ctx.draw(ctx.text_buffers[key], {"metallic": 0}, ui_camera);
+                }
+            }
+
+            gl.stencilFunc(gl.EQUAL, 0, 0xFF);
+            ctx.draw(zoom_circle, {"metallic": 0}, ui_camera);
+            ctx.draw(zoom_line_1, {"metallic": 0}, ui_camera);
+            ctx.draw(zoom_line_2, {"metallic": 0}, ui_camera);
+
             gl.disable(gl.STENCIL_TEST);
+
+            gl.depthFunc(gl.ALWAYS);
+
         }
         else if(scene_id == "scene_relativity"){
             if(scene.set_charges_spacing >= 0){
@@ -2449,7 +2738,7 @@ async function get_mesh_from_file(path) {
     } catch (err) {
         console.error(err);
     }
-}
+};
 get_mesh_from_file("bulb.mesh").then(function(mesh){
     bulb.vertex_buffer = ctx.create_vertex_buffer(mesh.vertices, mesh.attribs, mesh.indices);
 });
@@ -2465,3 +2754,134 @@ get_mesh_from_file("bulb_screw_black.mesh").then(function(mesh){
 get_mesh_from_file("bulb_wire.mesh").then(function(mesh){
     bulb_wire.vertex_buffer = ctx.create_vertex_buffer(mesh.vertices, mesh.attribs, mesh.indices);
 });
+get_mesh_from_file("apple.mesh").then(function(mesh){
+    apple.vertex_buffer = ctx.create_vertex_buffer(mesh.vertices, mesh.attribs, mesh.indices);
+});
+get_mesh_from_file("apple_stem.mesh").then(function(mesh){
+    apple_stem.vertex_buffer = ctx.create_vertex_buffer(mesh.vertices, mesh.attribs, mesh.indices);
+});
+get_mesh_from_file("apple_leaf.mesh").then(function(mesh){
+    apple_leaf.vertex_buffer = ctx.create_vertex_buffer(mesh.vertices, mesh.attribs, mesh.indices);
+});
+
+function parse_fnt(fnt_text) {
+    const lines = fnt_text.split("\n").map(line => line.trim()).filter(line => line);
+    const font_data = {
+        info: {},
+        common: {},
+        pages: [],
+        chars: [],
+        kernings: []
+    };
+    const key_value_regex = /(\w+)="?([^"\s]+)"?(?=\s|$)|(\w+)=(-?\d+)/g;
+
+    lines.forEach(line => {
+        const parts = line.split(/\s+/);
+        const type = parts[0];
+
+        switch(type) {
+            case "info":
+            case "common": {
+                const obj = {};
+                let match;
+                while ((match = key_value_regex.exec(line)) !== null) {
+                    const key = match[1] || match[3];
+                    const value = match[2] || match[4];
+                    obj[key] = isNaN(value) ? value : parseInt(value);
+                }
+                font_data[type] = obj;
+                break;
+            }
+            case "page": {
+                const page = {};
+                let match;
+                while ((match = key_value_regex.exec(line)) !== null) {
+                    const key = match[1] || match[3];
+                    const value = match[2] || match[4];
+                    page[key] = key === "file" ? value.replace(/"/g, "") : parseInt(value);
+                }
+                font_data.pages.push(page.file);
+                break;
+            }
+            case "char": {
+                const char = {};
+                let match;
+                while ((match = key_value_regex.exec(line)) !== null) {
+                    const key = match[1] || match[3];
+                    const value = match[2] || match[4];
+                    char[key] = isNaN(value) ? value : parseInt(value);
+                }
+                char.char = String.fromCharCode(char.id);
+                font_data.chars.push(char);
+                break;
+            }
+            case "kerning": {
+                const kerning = {};
+                let match;
+                while ((match = key_value_regex.exec(line)) !== null) {
+                    const key = match[1] || match[3];
+                    const value = match[2] || match[4];
+                    kerning[key] = parseInt(value);
+                }
+                font_data.kernings.push(kerning);
+                break;
+            }
+        }
+    });
+
+    return font_data;
+}
+
+async function get_font(ctx, fnt_path, bitmap_path) {
+    const gl = ctx.gl;
+    try {
+        let res = await fetch(fnt_path);
+        let fnt_data = await res.text();
+        res = await fetch(bitmap_path);
+        let bitmap_data = await res.arrayBuffer();
+
+        const image = new Image();
+        image.src = bitmap_path;
+
+        await new Promise((resolve, reject) => {
+            image.onload = () => {
+                gl.bindTexture(gl.TEXTURE_2D, ctx.font_texture);
+                gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, image);
+                gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR_MIPMAP_LINEAR);
+                gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
+                gl.generateMipmap(gl.TEXTURE_2D);
+                resolve();
+            };
+            image.onerror = reject;
+        });
+
+
+        const font_data = parse_fnt(fnt_data);
+
+        ctx.font = { chars: {} };
+        font_data.chars.forEach(char => {
+            ctx.font.chars[char.char] = char;
+        });
+
+        ctx.font.data = {
+            scale_w: font_data.common.scaleW,
+            scale_h: font_data.common.scaleH,
+            line_height: font_data.common.lineHeight,
+            base: font_data.common.base
+        };
+
+        let custom_vertex_attribs = [
+            { name: "position_attrib", size: 2 },
+            { name: "texcoord_attrib", size: 2 }
+        ];
+
+        for(let key in ctx.text_buffers){
+            ctx.text_buffers[key] = ctx.create_drawable("shader_text", create_text_buffer(ctx, ctx.text_buffers[key].text, 0, 0), ctx.text_buffers[key].color,
+                ctx.text_buffers[key].transform, custom_vertex_attribs);
+        }
+    } catch (err) {
+        console.error(err);
+    }
+};
+
+get_font(ctx, "inter.fnt", "inter.png");

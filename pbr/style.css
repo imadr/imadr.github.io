@@ -87,6 +87,9 @@ input[type="range"]::-moz-range-thumb {
 .red{
     color: #eb3434;
 }
+.green{
+    color: #1a9312;
+}
 #main-title{
     font-size: 3em;
     line-height: 1.0em;
@@ -223,8 +226,6 @@ h2{
         flex-wrap: wrap;
     }
 }
-.text-container-content{
-    position: absolute;
-    top: 0;
-    left: 0;
+.violet{
+    color: #8e00ff;
 }
