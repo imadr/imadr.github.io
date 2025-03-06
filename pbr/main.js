@@ -804,6 +804,21 @@ ctx.font_texture = ctx.gl.createTexture();
 ctx.font = {chars:{}, data: {}};
 ctx.text_buffers = {};
 
+const postprocess_framebuffer = ctx.gl.createFramebuffer();
+ctx.gl.bindFramebuffer(ctx.gl.FRAMEBUFFER, postprocess_framebuffer);
+const postprocess_texture = ctx.gl.createTexture();
+ctx.gl.bindTexture(ctx.gl.TEXTURE_2D, postprocess_texture);
+ctx.gl.texImage2D(ctx.gl.TEXTURE_2D, 0, ctx.gl.RGBA, ctx.gl.canvas.width, ctx.gl.canvas.height, 0, ctx.gl.RGBA, ctx.gl.UNSIGNED_BYTE, null);
+ctx.gl.texParameteri(ctx.gl.TEXTURE_2D, ctx.gl.TEXTURE_MIN_FILTER, ctx.gl.LINEAR);
+ctx.gl.texParameteri(ctx.gl.TEXTURE_2D, ctx.gl.TEXTURE_MAG_FILTER, ctx.gl.LINEAR);
+ctx.gl.texParameteri(ctx.gl.TEXTURE_2D, ctx.gl.TEXTURE_MIN_FILTER, ctx.gl.LINEAR_MIPMAP_LINEAR);
+ctx.gl.framebufferTexture2D(ctx.gl.FRAMEBUFFER, ctx.gl.COLOR_ATTACHMENT0, ctx.gl.TEXTURE_2D, postprocess_texture, 0);
+const postprocess_renderbuffer = ctx.gl.createRenderbuffer();
+ctx.gl.bindRenderbuffer(ctx.gl.RENDERBUFFER, postprocess_renderbuffer);
+ctx.gl.renderbufferStorage(ctx.gl.RENDERBUFFER, ctx.gl.DEPTH_COMPONENT16, ctx.gl.canvas.width, ctx.gl.canvas.height);
+ctx.gl.framebufferRenderbuffer(ctx.gl.FRAMEBUFFER, ctx.gl.DEPTH_ATTACHMENT, ctx.gl.RENDERBUFFER, postprocess_renderbuffer);
+ctx.gl.bindFramebuffer(ctx.gl.FRAMEBUFFER, null);
+
 function create_text_buffer(ctx, text, start_x = 0, start_y = 0) {
     let vertices = [];
     let indices = [];
@@ -876,6 +891,51 @@ in vec2 texcoord;
 void main(){
     vec4 font = texture(font_texture, texcoord);
     frag_color = vec4(0, 0, 0, font.a > 0.5 ? font.a : 0.0);
+}`);
+ctx.shaders["shader_postprocess"] = ctx.create_shader(`#version 300 es
+layout(location = 0) in vec3 position_attrib;
+layout(location = 1) in vec2 texcoord_attrib;
+
+out vec3 position;
+out vec2 texcoord;
+
+void main(){
+    gl_Position = vec4(position_attrib, 1.0);
+    position = position_attrib;
+    texcoord = texcoord_attrib;
+}`,
+`#version 300 es
+precision highp float;
+
+uniform vec3 color;
+
+out vec4 frag_color;
+
+uniform sampler2D framebuffer_texture;
+uniform vec4 scissor_texcoords;
+uniform float brightness;
+
+in vec3 position;
+in vec2 texcoord;
+
+void main(){
+    vec2 texcoord_adjusted = mix(scissor_texcoords.xy, scissor_texcoords.zw, texcoord);
+    vec4 color_total = vec4(0.0);
+    float weight_total = 0.0;
+    float blur_radius = 4.0;
+    float blur_sigma = 4.0;
+    for (float x = -blur_radius; x <= blur_radius; x++) {
+        for (float y = -blur_radius; y <= blur_radius; y++) {
+            float weight = exp(-(x * x + y * y) / (2.0 * blur_sigma * blur_sigma));
+            vec2 pixel_offset = vec2(x, y) / vec2(textureSize(framebuffer_texture, 3));
+            color_total += textureLod(framebuffer_texture, texcoord_adjusted + pixel_offset, 5.0) * weight;
+            weight_total += weight;
+        }
+    }
+    color_total /= weight_total;
+
+    vec4 sample_texture = color_total;
+    frag_color = vec4(sample_texture.rgb, min(sample_texture.a, brightness));
 }`);
 ctx.shaders["shader_basic"] = ctx.create_shader(`#version 300 es
 layout(location = 0) in vec3 position_attrib;
@@ -1483,7 +1543,7 @@ function handle_global_move(e) {
                 -Math.PI / 2,
                 Math.PI / 2
             );
-            update_camera_orbit(scene.camera, scene.canvas);
+            update_camera_orbit(scene.camera);
             scene.camera_dirty = true;
         }
         scene.last_pos = current_pos;
@@ -1496,12 +1556,11 @@ document.addEventListener("mouseup", handle_interaction_end);
 document.addEventListener("touchend", handle_interaction_end);
 setup_scene_listeners();
 
-ctx.draw = function(drawable, custom_uniforms, custom_camera){
+ctx.draw = function(drawable, custom_uniforms, custom_camera, custom_shader){
     if(drawable == null) return;
     if(drawable.vertex_buffer == null) return;
-
     const gl = this.gl;
-    const shader = ctx.shaders[drawable.shader];
+    const shader = custom_shader ? ctx.shaders[custom_shader] : ctx.shaders[drawable.shader];
 
     if(this.previous_shader != drawable.shader || this.previous_scene != this.current_scene || ctx.current_scene.camera_dirty){
         gl.useProgram(shader.program);
@@ -1509,13 +1568,13 @@ ctx.draw = function(drawable, custom_uniforms, custom_camera){
 
         if(custom_camera){
             update_camera_projection_matrix(custom_camera, scene.width/scene.height);
-            update_camera_orbit(custom_camera, custom_camera.canvas);
+            update_camera_orbit(custom_camera);
             ctx.set_shader_uniform(shader, "p", custom_camera.projection_matrix);
             ctx.set_shader_uniform(shader, "v", custom_camera.view_matrix);
         }
         else{
             update_camera_projection_matrix(scene.camera, scene.width/scene.height);
-            update_camera_orbit(scene.camera, scene.canvas);
+            update_camera_orbit(scene.camera);
             ctx.set_shader_uniform(shader, "p", scene.camera.projection_matrix);
             ctx.set_shader_uniform(shader, "v", scene.camera.view_matrix);
         }
@@ -1523,6 +1582,11 @@ ctx.draw = function(drawable, custom_uniforms, custom_camera){
         this.previous_scene = this.current_scene;
         this.current_scene.camera_dirty = true;
     }
+    
+    ctx.set_shader_uniform(shader, "time", this.time);
+    gl.bindVertexArray(drawable.vertex_buffer.vao);
+    this.set_shader_uniform(this.shaders[drawable.shader], "color", drawable.color);
+    this.set_shader_uniform(this.shaders[drawable.shader], "m", drawable.transform);
 
     if(custom_uniforms){
         for(let custom_uniform in custom_uniforms){
@@ -1530,10 +1594,6 @@ ctx.draw = function(drawable, custom_uniforms, custom_camera){
         }
     }
 
-    ctx.set_shader_uniform(shader, "time", this.time);
-    gl.bindVertexArray(drawable.vertex_buffer.vao);
-    this.set_shader_uniform(this.shaders[drawable.shader], "color", drawable.color);
-    this.set_shader_uniform(this.shaders[drawable.shader], "m", drawable.transform);
     gl.drawElements(gl.TRIANGLES, drawable.vertex_buffer.draw_count, gl.UNSIGNED_SHORT, 0);
 }
 
@@ -1596,6 +1656,14 @@ ctx.update_wave_3d = function(drawable, wave_param, lines_segments_3d) {
 function resize_event(ctc){
     ctx.gl.canvas.width = window.innerWidth;
     ctx.gl.canvas.height = window.innerHeight;
+
+    ctx.gl.bindFramebuffer(ctx.gl.FRAMEBUFFER, postprocess_framebuffer);
+    ctx.gl.bindTexture(ctx.gl.TEXTURE_2D, postprocess_texture);
+    ctx.gl.texImage2D(ctx.gl.TEXTURE_2D, 0, ctx.gl.RGBA, ctx.gl.canvas.width, ctx.gl.canvas.height, 0, ctx.gl.RGBA, ctx.gl.UNSIGNED_BYTE, null);
+    ctx.gl.bindRenderbuffer(ctx.gl.RENDERBUFFER, postprocess_renderbuffer);
+    ctx.gl.renderbufferStorage(ctx.gl.RENDERBUFFER, ctx.gl.DEPTH_COMPONENT16, ctx.gl.canvas.width, ctx.gl.canvas.height);
+    ctx.gl.bindFramebuffer(ctx.gl.FRAMEBUFFER, null);
+
     let width = document.body.clientWidth - parseInt(window.getComputedStyle(document.body).paddingLeft) - parseInt(window.getComputedStyle(document.body).paddingRight);
     for (let scene_id in ctx.scenes) {
         const scene = ctx.scenes[scene_id];
@@ -1676,7 +1744,7 @@ add_charge(ctx.scenes["scene_charges"], "positive", [1.5, 0.3, 0], 0.25, 0.21, 0
 
 function update_drag_charges(scene){
     update_camera_projection_matrix(scene.camera, scene.width/scene.height);
-    update_camera_orbit(scene.camera, scene.canvas);
+    update_camera_orbit(scene.camera);
 
     const force_strength = 1.0;
     for (let i = 0; i < scene.charges.length; i++) {
@@ -1827,7 +1895,7 @@ update_electric_field(ctx.scenes["scene_electric_field"]);
 // scene_relativity setup
 function update_drag_charges_relativity(scene){
     update_camera_projection_matrix(scene.camera, scene.width/scene.height);
-    update_camera_orbit(scene.camera, scene.canvas);
+    update_camera_orbit(scene.camera);
 
     const force_strength = 1.0;
 
@@ -2231,6 +2299,8 @@ ctx.update_drawable_mesh(voltage_graph_drawable, create_line(voltage_graph_drawa
 
 let current_voltage = 0;
 let current_current = 0;
+let current_brightness = 0;
+let current_temperature = 20;
 document.getElementById("voltage-input").value = 0;
 document.getElementById("voltage-input").addEventListener("input", (e) => {
     current_voltage = parseFloat(e.target.value);
@@ -2307,6 +2377,7 @@ let bulb2 = ctx.create_drawable("shader_glass", null, [0.4, 0.4, 0.4], bulb_tran
 let bulb_screw = ctx.create_drawable("shader_shaded", null, [0.8, 0.8, 0.8], bulb_transform);
 let bulb_screw_black = ctx.create_drawable("shader_shaded", null, [0.3, 0.3, 0.3], bulb_transform);
 let bulb_wire = ctx.create_drawable("shader_shaded", null, [0.2, 0.2, 0.2], bulb_transform);
+let bulb_wire_holder = ctx.create_drawable("shader_shaded", null, [0.2, 0.2, 0.2], bulb_transform);
 let zoom_circle_pos = [1.4, 0, 0];
 let zoom_circle_radius = 0.9;
 let zoom_circle = ctx.create_drawable("shader_basic", create_circle_stroke(zoom_circle_pos, zoom_circle_radius, 64, 0.01), [0.4, 0.4, 0.4], translate_3d([0, 0, 0]));
@@ -2415,6 +2486,21 @@ for(let i = 0; i < 9; i++) {
     }
 }
 // scene_bulb
+let fullscreen_quad = ctx.create_drawable("shader_postprocess", {
+    vertices: [
+        -1, -1, 0, 0, 0,
+         1, -1, 0, 1, 0,
+         1,  1, 0, 1, 1,
+        -1,  1, 0, 0, 1
+    ],
+    indices: [
+        0, 1, 2,
+        0, 2, 3
+    ]
+}, [1, 0, 1], mat4_identity(), [
+    { name: 'position_attrib', size: 3 },
+    { name: 'texcoord_attrib', size: 2 }
+]);
 
 ctx.time = 0.0;
 ctx.last_time = 0.0;
@@ -2432,6 +2518,8 @@ function update(current_time){
     gl.clearColor(0, 0, 0, 0);
     gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
     gl.depthFunc(gl.LESS);
+    gl.enable(gl.BLEND);
+    gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
 
     gl.activeTexture(gl.TEXTURE0);
     gl.bindTexture(gl.TEXTURE_2D, ctx.font_texture);
@@ -2561,7 +2649,7 @@ function update(current_time){
             ctx.draw(scene_bulb_graph_x_axis_temperature);
             ctx.draw(scene_bulb_graph_y_axis_temperature);
 
-            let current_temperature = 20 + 0.759 * Math.pow(current_voltage, 1.5);
+            current_temperature = 20 + 0.759 * Math.pow(current_voltage, 1.5);
             let current_temperature_mapped = remap_value(current_temperature, 20, 2500, 0.1, 0.8);
             temperature_graph.push(current_temperature_mapped);
             temperature_graph.shift();
@@ -2600,15 +2688,13 @@ function update(current_time){
             ctx.draw(ctx.text_buffers["graph_current_y_min"]);
         }
         else if(scene_id == "scene_bulb"){
-            gl.enable(gl.BLEND);
-            gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
-
             ctx.draw(bulb_screw, {"metallic": 1});
             ctx.draw(bulb_screw_black, {"metallic": 0});
             ctx.draw(bulb_wire, {"metallic": 0});
+            ctx.draw(bulb_wire_holder, {"metallic": 0});
             ctx.draw(bulb2);
             ctx.draw(bulb);
-
+            
             gl.clear(gl.STENCIL_BUFFER_BIT);
             gl.enable(gl.STENCIL_TEST);
 
@@ -2633,6 +2719,7 @@ function update(current_time){
                 ctx.draw(particle.particle_background, { "metallic": 0 }, ui_camera);
                 ctx.draw(particle.particle, { "metallic": 0 }, ui_camera);
                 ctx.draw(ctx.text_buffers[particle.text_id], {"metallic": 0}, ui_camera);
+                particle.particle.color = vec3_lerp([0.7, 0.7, 0.7], [0.861, 0.676, 0.508], remap_value(current_temperature, 20, 2500, 0, 1));
             }
 
             for (const particle_id of electron_particles) {
@@ -2668,6 +2755,30 @@ function update(current_time){
 
             gl.depthFunc(gl.ALWAYS);
 
+            ctx.gl.bindFramebuffer(ctx.gl.FRAMEBUFFER, postprocess_framebuffer);
+            gl.clearColor(0, 0, 0, 0);
+            gl.scissor(0, 0, gl.canvas.width, gl.canvas.height);
+            gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
+            ctx.draw(bulb, {"color": [1.000, 0.777, 0.000], "m": bulb_transform}, null, "shader_basic");
+            ctx.gl.bindFramebuffer(ctx.gl.FRAMEBUFFER, null);
+            
+            gl.useProgram(ctx.shaders["shader_postprocess"].program);
+            gl.activeTexture(gl.TEXTURE1);
+            gl.bindTexture(gl.TEXTURE_2D, postprocess_texture);
+            gl.generateMipmap(gl.TEXTURE_2D);
+            gl.uniform1i(ctx.shaders["shader_postprocess"].uniforms["framebuffer_texture"].location, 1);
+            const u_min = left / gl.canvas.width;
+            const v_min = bottom / gl.canvas.height;
+            const u_max = (left + width) / gl.canvas.width;
+            const v_max = (bottom + height) / gl.canvas.height;
+            gl.uniform4f(ctx.shaders["shader_postprocess"].uniforms["scissor_texcoords"].location, u_min, v_min, u_max, v_max);
+
+            gl.bindVertexArray(fullscreen_quad.vertex_buffer.vao);
+            ctx.set_shader_uniform(ctx.shaders["shader_postprocess"], "p", mat4_identity());
+            ctx.set_shader_uniform(ctx.shaders["shader_postprocess"], "v", mat4_identity());
+            current_brightness = remap_value(current_voltage, 0, 220, 0, 0.2);
+            ctx.set_shader_uniform(ctx.shaders["shader_postprocess"], "brightness", current_brightness);
+            gl.drawElements(gl.TRIANGLES, fullscreen_quad.vertex_buffer.draw_count, gl.UNSIGNED_SHORT, 0);
         }
         else if(scene_id == "scene_relativity"){
             if(scene.set_charges_spacing >= 0){
@@ -2906,6 +3017,9 @@ get_mesh_from_file("bulb_screw_black.mesh").then(function(mesh){
 });
 get_mesh_from_file("bulb_wire.mesh").then(function(mesh){
     bulb_wire.vertex_buffer = ctx.create_vertex_buffer(mesh.vertices, mesh.attribs, mesh.indices);
+});
+get_mesh_from_file("bulb_wire_holder.mesh").then(function(mesh){
+    bulb_wire_holder.vertex_buffer = ctx.create_vertex_buffer(mesh.vertices, mesh.attribs, mesh.indices);
 });
 get_mesh_from_file("apple.mesh").then(function(mesh){
     apple.vertex_buffer = ctx.create_vertex_buffer(mesh.vertices, mesh.attribs, mesh.indices);
