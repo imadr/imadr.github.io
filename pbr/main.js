@@ -875,7 +875,7 @@ in vec2 texcoord;
 
 void main(){
     vec4 font = texture(font_texture, texcoord);
-    frag_color = vec4(0, 0, 0, font.a);
+    frag_color = vec4(0, 0, 0, font.a > 0.5 ? font.a : 0.0);
 }`);
 ctx.shaders["shader_basic"] = ctx.create_shader(`#version 300 es
 layout(location = 0) in vec3 position_attrib;
@@ -1346,9 +1346,9 @@ ctx.scenes = {
             }
         },
         particles: []},
-    "scene_bulb_graphs": {id: "scene_bulb_graphs", el: null, ratio: 2, camera: null, dragging_rect: null, draggable_rects: {},
+    "scene_bulb_graphs": {id: "scene_bulb_graphs", el: null, ratio: 3.5, camera: null, dragging_rect: null, draggable_rects: {},
         camera: {
-            fov: 50, z_near: 0.1, z_far: 1000,
+            fov: 30, z_near: 0.1, z_far: 1000,
             position: [0, 0, 0], rotation: [0, 0, 0],
             up_vector: [0, 1, 0],
             view_matrix: mat4_identity(),
@@ -2213,11 +2213,10 @@ mat4_mat4_mul(
     );
 // scene_apple
 // scene_bulb_graphs
-let scene_bulb_graph_lines = [];
-scene_bulb_graph_lines.push(ctx.create_drawable("shader_basic", create_arrow([0, 0, 0], [1.5, 0, 0], [0.02, 0.04]), [0.4, 0.4, 0.4], translate_3d([0, 0, 0])));
-scene_bulb_graph_lines.push(ctx.create_drawable("shader_basic", create_arrow([0, 0, 0], [0, 1, 0], [0.02, 0.04]), [0.4, 0.4, 0.4], translate_3d([0, 0, 0])));
-
-let voltage_graph_num_points = 200;
+let voltage_graph_position = [-2.4, -0.5, 0];
+let scene_bulb_graph_x_axis = ctx.create_drawable("shader_basic", create_arrow([0, 0, 0], [1.4, 0, 0], [0.02, 0.04]), [0.4, 0.4, 0.4], translate_3d(voltage_graph_position));
+let scene_bulb_graph_y_axis = ctx.create_drawable("shader_basic", create_arrow([0, 0, 0], [0, 1, 0], [0.02, 0.04]), [0.4, 0.4, 0.4], translate_3d(voltage_graph_position));
+let voltage_graph_num_points = 400;
 let voltage_graph = [];
 for(let i = 0; i < voltage_graph_num_points; i++){
     voltage_graph.push(0.1);
@@ -2227,24 +2226,75 @@ for(let i = 0; i < voltage_graph.length; i++){
     let x = i * 1.3 / (voltage_graph_num_points-1);
     voltage_graph_drawable_points.push([x, voltage_graph[i], 0]);
 }
-let voltage_graph_drawable = ctx.create_drawable("shader_basic", null, [0.2, 0.2, 0.2], translate_3d([0, 0, 0]));
+let voltage_graph_drawable = ctx.create_drawable("shader_basic", null, blue, translate_3d(voltage_graph_position));
 ctx.update_drawable_mesh(voltage_graph_drawable, create_line(voltage_graph_drawable_points, 0.03, false));
 
 let current_voltage = 0;
+let current_current = 0;
 document.getElementById("voltage-input").value = 0;
 document.getElementById("voltage-input").addEventListener("input", (e) => {
     current_voltage = parseFloat(e.target.value);
 });
 ctx.text_buffers["graph_voltage_y_axis"] = {text: "Voltage", color: [0, 0, 0], transform: mat4_mat4_mul(
                     scale_3d([0.0025, 0.0025, 0.0025]),
-                    translate_3d([-0.22, 1.05, 0]))};
-ctx.text_buffers["graph_voltage_y_max"] = {text: "220", color: [0, 0, 0], transform: mat4_mat4_mul(
+                    translate_3d(vec3_add(voltage_graph_position, [-0.22, 1.05, 0])))};
+ctx.text_buffers["graph_voltage_y_max"] = {text: "220 V", color: [0, 0, 0], transform: mat4_mat4_mul(
                     scale_3d([0.0025, 0.0025, 0.0025]),
-                    translate_3d([-0.26, 0.75, 0]))};
-ctx.text_buffers["graph_voltage_y_min"] = {text: "0", color: [0, 0, 0], transform: mat4_mat4_mul(
+                    translate_3d(vec3_add(voltage_graph_position, [-0.35, 0.75, 0])))};
+ctx.text_buffers["graph_voltage_y_min"] = {text: "0 V", color: [0, 0, 0], transform: mat4_mat4_mul(
                     scale_3d([0.0025, 0.0025, 0.0025]),
-                    translate_3d([-0.13, 0.1, 0]))};
+                    translate_3d(vec3_add(voltage_graph_position, [-0.21, 0.1, 0])))};
 
+let temperature_graph_position = [-0.5, -0.5, 0];
+let scene_bulb_graph_x_axis_temperature = ctx.create_drawable("shader_basic", create_arrow([0, 0, 0], [1.4, 0, 0], [0.02, 0.04]), [0.4, 0.4, 0.4], translate_3d(temperature_graph_position));
+let scene_bulb_graph_y_axis_temperature = ctx.create_drawable("shader_basic", create_arrow([0, 0, 0], [0, 1, 0], [0.02, 0.04]), [0.4, 0.4, 0.4], translate_3d(temperature_graph_position));
+let temperature_graph_num_points = 400;
+let temperature_graph = [];
+for(let i = 0; i < temperature_graph_num_points; i++){
+    temperature_graph.push(0.1);
+}
+let temperature_graph_drawable_points = [];
+for(let i = 0; i < temperature_graph.length; i++){
+    let x = i * 1.3 / (temperature_graph_num_points-1);
+    temperature_graph_drawable_points.push([x, temperature_graph[i], 0]);
+}
+let temperature_graph_drawable = ctx.create_drawable("shader_basic", null, red, translate_3d(temperature_graph_position));
+ctx.update_drawable_mesh(temperature_graph_drawable, create_line(temperature_graph_drawable_points, 0.03, false));
+
+ctx.text_buffers["graph_temperature_y_axis"] = {text: "Temperature", color: [0, 0, 0], transform: mat4_mat4_mul(
+                    scale_3d([0.0025, 0.0025, 0.0025]),
+                    translate_3d(vec3_add(temperature_graph_position, [-0.22, 1.05, 0])))};
+ctx.text_buffers["graph_temperature_y_max"] = {text: "2500°C", color: [0, 0, 0], transform: mat4_mat4_mul(
+                    scale_3d([0.0025, 0.0025, 0.0025]),
+                    translate_3d(vec3_add(temperature_graph_position, [-0.45, 0.75, 0])))};
+ctx.text_buffers["graph_temperature_y_min"] = {text: "20°C", color: [0, 0, 0], transform: mat4_mat4_mul(
+                    scale_3d([0.0025, 0.0025, 0.0025]),
+                    translate_3d(vec3_add(temperature_graph_position, [-0.32, 0.1, 0])))};
+let current_graph_position = [1.4, -0.5, 0];
+let scene_bulb_graph_x_axis_current = ctx.create_drawable("shader_basic", create_arrow([0, 0, 0], [1.4, 0, 0], [0.02, 0.04]), [0.4, 0.4, 0.4], translate_3d(current_graph_position));
+let scene_bulb_graph_y_axis_current = ctx.create_drawable("shader_basic", create_arrow([0, 0, 0], [0, 1, 0], [0.02, 0.04]), [0.4, 0.4, 0.4], translate_3d(current_graph_position));
+let current_graph_num_points = 400;
+let current_graph = [];
+for(let i = 0; i < current_graph_num_points; i++){
+    current_graph.push(0.1);
+}
+let current_graph_drawable_points = [];
+for(let i = 0; i < current_graph.length; i++){
+    let x = i * 1.3 / (current_graph_num_points-1);
+    current_graph_drawable_points.push([x, current_graph[i], 0]);
+}
+let current_graph_drawable = ctx.create_drawable("shader_basic", null, green, translate_3d(current_graph_position));
+ctx.update_drawable_mesh(current_graph_drawable, create_line(current_graph_drawable_points, 0.03, false));
+
+ctx.text_buffers["graph_current_y_axis"] = {text: "Current", color: [0, 0, 0], transform: mat4_mat4_mul(
+                    scale_3d([0.0025, 0.0025, 0.0025]),
+                    translate_3d(vec3_add(current_graph_position, [-0.22, 1.05, 0])))}; 
+ctx.text_buffers["graph_current_y_max"] = {text: "2 A", color: [0, 0, 0], transform: mat4_mat4_mul(
+                    scale_3d([0.0025, 0.0025, 0.0025]),
+                    translate_3d(vec3_add(current_graph_position, [-0.24, 0.75, 0])))}; 
+ctx.text_buffers["graph_current_y_min"] = {text: "0 A", color: [0, 0, 0], transform: mat4_mat4_mul(
+                    scale_3d([0.0025, 0.0025, 0.0025]),
+                    translate_3d(vec3_add(current_graph_position, [-0.24, 0.1, 0])))}; 
 // scene_bulb_graphs
 // scene_bulb
 let bulb_transform =
@@ -2296,40 +2346,72 @@ function update_particle_pos(particle){
     particle.particle_background.transform = translate_3d(particle.pos);
 }
 
-function add_particle(scene, pos, particle_size = 0.25, border_size = 0.21, custom_camera){
+function add_particle(scene, pos, particle_size = 0.25, border_size = 0.21, particle_type){
+    let particle_background_color;
+    if(particle_type == "tungsten"){
+        particle_background_color = [0.7, 0.7, 0.7];
+    }
+    else if(particle_type == "electron"){
+        particle_background_color = [0.000, 0.625, 1.000];
+    }
+
     let particle_background = ctx.create_drawable("shader_basic", create_circle([0, 0, 0], particle_size, 32), [0.1, 0.1, 0.1], mat4_identity());
-    let particle = ctx.create_drawable("shader_basic", create_circle([0, 0, 0], border_size, 32), [0.7, 0.7, 0.7], mat4_identity());
+    let particle = ctx.create_drawable("shader_basic", create_circle([0, 0, 0], border_size, 32), particle_background_color, mat4_identity());
 
     let id = scene.particles.length;
 
-    ctx.text_buffers["tungsten_w_"+id] = {text: "W", color: [0, 0, 0], transform: mat4_mat4_mul(
-                    scale_3d([0.0025, 0.0025, 0.0025]),
-                    translate_3d(vec3_sub(pos, [0.06, 0.04, 0.0])),
-                )};
+    let text_id = "";
+    if(particle_type == "tungsten"){
+        text_id = "tungsten_w_"+id;
+        ctx.text_buffers["tungsten_w_"+id] = {text: "W", color: [0, 0, 0], transform: mat4_mat4_mul(
+            scale_3d([0.0025, 0.0025, 0.0025]),
+            translate_3d(vec3_sub(pos, [0.06, 0.04, 0.0])),
+        )};
+    }
+    else if(particle_type == "electron"){
+        text_id = "electron_w_"+id;
+        ctx.text_buffers["electron_w_"+id] = {text: "e", color: [0, 0, 0], transform: mat4_mat4_mul(
+                        scale_3d([0.0025, 0.0025, 0.0025]),
+                        translate_3d(vec3_sub(pos, [0.032, 0.03, 0.0])),
+                    )};
+    }
 
-    scene.particles.push({id: id, particle: particle, particle_background: particle_background, pos: pos, size: particle_size});
+    scene.particles.push({id: id, particle: particle, particle_background: particle_background, pos: pos, size: particle_size, text_id: text_id});
     update_particle_pos(scene.particles[scene.particles.length-1]);
     return id;
 }
 
-let zoom_circle_particles = [];
 let spacing = 0.2;
 let start_x = zoom_circle_pos[0] - zoom_circle_radius + spacing;
 let start_y = zoom_circle_pos[1] - zoom_circle_radius + spacing;
 
+let tungsten_particles = [];
 for(let i = 0; i < 9; i++) {
     for(let j = 0; j < 4; j++) {
         let x = start_x + spacing * i;
         let y = start_y + spacing * j;
 
-        let particle_id = add_particle(
+        tungsten_particles.push(add_particle(
             ctx.scenes["scene_bulb"],
             [x-0.15, y-0.1, 0.1],
             0.1,
             0.08,
-            ui_camera
-        );
-        zoom_circle_particles.push(particle_id);
+            "tungsten"
+        ));
+    }
+}
+let electron_particles = [];
+for(let i = 0; i < 9; i++) {
+    for(let j = 0; j < 3; j++) {
+        let x = start_x - 0.2 + spacing * i + (Math.random() - 0.5) * 0.05;
+        let y = start_y + 0.1 + spacing * j + (Math.random() - 0.5) * 0.05;
+        electron_particles.push(add_particle(
+            ctx.scenes["scene_bulb"],
+            [x-0.15, y-0.1, 0.1],
+            0.07,
+            0.05,
+            "electron"
+        ));
     }
 }
 // scene_bulb
@@ -2457,9 +2539,8 @@ function update(current_time){
             ctx.draw(apple_leaf);
         }
         else if(scene_id == "scene_bulb_graphs"){
-            for(let drawable of scene_bulb_graph_lines){
-                ctx.draw(drawable);
-            }
+            ctx.draw(scene_bulb_graph_x_axis);
+            ctx.draw(scene_bulb_graph_y_axis);
 
             let current_voltage_mapped = remap_value(current_voltage, 0, 220, 0.1, 0.8);
             voltage_graph.push(current_voltage_mapped);
@@ -2473,9 +2554,50 @@ function update(current_time){
             ctx.update_drawable_mesh(voltage_graph_drawable, create_line(voltage_graph_drawable_points, 0.03, false));
 
             ctx.draw(voltage_graph_drawable);
-            ctx.draw(ctx.text_buffers["graph_voltage_y_axis"], {"metallic": 0}, ui_camera);
-            ctx.draw(ctx.text_buffers["graph_voltage_y_max"], {"metallic": 0}, ui_camera);
-            ctx.draw(ctx.text_buffers["graph_voltage_y_min"], {"metallic": 0}, ui_camera);
+            ctx.draw(ctx.text_buffers["graph_voltage_y_axis"]);
+            ctx.draw(ctx.text_buffers["graph_voltage_y_max"]);
+            ctx.draw(ctx.text_buffers["graph_voltage_y_min"]);
+
+            ctx.draw(scene_bulb_graph_x_axis_temperature);
+            ctx.draw(scene_bulb_graph_y_axis_temperature);
+
+            let current_temperature = 20 + 0.759 * Math.pow(current_voltage, 1.5);
+            let current_temperature_mapped = remap_value(current_temperature, 20, 2500, 0.1, 0.8);
+            temperature_graph.push(current_temperature_mapped);
+            temperature_graph.shift();
+
+            temperature_graph_drawable_points = [];
+            for(let i = 0; i < temperature_graph.length; i++){
+                let x = i * 1.3 / (temperature_graph_num_points-1);
+                temperature_graph_drawable_points.push([x, temperature_graph[i], 0]);
+            }
+            ctx.update_drawable_mesh(temperature_graph_drawable, create_line(temperature_graph_drawable_points, 0.03, false));
+
+            ctx.draw(temperature_graph_drawable);
+            ctx.draw(ctx.text_buffers["graph_temperature_y_axis"]);
+            ctx.draw(ctx.text_buffers["graph_temperature_y_max"]);
+            ctx.draw(ctx.text_buffers["graph_temperature_y_min"]);
+
+            ctx.draw(scene_bulb_graph_x_axis_current);
+            ctx.draw(scene_bulb_graph_y_axis_current);
+
+            let current_resistance = 10 * (1 + 0.0045 * (current_temperature - 20));
+            current_current = current_voltage / current_resistance;
+            let current_current_mapped = remap_value(current_current, 0, 2.3, 0.1, 0.8);
+            current_graph.push(current_current_mapped);
+            current_graph.shift();
+
+            current_graph_drawable_points = [];
+            for(let i = 0; i < current_graph.length; i++){
+                let x = i * 1.3 / (current_graph_num_points-1);
+                current_graph_drawable_points.push([x, current_graph[i], 0]);
+            }
+            ctx.update_drawable_mesh(current_graph_drawable, create_line(current_graph_drawable_points, 0.03, false));
+
+            ctx.draw(current_graph_drawable);
+            ctx.draw(ctx.text_buffers["graph_current_y_axis"]);
+            ctx.draw(ctx.text_buffers["graph_current_y_max"]);
+            ctx.draw(ctx.text_buffers["graph_current_y_min"]);
         }
         else if(scene_id == "scene_bulb"){
             gl.enable(gl.BLEND);
@@ -2506,15 +2628,35 @@ function update(current_time){
             gl.depthFunc(gl.ALWAYS);
 
 
-            for (const particle of scene.particles) {
+            for (const particle_id of tungsten_particles) {
+                const particle = scene.particles[particle_id];
                 ctx.draw(particle.particle_background, { "metallic": 0 }, ui_camera);
                 ctx.draw(particle.particle, { "metallic": 0 }, ui_camera);
+                ctx.draw(ctx.text_buffers[particle.text_id], {"metallic": 0}, ui_camera);
             }
 
-            for(let key in ctx.text_buffers){
-                if(key.indexOf("tungsten_w") > -1){
-                    ctx.draw(ctx.text_buffers[key], {"metallic": 0}, ui_camera);
+            for (const particle_id of electron_particles) {
+                const particle = scene.particles[particle_id];
+                ctx.draw(particle.particle_background, { "metallic": 0 }, ui_camera);
+                ctx.draw(particle.particle, { "metallic": 0 }, ui_camera);
+                ctx.draw(ctx.text_buffers[particle.text_id], {"metallic": 0}, ui_camera);
+
+                let dx = particle.pos[0] - zoom_circle_pos[0];
+                let dy = particle.pos[1] - zoom_circle_pos[1];
+                let distance = Math.sqrt(dx * dx + dy * dy);
+
+                if (particle.pos[0] > zoom_circle_pos[0] + zoom_circle_radius) {
+                    particle.pos[0] = zoom_circle_pos[0] - zoom_circle_radius;
+                } else {
+                    particle.pos[0] += remap_value(current_current, 0, 2, 0, 0.1) * delta_time;
                 }
+
+                update_particle_pos(particle);
+
+                ctx.text_buffers[particle.text_id].transform = mat4_mat4_mul(
+                    scale_3d([0.0025, 0.0025, 0.0025]),
+                    translate_3d(vec3_sub(particle.pos, [0.032, 0.03, 0.0])),
+                );
             }
 
             gl.stencilFunc(gl.EQUAL, 0, 0xFF);
