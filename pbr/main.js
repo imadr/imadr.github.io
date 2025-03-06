@@ -920,6 +920,7 @@ in vec2 texcoord;
 
 void main(){
     vec2 texcoord_adjusted = mix(scissor_texcoords.xy, scissor_texcoords.zw, texcoord);
+    vec4 sample_texture = texture(framebuffer_texture, texcoord_adjusted);
     vec4 color_total = vec4(0.0);
     float weight_total = 0.0;
     float blur_radius = 4.0;
@@ -928,14 +929,13 @@ void main(){
         for (float y = -blur_radius; y <= blur_radius; y++) {
             float weight = exp(-(x * x + y * y) / (2.0 * blur_sigma * blur_sigma));
             vec2 pixel_offset = vec2(x, y) / vec2(textureSize(framebuffer_texture, 3));
-            color_total += textureLod(framebuffer_texture, texcoord_adjusted + pixel_offset, 5.0) * weight;
+            vec4 lod_sample_texture = textureLod(framebuffer_texture, texcoord_adjusted + pixel_offset, 5.0);
+            color_total += lod_sample_texture * weight;
             weight_total += weight;
         }
     }
     color_total /= weight_total;
-
-    vec4 sample_texture = color_total;
-    frag_color = vec4(sample_texture.rgb, min(sample_texture.a, brightness));
+    frag_color = vec4(color_total.rgb, min(color_total.a, brightness));
 }`);
 ctx.shaders["shader_basic"] = ctx.create_shader(`#version 300 es
 layout(location = 0) in vec3 position_attrib;
@@ -1587,7 +1587,6 @@ ctx.draw = function(drawable, custom_uniforms, custom_camera, custom_shader){
     gl.bindVertexArray(drawable.vertex_buffer.vao);
     this.set_shader_uniform(this.shaders[drawable.shader], "color", drawable.color);
     this.set_shader_uniform(this.shaders[drawable.shader], "m", drawable.transform);
-
     if(custom_uniforms){
         for(let custom_uniform in custom_uniforms){
             ctx.set_shader_uniform(shader, custom_uniform, custom_uniforms[custom_uniform]);
@@ -2719,7 +2718,7 @@ function update(current_time){
                 ctx.draw(particle.particle_background, { "metallic": 0 }, ui_camera);
                 ctx.draw(particle.particle, { "metallic": 0 }, ui_camera);
                 ctx.draw(ctx.text_buffers[particle.text_id], {"metallic": 0}, ui_camera);
-                particle.particle.color = vec3_lerp([0.7, 0.7, 0.7], [0.861, 0.676, 0.508], remap_value(current_temperature, 20, 2500, 0, 1));
+                particle.particle.color = vec3_lerp([0.7, 0.7, 0.7], [0.961, 0.550, 0.351], remap_value(current_temperature, 20, 2500, 0, 1));
             }
 
             for (const particle_id of electron_particles) {
@@ -2759,7 +2758,7 @@ function update(current_time){
             gl.clearColor(0, 0, 0, 0);
             gl.scissor(0, 0, gl.canvas.width, gl.canvas.height);
             gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
-            ctx.draw(bulb, {"color": [1.000, 0.777, 0.000], "m": bulb_transform}, null, "shader_basic");
+            ctx.draw(bulb, {"color": [1.000, 0.577, 0.000], "m": bulb_transform}, null, "shader_basic");
             ctx.gl.bindFramebuffer(ctx.gl.FRAMEBUFFER, null);
             
             gl.useProgram(ctx.shaders["shader_postprocess"].program);
