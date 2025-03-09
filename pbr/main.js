@@ -2203,8 +2203,14 @@ let magnet_south = ctx.create_drawable("shader_shaded",
     create_box(0.75, 0.75, 0.75), blue, translate_3d([0.375, magnet_y_pos, 0]));
 let magnet_pos_average = [];
 let magnet_pos = 0;
+
+let show_magnetic_field = false;
+
+document.getElementById("show-field-checkbox").addEventListener("change", function(e){
+    show_magnetic_field = this.checked;
+});
 document.getElementById("magnet-input").value = magnet_pos;
-document.getElementById("magnet-input").addEventListener("input", (e) => {
+document.getElementById("magnet-input").addEventListener("input", function(e){
     magnet_pos = parseFloat(e.target.value);
     
     if(magnet_pos_average.length < 10){
@@ -2702,8 +2708,10 @@ function update(current_time){
             ctx.draw(voltmeter_arrow);
             ctx.draw(magnet_south);
             ctx.draw(magnet_north);
-            for(let line of magnetic_field_drawables){
-                ctx.draw(line);
+            if(show_magnetic_field){
+                for(let line of magnetic_field_drawables){
+                    ctx.draw(line);
+                }
             }
         }
         else if(scene_id == "scene_ampere"){

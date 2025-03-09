@@ -236,3 +236,36 @@ h2{
 .violet{
     color: #8e00ff;
 }
+.checkbox-container {
+    position: relative;
+    display: inline-block;
+}
+.checkbox-container input[type="checkbox"] {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 30px;
+    height: 30px;
+    background-color: rgb(202, 202, 202);
+    margin: 0;
+    border-radius: 4px;
+    position: relative;
+    cursor: pointer;
+}
+.checkbox-container input[type="checkbox"]:after {
+    content: "";
+    position: absolute;
+    display: none;
+    left: 10px;
+    top: 5px;
+    width: 8px;
+    height: 15px;
+    border: solid #5c5c5c;
+    border-width: 0 4px 4px 0;
+    transform: rotate(45deg);
+}
+.checkbox-container input[type="checkbox"]:checked:after {
+    display: block;
+}
+.checkbox-container input[type="checkbox"]:focus {
+    outline: none;
+}
