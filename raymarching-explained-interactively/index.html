@@ -140,9 +140,19 @@
             background:rgba(100,200,100,0.5);
             z-index:20;
         }
+        #main-canvas{
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100vh;
+            z-index: -1;
+            display: block;
+        }
     </style>
 </head>
 <body>
+    <canvas id="main-canvas"></canvas>
     <nav>
         <a href="/" style="text-transform: uppercase;">Imadr.me</a>
         <span id="navbar-right" style="float: right;">
@@ -256,17 +266,26 @@
     Iterations: <input style="vertical-align: middle;" type="range" value="5" min="0" max="15" step="1" id="iterations" autocomplete="off"><br>
 
     <h2 id="going-3d"><a href="#going-3d">Going 3D</a></h2>
-    <p>Until now, we have only seen how raymarching works in two dimensions. To do 3D rendering we are going to use a <strong>fragment shader.</strong></p>
-    <p>I'll skip explaining how to setup a fragment shader like this, you can either use <a href="https://www.shadertoy.com/">shadertoy</a> or draw a fullscreen quad in a custom 3D engine.</p>
+
+    <p>We will apply the exact same algorithm in three dimensions.</p>
+    <p>Just like how we did in 2D, the idea is to send a ray for each pixel on the screen. The view frustum extends from the camera towards the corners of the screen.<br>By iteratively moving the ray along some direction, we test whether we hit an object (if the distance is below a certain minimum) or if the ray goes to infinity (if the distance is above a maximum).</p>
+    <p>You can play with this demo to get a feel for it:</p>
+
+    <div id="scene_3d_viz"></div>
+
+    Near plane: <input style="vertical-align: middle;" type="range" min="0.5" max="3" step="0.01" id="near-plan-3d" autocomplete="off"><br>
+    Field of view: <input style="vertical-align: middle;" type="range" min="5" max="80" step="0.01" id="fov-3d" autocomplete="off"><br>
+    Number of rays: <input style="vertical-align: middle;" type="range" min="1" max="20" step="1" id="nb-rays-3d" autocomplete="off"><br>
+    Iterations: <input style="vertical-align: middle;" type="range" min="0" max="15" step="1" id="iterations-3d" autocomplete="off"><br>
     <br>
+    <p>I'll skip explaining how to setup a fragment shader like this, you can either use <a href="https://www.shadertoy.com/">shadertoy</a> or draw a fullscreen quad in a custom 3D engine.</p>
     <p>First, we will display the screen space position of each pixel (multiplied by the aspect ratio). The horizontal position is represented by the red channel, and the vertical position by the green channel.</p>
     <div class="shader-editor">
         <canvas id="canvas-webgl-1"></canvas>
         <div class="editor" id="canvas-webgl-1-editor"></div>
     </div>
 
-    <p>Just like how we did in 2D, the idea is to send a ray for each pixel on the screen. The view frustum extends from the camera towards the corners of the screen.<br>By iteratively moving the ray along some direction, we test whether we hit an object (if the distance is below a certain minimum) or if the ray goes to infinity (if the distance is above a maximum).</p>
-    <img src="3d.png" style="display: block;margin-right: auto;margin-left: auto;">
+  
 
     <p>The equation of the SDF for a 3D sphere is basically the same for the 2D circle, in this shader we display the depth (distance) of each point in the scene composed of a sphere:</p>
     <div class="shader-editor">
@@ -304,5 +323,6 @@
 <script src="/js/math.js"></script>
 <script src="/js/light.js"></script>
 <script src="main.js"></script>
+<script src="main2.js"></script>
 </body>
 </html>

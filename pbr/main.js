@@ -1663,8 +1663,7 @@ ctx.update_wave_3d = function(drawable, wave_param, lines_segments_3d) {
     }
 }
 
-
-function resize_event(ctc){
+function resize_event(ctx){
     ctx.gl.canvas.width = window.innerWidth;
     ctx.gl.canvas.height = window.innerHeight;
 
@@ -1691,7 +1690,7 @@ function resize_event(ctc){
 
 }
 resize_event(ctx);
-addEventListener("resize", resize_event);
+addEventListener("resize", () => resize_event(ctx));
 
 const lines_segments_3d = 8;
 
@@ -2615,7 +2614,6 @@ function update(current_time){
         gl.clearColor(0, 0, 0, 0);
         gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
 
-        let draw_calls = [];
         if(scene_id == "scene_charges" || scene_id == "scene_electric_field"){
             for(const charge of scene.charges){
                 ctx.draw(charge.sign);
