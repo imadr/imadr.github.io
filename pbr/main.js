@@ -1194,7 +1194,7 @@ void main(){
     float fresnel = pow(1.0 - max(dot(normalize(world_normal), view_dir), 0.0), 2.0);
     vec3 refract_dir = refract(-view_dir, normalize(world_normal), 0.95);
 
-    frag_color = vec4(vec3(max(0.3-fresnel, 0.2)), 0.4);
+    frag_color = vec4(vec3(max(0.3-fresnel, 0.2))*color, 0.4);
 }`);
 ctx.shaders["shader_plane"] = ctx.create_shader(`#version 300 es
 layout(location = 0) in vec3 position_attrib;
@@ -1391,6 +1391,18 @@ ctx.scenes = {
                 rotation: [-0.4, 0, 0],
                 pivot: [0, 0, 0],
                 zoom: 3.0
+            }
+        }},
+    "scene_led": {id: "scene_led", el: null, ratio: 1.7, camera: null, dragging_rect: null, draggable_rects: {"scene": []},
+        camera: {
+            fov: 50, z_near: 0.1, z_far: 1000,
+            position: [0, 0, 0], rotation: [0, 0, 0],
+            up_vector: [0, 1, 0],
+            view_matrix: mat4_identity(),
+            orbit: {
+                rotation: [0, 0, 0],
+                pivot: [0, 0, 0],
+                zoom: 10.0
             }
         }},
     "scene_bulb": {id: "scene_bulb", el: null, ratio: 1.7, camera: null, dragging_rect: null, draggable_rects: {},
@@ -2006,6 +2018,13 @@ let arrow = ctx.create_drawable("shader_basic",
     create_triangle([0, 0, 0], [0.15, 0.15]),
     [0, 0, 0], translate_3d([-0.075, -0.64, -0.9]));
 
+ctx.text_buffers["gamma_ray_text_wavelength"] = {text: "0.01nm              10nm                               400nm                       700nm                       1 mm                      100 km", color: [0, 0, 0], transform: mat4_mat4_mul(
+                    scale_3d([0.0012, 0.0012, 0.0012]),
+                    translate_3d([-1.2, -0.02, 0]))};
+ctx.text_buffers["gamma_ray_text"] = {text: "Gamma rays          X rays              UV                                                           IR        Microwave        Radio waves", color: [0, 0, 0], transform: mat4_mat4_mul(
+                    scale_3d([0.0012, 0.0012, 0.0012]),
+                    translate_3d([-1.2, -0.245, 0]))};
+
 function wavelength_to_rgb(value, start, end) {
     let wavelength = 380 + (700 - 380) * ((start - value) / (start - end));
     let r = 0, g = 0, b = 0;
@@ -2365,14 +2384,24 @@ ctx.text_buffers["graph_current_y_min"] = {text: "0 A", color: [0, 0, 0], transf
                     scale_3d([0.0025, 0.0025, 0.0025]),
                     translate_3d(vec3_add(current_graph_position, [-0.24, 0.1, 0])))}; 
 // scene_bulb_graphs
+// scene_led
+let led_transform =
+mat4_mat4_mul(
+    translate_3d([0, -2, 0]),
+    scale_3d([1.5, 1.5, 1.5])
+);
+let led_metal = ctx.create_drawable("shader_shaded", null, [0.5, 0.5, 0.5], led_transform);
+let led_epoxy_case = ctx.create_drawable("shader_glass", null, [1.5, 0.5, 0.5], led_transform);
+let led_reflective_case = ctx.create_drawable("shader_shaded", null, [0.5, 0.5, 0.5], led_transform);
+// scene_led
 // scene_bulb
 let bulb_transform =
 mat4_mat4_mul(
     translate_3d([-0.5, 0, 0]),
     scale_3d([1.3, 1.3, 1.3])
 );
-let bulb = ctx.create_drawable("shader_glass", null, [0.5, 0.5, 0.5], bulb_transform);
-let bulb2 = ctx.create_drawable("shader_glass", null, [0.4, 0.4, 0.4], bulb_transform);
+let bulb = ctx.create_drawable("shader_glass", null, [1, 1, 1], bulb_transform);
+let bulb2 = ctx.create_drawable("shader_glass", null, [1, 1, 1], bulb_transform);
 let bulb_screw = ctx.create_drawable("shader_shaded", null, [0.8, 0.8, 0.8], bulb_transform);
 let bulb_screw_black = ctx.create_drawable("shader_shaded", null, [0.3, 0.3, 0.3], bulb_transform);
 let bulb_wire = ctx.create_drawable("shader_shaded", null, [0.2, 0.2, 0.2], bulb_transform);
@@ -2474,7 +2503,7 @@ let electron_particles = [];
 for(let i = 0; i < 9; i++) {
     for(let j = 0; j < 3; j++) {
         let x = start_x - 0.2 + spacing * i + (Math.random() - 0.5) * 0.05;
-        let y = start_y + 0.1 + spacing * j + (Math.random() - 0.5) * 0.05;
+        let y = start_y + 0.1 + spacing * j + (Math.random() - 0.5) * 0.09;
         electron_particles.push(add_particle(
             ctx.scenes["scene_bulb"],
             [x-0.15, y-0.1, 0.1],
@@ -2483,6 +2512,49 @@ for(let i = 0; i < 9; i++) {
             "electron"
         ));
     }
+}
+
+let photon_waves = [];
+let photon_wave_param = {
+    num_points: 500,
+    width: 0.4,
+    amplitude: 0.05,
+    frequency: 20,
+    thickness: 0.013,
+    z_range: 0,
+    time: 0,
+};
+let number_photons = 9;
+for (let i = 0; i < number_photons; i++) {
+    let photon_wave = {vertex_buffer: null, shader: "shader_basic"};
+    let random_angle = rad(74 + Math.random() * 20);
+    let random_pos;
+    let overlap;
+    do {
+        overlap = false;
+        random_pos = [
+            zoom_circle_pos[0] + (Math.random() - 0.5) * zoom_circle_radius * 2,
+            zoom_circle_pos[1] + (Math.random() - 0.5) * 0.4 - 0.4,
+            zoom_circle_pos[2]
+        ];
+        for (let j = 0; j < photon_waves.length; j++) {
+            let dx = random_pos[0] - photon_waves[j].transform[12];
+            let dy = random_pos[1] - photon_waves[j].transform[13];
+            let distance = Math.sqrt(dx * dx + dy * dy);
+            if (distance < 0.2) {
+                overlap = true;
+                break;
+            }
+        }
+    } while (overlap);
+    photon_wave.transform = mat4_mat4_mul(
+        rotate_3d(axis_angle_to_quat([0, 0, 1], random_angle)),
+        translate_3d(random_pos),
+    );
+    photon_wave.angle = random_angle;
+    photon_wave.color = [1.000, 0.885, 0.000];
+    ctx.update_wave_3d(photon_wave, photon_wave_param, lines_segments_3d);
+    photon_waves.push(photon_wave);
 }
 // scene_bulb
 let fullscreen_quad = ctx.create_drawable("shader_postprocess", {
@@ -2569,6 +2641,8 @@ function update(current_time){
             ctx.update_wave_3d(spectrum_wave, wave_param_spectrum, lines_segments_3d);
             ctx.draw(spectrum_wave);
             ctx.draw(arrow);
+            ctx.draw(ctx.text_buffers["gamma_ray_text_wavelength"]);
+            ctx.draw(ctx.text_buffers["gamma_ray_text"]);
         }
         else if(scene_id == "scene_wave"){
             ctx.update_wave_3d(wave_3d, wave_param, lines_segments_3d);
@@ -2686,6 +2760,11 @@ function update(current_time){
             ctx.draw(ctx.text_buffers["graph_current_y_max"]);
             ctx.draw(ctx.text_buffers["graph_current_y_min"]);
         }
+        else if(scene_id == "scene_led"){
+            ctx.draw(led_metal);
+            ctx.draw(led_epoxy_case);
+            ctx.draw(led_reflective_case);
+        }
         else if(scene_id == "scene_bulb"){
             ctx.draw(bulb_screw, {"metallic": 1});
             ctx.draw(bulb_screw_black, {"metallic": 0});
@@ -2743,6 +2822,54 @@ function update(current_time){
                     scale_3d([0.0025, 0.0025, 0.0025]),
                     translate_3d(vec3_sub(particle.pos, [0.032, 0.03, 0.0])),
                 );
+            }
+
+            for (let photon_wave of photon_waves) {
+                let skip_rate = Math.floor(remap_value(current_voltage, 80, 220, 6, 0));
+                if (skip_rate < 0) skip_rate = 0;
+                if (skip_rate > number_photons) skip_rate = number_photons;
+                if (current_voltage < 80) continue;
+                if (photon_waves.indexOf(photon_wave) % (skip_rate + 1) !== 0) continue;
+
+                photon_wave_param.time += 0.04;
+                let direction = vec3_normalize([Math.sin(photon_wave.angle), Math.cos(photon_wave.angle), 0]);
+                let speed = 0.05;
+                let translation = vec3_scale(direction, speed * delta_time);
+                photon_wave.transform = mat4_mat4_mul(translate_3d(translation), photon_wave.transform);
+
+                let dx = photon_wave.transform[12] - zoom_circle_pos[0];
+                let dy = photon_wave.transform[13] - zoom_circle_pos[1];
+                let distance = Math.sqrt(dx * dx + dy * dy);
+                if (distance > zoom_circle_radius && dy > 0) {
+                    let random_angle = rad(85 + Math.random() * 20);
+                    let random_pos;
+                    let overlap;
+                    do {
+                        overlap = false;
+                        random_pos = [
+                            zoom_circle_pos[0] + (Math.random() - 0.5) * zoom_circle_radius * 2,
+                            zoom_circle_pos[1] + (Math.random() - 0.5) * 0.4 - 0.4,
+                            zoom_circle_pos[2]
+                        ];
+                        for (let j = 0; j < photon_waves.length; j++) {
+                            let dx = random_pos[0] - photon_waves[j].transform[12];
+                            let dy = random_pos[1] - photon_waves[j].transform[13];
+                            let distance = Math.sqrt(dx * dx + dy * dy);
+                            if (distance < 0.2) {
+                                overlap = true;
+                                break;
+                            }
+                        }
+                    } while (overlap);
+                    photon_wave.transform = mat4_mat4_mul(
+                        rotate_3d(axis_angle_to_quat([0, 0, 1], random_angle)),
+                        translate_3d(random_pos),
+                    );
+                    photon_wave.angle = random_angle;
+                }
+
+                ctx.update_wave_3d(photon_wave, photon_wave_param, lines_segments_3d);
+                ctx.draw(photon_wave, {}, ui_camera);
             }
 
             gl.stencilFunc(gl.EQUAL, 0, 0xFF);
@@ -3002,32 +3129,25 @@ async function get_mesh_from_file(path) {
         console.error(err);
     }
 };
-get_mesh_from_file("bulb.mesh").then(function(mesh){
-    bulb.vertex_buffer = ctx.create_vertex_buffer(mesh.vertices, mesh.attribs, mesh.indices);
-});
-get_mesh_from_file("bulb2.mesh").then(function(mesh){
-    bulb2.vertex_buffer = ctx.create_vertex_buffer(mesh.vertices, mesh.attribs, mesh.indices);
-});
-get_mesh_from_file("bulb_screw.mesh").then(function(mesh){
-    bulb_screw.vertex_buffer = ctx.create_vertex_buffer(mesh.vertices, mesh.attribs, mesh.indices);
-});
-get_mesh_from_file("bulb_screw_black.mesh").then(function(mesh){
-    bulb_screw_black.vertex_buffer = ctx.create_vertex_buffer(mesh.vertices, mesh.attribs, mesh.indices);
-});
-get_mesh_from_file("bulb_wire.mesh").then(function(mesh){
-    bulb_wire.vertex_buffer = ctx.create_vertex_buffer(mesh.vertices, mesh.attribs, mesh.indices);
-});
-get_mesh_from_file("bulb_wire_holder.mesh").then(function(mesh){
-    bulb_wire_holder.vertex_buffer = ctx.create_vertex_buffer(mesh.vertices, mesh.attribs, mesh.indices);
-});
-get_mesh_from_file("apple.mesh").then(function(mesh){
-    apple.vertex_buffer = ctx.create_vertex_buffer(mesh.vertices, mesh.attribs, mesh.indices);
-});
-get_mesh_from_file("apple_stem.mesh").then(function(mesh){
-    apple_stem.vertex_buffer = ctx.create_vertex_buffer(mesh.vertices, mesh.attribs, mesh.indices);
-});
-get_mesh_from_file("apple_leaf.mesh").then(function(mesh){
-    apple_leaf.vertex_buffer = ctx.create_vertex_buffer(mesh.vertices, mesh.attribs, mesh.indices);
+const meshes = [
+    { path: "led_metal.mesh", drawable: led_metal },
+    { path: "led_epoxy_case.mesh", drawable: led_epoxy_case },
+    { path: "led_reflective_case.mesh", drawable: led_reflective_case },
+    { path: "bulb.mesh", drawable: bulb },
+    { path: "bulb2.mesh", drawable: bulb2 },
+    { path: "bulb_screw.mesh", drawable: bulb_screw },
+    { path: "bulb_screw_black.mesh", drawable: bulb_screw_black },
+    { path: "bulb_wire.mesh", drawable: bulb_wire },
+    { path: "bulb_wire_holder.mesh", drawable: bulb_wire_holder },
+    { path: "apple.mesh", drawable: apple },
+    { path: "apple_stem.mesh", drawable: apple_stem },
+    { path: "apple_leaf.mesh", drawable: apple_leaf }
+];
+
+meshes.forEach(mesh => {
+    get_mesh_from_file(mesh.path).then(function(data) {
+        mesh.drawable.vertex_buffer = ctx.create_vertex_buffer(data.vertices, data.attribs, data.indices);
+    });
 });
 
 function parse_fnt(fnt_text) {
