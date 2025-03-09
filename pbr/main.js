@@ -1371,14 +1371,14 @@ ctx.scenes = {
         charges: [], reference_frame: 0},
     "scene_induction": {id: "scene_induction", el: null, ratio: 1.7, camera: null, dragging_rect: null, draggable_rects: {"scene": []},
         camera: {
-            fov: 70, z_near: 0.1, z_far: 1000,
+            fov: 40, z_near: 0.1, z_far: 1000,
             position: [0, 0, 0], rotation: [0, 0, 0],
             up_vector: [0, 1, 0],
             view_matrix: mat4_identity(),
             orbit: {
                 rotation: [-0.4, 0, 0],
                 pivot: [0, 0, 0],
-                zoom: 3.0
+                zoom: 8.0
             }
         }},
     "scene_ampere": {id: "scene_ampere", el: null, ratio: 1.7, camera: null, dragging_rect: null, draggable_rects: {"scene": []},
@@ -2179,39 +2179,72 @@ function update_magnetic_field(north_pole, south_pole) {
     return field_lines;
 }
 
-let magnetic_field_drawables = update_magnetic_field([-0.25, 0, 0], [0.25, 0, 0]);
-
-let coil = ctx.create_drawable("shader_shaded",
-    create_coil_3d(15, 3, 0.5, 0.02, 32, 32),
-    [0.722, 0.451, 0.200],
+let magnet_y_pos = 0.85;
+let magnetic_field_drawables = update_magnetic_field([-0.25, magnet_y_pos, 0], [0.25, magnet_y_pos, 0]);
+let voltmeter_transform =  mat4_mat4_mul(
+    translate_3d([0, -1.5, 0.3]),
+    scale_3d([0.4, 0.4, 0.4]),
+)
+let coil = ctx.create_drawable("shader_shaded", null, [0.722, 0.451, 0.200], voltmeter_transform);
+let voltmeter = ctx.create_drawable("shader_shaded", null, [0.6, 0.6, 0.6], voltmeter_transform);
+let voltmeter_screen = ctx.create_drawable("shader_basic", null, [0.9, 0.9, 0.9], voltmeter_transform);
+let voltmeter_arrow = ctx.create_drawable("shader_shaded", null, [0.1, 0.1, 0.1], mat4_mat4_mul(
     mat4_mat4_mul(
-        translate_3d([0, -1.5, 0]),
-        mat4_mat4_mul(
-            rotate_3d(axis_angle_to_quat(vec3_normalize([1, 0, 0]), rad(90))),
-            rotate_3d(axis_angle_to_quat(vec3_normalize([0, 1, 0]), rad(90))),
-        )
-    )
+        rotate_3d(axis_angle_to_quat(vec3_normalize([0, 0, 1]), rad(0))),
+        translate_3d([0, 0.3, 4]),
+    ),
+    voltmeter_transform,
+)
 );
+
 let magnet_north = ctx.create_drawable("shader_shaded",
-    create_box(0.5, 0.5, 0.5), red, translate_3d([-0.25, 0, 0]));
+    create_box(0.75, 0.75, 0.75), red, translate_3d([-0.375, magnet_y_pos, 0]));
 let magnet_south = ctx.create_drawable("shader_shaded",
-    create_box(0.5, 0.5, 0.5), blue, translate_3d([0.25, 0, 0]));
+    create_box(0.75, 0.75, 0.75), blue, translate_3d([0.375, magnet_y_pos, 0]));
+let magnet_pos_average = [];
 let magnet_pos = 0;
 document.getElementById("magnet-input").value = magnet_pos;
 document.getElementById("magnet-input").addEventListener("input", (e) => {
     magnet_pos = parseFloat(e.target.value);
-    magnet_south.transform = translate_3d([0.25+magnet_pos, 0, 0]);
-    magnet_north.transform = translate_3d([-0.25+magnet_pos, 0, 0]);
+    
+    if(magnet_pos_average.length < 10){
+        magnet_pos_average.push(magnet_pos);
+    }
+    else{
+        magnet_pos_average.push(magnet_pos);
+        magnet_pos_average.shift();
+    }
+
+    magnet_south.transform = translate_3d([0.375+magnet_pos*2, magnet_y_pos, 0]);
+    magnet_north.transform = translate_3d([-0.375+magnet_pos*2, magnet_y_pos, 0]);
 
     for(let line of magnetic_field_drawables){
-        line.transform = translate_3d([magnet_pos, 0, 0]);
+        line.transform = translate_3d([magnet_pos*2, 0, 0]);
     }
 });
-let wire = ctx.create_drawable("shader_shaded",
-    create_line_3d([[1.5, 0, -0.5], [2.0, -0.2, 0]], 0.02, 32),
-    [0.722, 0.451, 0.200],
-    mat4_identity()
-);
+setInterval(function(){
+    if(magnet_pos_average.length < 10){
+        magnet_pos_average.push(0);
+    }
+    else{
+        magnet_pos_average.push(0);
+        magnet_pos_average.shift();
+    }
+
+    let average = 0;
+    for(let i = 0; i < magnet_pos_average.length; i++){
+        average += magnet_pos_average[i];
+    }
+    average /= magnet_pos_average.length;
+
+    voltmeter_arrow.transform = mat4_mat4_mul(
+        mat4_mat4_mul(
+            rotate_3d(axis_angle_to_quat(vec3_normalize([0, 0, 1]), rad(remap_value(average, -1, 1, 85, -85)))),
+            translate_3d([0, 0.3, 4]),
+        ),
+        voltmeter_transform,
+    );
+}, 10);
 // scene_induction setup
 
 // scene_ampere setup
@@ -2664,10 +2697,11 @@ function update(current_time){
         }
         else if(scene_id == "scene_induction"){
             ctx.draw(coil);
+            ctx.draw(voltmeter);
+            ctx.draw(voltmeter_screen);
+            ctx.draw(voltmeter_arrow);
             ctx.draw(magnet_south);
             ctx.draw(magnet_north);
-            ctx.draw(wire);
-
             for(let line of magnetic_field_drawables){
                 ctx.draw(line);
             }
@@ -3139,7 +3173,11 @@ const meshes = [
     { path: "bulb_wire_holder.mesh", drawable: bulb_wire_holder },
     { path: "apple.mesh", drawable: apple },
     { path: "apple_stem.mesh", drawable: apple_stem },
-    { path: "apple_leaf.mesh", drawable: apple_leaf }
+    { path: "apple_leaf.mesh", drawable: apple_leaf },
+    { path: "coil.mesh", drawable: coil },
+    { path: "voltmeter.mesh", drawable: voltmeter },
+    { path: "voltmeter_screen.mesh", drawable: voltmeter_screen },
+    { path: "voltmeter_arrow.mesh", drawable: voltmeter_arrow },
 ];
 
 meshes.forEach(mesh => {
