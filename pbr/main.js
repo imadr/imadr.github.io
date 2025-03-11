@@ -1180,6 +1180,7 @@ void main(){
 precision highp float;
 
 uniform vec3 color;
+uniform float alpha;
 
 out vec4 frag_color;
 
@@ -1194,7 +1195,7 @@ void main(){
     float fresnel = pow(1.0 - max(dot(normalize(world_normal), view_dir), 0.0), 2.0);
     vec3 refract_dir = refract(-view_dir, normalize(world_normal), 0.95);
 
-    frag_color = vec4(vec3(max(0.3-fresnel, 0.2))*color, 0.4);
+    frag_color = vec4(vec3(max(0.3-fresnel, 0.2))*color, alpha);
 }`);
 ctx.shaders["shader_plane"] = ctx.create_shader(`#version 300 es
 layout(location = 0) in vec3 position_attrib;
@@ -1369,7 +1370,7 @@ ctx.scenes = {
         },
         cable_y_pos: 1.3, num_charges: 100, set_charges_spacing: -1, spacing_positive: 0.28, spacing_negative: 0.28,
         charges: [], reference_frame: 0},
-    "scene_induction": {id: "scene_induction", el: null, ratio: 1.7, camera: null, dragging_rect: null, draggable_rects: {"scene": []},
+    "scene_induction": {id: "scene_induction", el: null, ratio: 1.8, camera: null, dragging_rect: null, draggable_rects: {"scene": []},
         camera: {
             fov: 40, z_near: 0.1, z_far: 1000,
             position: [0, 0, 0], rotation: [0, 0, 0],
@@ -1377,20 +1378,20 @@ ctx.scenes = {
             view_matrix: mat4_identity(),
             orbit: {
                 rotation: [-0.4, 0, 0],
-                pivot: [0, 0, 0],
-                zoom: 8.0
+                pivot: [0, 0.5, 0],
+                zoom: 7.0
             }
         }},
-    "scene_ampere": {id: "scene_ampere", el: null, ratio: 1.7, camera: null, dragging_rect: null, draggable_rects: {"scene": []},
+    "scene_ampere": {id: "scene_ampere", el: null, ratio: 2.5, camera: null, dragging_rect: null, draggable_rects: {"scene": []},
         camera: {
-            fov: 70, z_near: 0.1, z_far: 1000,
+            fov: 40, z_near: 0.1, z_far: 1000,
             position: [0, 0, 0], rotation: [0, 0, 0],
             up_vector: [0, 1, 0],
             view_matrix: mat4_identity(),
             orbit: {
                 rotation: [-0.4, 0, 0],
-                pivot: [0, 0, 0],
-                zoom: 3.0
+                pivot: [1, 0.5, 0],
+                zoom: 6.0
             }
         }},
     "scene_led": {id: "scene_led", el: null, ratio: 1.7, camera: null, dragging_rect: null, draggable_rects: {"scene": []},
@@ -2206,6 +2207,7 @@ let magnet_pos = 0;
 
 let show_magnetic_field = false;
 
+document.getElementById("show-field-checkbox").checked = show_magnetic_field;
 document.getElementById("show-field-checkbox").addEventListener("change", function(e){
     show_magnetic_field = this.checked;
 });
@@ -2254,17 +2256,84 @@ setInterval(function(){
 // scene_induction setup
 
 // scene_ampere setup
-let coil2 = ctx.create_drawable("shader_shaded",
-    create_coil_3d(15, 3, 0.5, 0.02, 32, 32),
-    [0.722, 0.451, 0.200],
-    mat4_mat4_mul(
-        translate_3d([0, -1.5, 0]),
-        mat4_mat4_mul(
-            rotate_3d(axis_angle_to_quat(vec3_normalize([1, 0, 0]), rad(0))),
-            rotate_3d(axis_angle_to_quat(vec3_normalize([0, 1, 0]), rad(90))),
-        )
-    )
+let ampere_transform = mat4_mat4_mul(
+    translate_3d([0, 0, 0]),
+    scale_3d([0.4, 0.4, 0.4]),
 );
+
+let coil_ampere = ctx.create_drawable("shader_shaded", null, [0.722, 0.451, 0.200], ampere_transform);
+let battery1 = ctx.create_drawable("shader_shaded", null, [0.3, 0.3, 0.3], mat4_identity());
+let battery2 = ctx.create_drawable("shader_shaded", null, [0.841, 0.500, 0.189], mat4_identity());
+let battery_cap1 = ctx.create_drawable("shader_shaded", null, [0.7, 0.7, 0.7], mat4_mat4_mul(
+    mat4_mat4_mul(
+        scale_3d([0.5, 0.5, 0.5]),
+        translate_3d([1.75, 2.2, 0]),
+    ),
+    ampere_transform,
+));
+let battery_cap2 = ctx.create_drawable("shader_shaded", null, [0.7, 0.7, 0.7], mat4_mat4_mul(
+    mat4_mat4_mul(
+        scale_3d([0.5, 0.5, 0.5]),
+        translate_3d([-0.95, 2.2, 0]),
+    ),
+    ampere_transform,
+));
+let magnet_transform = mat4_mat4_mul(
+    mat4_mat4_mul(
+        translate_3d([4.5, 0, -1]),
+        rotate_3d(axis_angle_to_quat(vec3_normalize([1, 0, 0]), rad(90))),
+    ),
+    scale_3d([0.7, 0.7, 0.7]),
+);
+let magnet = ctx.create_drawable("shader_shaded", null, [0.4, 0.4, 0.4], magnet_transform);
+let magnet_arrow1 = ctx.create_drawable("shader_shaded", null, [0.9, 0.9, 0.9], mat4_identity());
+let magnet_arrow2 = ctx.create_drawable("shader_shaded", null, red, mat4_identity());
+
+function update_ampere_scene(voltage, average){
+    battery1.transform = mat4_mat4_mul(
+        rotate_3d(axis_angle_to_quat(vec3_normalize([0, 1, 0]), rad(voltage < 0 ? 180 : 0))),
+        ampere_transform);
+    battery2.transform = mat4_mat4_mul(
+            mat4_mat4_mul(ampere_transform, translate_3d([0.644, 0, 0])),
+            rotate_3d(axis_angle_to_quat(vec3_normalize([0, 1, 0]), rad(voltage < 0 ? 180 : 0))),
+        );
+
+    let magnet_rotation = lerp(0, 180, remap_value(average, -1, 1, 1, 0));
+    magnet_arrow1.transform = mat4_mat4_mul(
+        mat4_mat4_mul(
+            translate_3d([0, 0, -0.2]),
+            rotate_3d(axis_angle_to_quat(vec3_normalize([0, 1, 0]), rad(magnet_rotation+90))),
+        ), magnet_transform);
+    magnet_arrow2.transform = mat4_mat4_mul(
+        mat4_mat4_mul(
+            translate_3d([0, 0, -0.2]),
+            rotate_3d(axis_angle_to_quat(vec3_normalize([0, 1, 0]), rad(magnet_rotation-90))),
+        ), magnet_transform);
+}
+
+let ampere_voltage = 0;
+let average_ampere_voltage = [0];
+document.getElementById("voltage-input-ampere").value = ampere_voltage;
+document.getElementById("voltage-input-ampere").addEventListener("input", function(e){
+    let new_voltage = parseFloat(e.target.value);
+    ampere_voltage = new_voltage;
+    document.getElementById("voltage-display").innerHTML = Math.floor(new_voltage*10);
+});
+setInterval(function(){
+    if(average_ampere_voltage.length < 10){
+        average_ampere_voltage.push(ampere_voltage > 0 ? 1 : -1);
+    }
+    else{
+        average_ampere_voltage.push(ampere_voltage > 0 ? 1 : -1);
+        average_ampere_voltage.shift();
+    }
+    let average = 0;
+    for(let i = 0; i < average_ampere_voltage.length; i++){
+        average += average_ampere_voltage[i];
+    }
+    average /= average_ampere_voltage.length;
+    update_ampere_scene(ampere_voltage, average);
+}, 10);
 // scene_ampere setup
 
 // scene_apple
@@ -2429,7 +2498,7 @@ mat4_mat4_mul(
     scale_3d([1.5, 1.5, 1.5])
 );
 let led_metal = ctx.create_drawable("shader_shaded", null, [0.5, 0.5, 0.5], led_transform);
-let led_epoxy_case = ctx.create_drawable("shader_glass", null, [1.5, 0.5, 0.5], led_transform);
+let led_epoxy_case = ctx.create_drawable("shader_glass", null, [3.0, 0, 0], led_transform);
 let led_reflective_case = ctx.create_drawable("shader_shaded", null, [0.5, 0.5, 0.5], led_transform);
 // scene_led
 // scene_bulb
@@ -2715,7 +2784,14 @@ function update(current_time){
             }
         }
         else if(scene_id == "scene_ampere"){
-            ctx.draw(coil2);
+            ctx.draw(coil_ampere);
+            ctx.draw(battery1);
+            ctx.draw(battery2);
+            ctx.draw(battery_cap1);
+            ctx.draw(battery_cap2);
+            ctx.draw(magnet);
+            ctx.draw(magnet_arrow1);
+            ctx.draw(magnet_arrow2);
         }
         else if(scene_id == "scene_apple"){
             wave_red_2_3d.color = red;
@@ -2802,7 +2878,7 @@ function update(current_time){
         }
         else if(scene_id == "scene_led"){
             ctx.draw(led_metal);
-            ctx.draw(led_epoxy_case);
+            ctx.draw(led_epoxy_case, {"alpha": 0.7});
             ctx.draw(led_reflective_case);
         }
         else if(scene_id == "scene_bulb"){
@@ -2810,8 +2886,8 @@ function update(current_time){
             ctx.draw(bulb_screw_black, {"metallic": 0});
             ctx.draw(bulb_wire, {"metallic": 0});
             ctx.draw(bulb_wire_holder, {"metallic": 0});
-            ctx.draw(bulb2);
-            ctx.draw(bulb);
+            ctx.draw(bulb2, {"alpha": 0.4});
+            ctx.draw(bulb, {"alpha": 0.4});
             
             gl.clear(gl.STENCIL_BUFFER_BIT);
             gl.enable(gl.STENCIL_TEST);
@@ -3186,6 +3262,15 @@ const meshes = [
     { path: "voltmeter.mesh", drawable: voltmeter },
     { path: "voltmeter_screen.mesh", drawable: voltmeter_screen },
     { path: "voltmeter_arrow.mesh", drawable: voltmeter_arrow },
+    { path: "coil.mesh", drawable: coil },
+    { path: "coil_ampere.mesh", drawable: coil_ampere },
+    { path: "battery.mesh", drawable: battery1 },
+    { path: "battery.mesh", drawable: battery2 },
+    { path: "battery.mesh", drawable: battery_cap1 },
+    { path: "battery.mesh", drawable: battery_cap2 },
+    { path: "magnet.mesh", drawable: magnet },
+    { path: "magnet_arrow.mesh", drawable: magnet_arrow1 },
+    { path: "magnet_arrow.mesh", drawable: magnet_arrow2 },
 ];
 
 meshes.forEach(mesh => {

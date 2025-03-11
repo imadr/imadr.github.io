@@ -53,22 +53,28 @@ $$
     </div>
     <h2>Maxwell's equations</h2>
     <p>Maxwell's equations describe how electric and magnetic fields are created and interact with each others. We will focus on the third and fourth equations.</p>
-    <p>Maxwell's third equation, known as <strong>Faraday's law of induction</strong>, shows how changing magnetic fields can generate electric currents. For example, when a magnet moves, it creates an electric field. This is the principle behind electric generators:</p>
+    <p>Maxwell's third equation, known as <strong>Faraday's law of induction</strong>, shows how changing magnetic fields can generate electric currents.<br>An example of this is moving a magnet inside a coil, which induces an electric current in the wire due to the changing magnetic flux. This is the principle behind electric generators, where mechanical energy is used to move magnets relative to coils, generating electricity through electromagnetic induction.</p>
+    <p>By moving the magnet left and right, we can see the voltmeter picking up a current:</p>
     <div class="canvas" id="scene_induction"></div>
     <div style="display: flex;margin-top: 2em;">
         <div class="checkbox-container">
             <label style="font-weight: bold;">Show magnetic field</label><br>
-            <input type="checkbox" id="show-field-checkbox">
+            <input type="checkbox" id="show-field-checkbox" autocomplete="false">
         </div>
         <div class="slider-container">
             <label style="font-weight: bold;">Slide the magnet</label><br><input id="magnet-input" type="range" min="-1" max="1" step="0.01" data-color="#888">
         </div>
     </div>
 
-    
     <br>
     <p>Maxwell's fourth and final equation, <strong>Ampère's Law</strong>, illustrates how electric currents (moving charges) produce magnetic fields around them. This is the basis of how electromagnets function:</p>
     <div class="canvas" id="scene_ampere"></div>
+    <div style="display: flex;margin-top: 2em;">
+        <div class="slider-container">
+            <label style="font-weight: bold;font-size: 1.5em;">Voltage: <span id="voltage-display">0</span> volts</label><br><input id="voltage-input-ampere" type="range" min="-1" max="1" step="0.01" data-color="#888">
+        </div>
+    </div>
+
     <p>Together, these laws demonstrate how electric and magnetic fields are interdependent. A changing magnetic field generates an electric field, and a changing electric field generates a magnetic field.</p>
     <p>This continuous cycle enables <strong>self-sustaining, self-propagating electromagnetic waves</strong>, which can travel through space without requiring a medium.</p>
     <h2>Electromagnetic radiation</h2>
