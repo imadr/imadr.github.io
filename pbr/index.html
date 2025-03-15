@@ -100,10 +100,9 @@ On the other end of the spectrum, gamma rays are highly energetic and can be dan
     </div>
 
     <h2>Generating Light</h2>
-    <p>There are multiple ways for light to be generated.</p>
+    <p>There are many ways for light to be generated, the two most common ones we encouter everyday are incandescence and electroluminescence.</p>
 
-    <h3>Incandescence</h3>
-    <p>One of them is <strong>incandescence</strong>, the process by which a material emits visible light due to high temperature. It is how incandescent lightbulbs and the <strong>sun</strong> generates light.</p>
+    <p><strong>Incandescence</strong> is the process by which a material emits visible light due to high temperature. It is how incandescent lightbulbs and the <strong>sun</strong> generates light.</p>
     <p>An incandescent lightbulb produces light through the heating of a filament until it starts glowing. The filament is made of <strong>tungsten</strong>, an element with a high melting point, high durability, and a positive temperature coefficient of resistance, which means its resistance increases with temperature.</p>
     <p>The current flowing through the filament follows <strong>Ohm's Law</strong>:</p>
 $$
@@ -129,23 +128,34 @@ $$
 
 <p><strong>The Sun</strong> also generates light by incandescence, but unlike the lightbulb's filament glowing via Joule heating, the Sun’s energy is produced by nuclear fusion in the core, where hydrogen nuclei fuse to form helium. This energy heats the Sun’s plasma to extreme temperatures, causing incandescence.</p>
 
-    <h3>Electroluminescence</h3>
-    <p>Another way to generate light is by <strong>electroluminescence</strong>, this is the phenomenon that powers LEDs
+<div class="canvas" id="scene_sun"></div>
 
-    <div class="canvas" id="scene_led"></div>
+<p>Another way to generate light is by <strong>electroluminescence</strong>, this is the phenomenon that powers LEDs
 
-    <h1>Chapter 4: Materials and Reflection Models</h1>
-    <p>When light interacts with an object, one of two things can happen: it can either be <strong>absorbed</strong> or <strong>redistributed</strong>.</p>
-    <p>Absorption can be thought of as deleting certain wavelengths from the incoming light, while redistribution refers to light continuing to propagate after interaction with the object, with possible changes to its properties such as direction, wavelength, or polarization..</p>
-    <p>If we take the example of a <strong class="red">red apple</strong>. When we shine a white light (which contains all visible wavelengths) on it, the apple's pigments (anthocyanins) absorb most of the wavelengths like <strong class="violet">violet</strong>, <strong class="blue">blue</strong> and <strong class="green">green</strong> wavelengths, thus decreasing the intensity of those colors from the light. The remaining wavelengths, mostly <strong class="red">red</strong>, gets scattered off the apple's surface making us perceive the apple as red.</p>
-    <div class="canvas" id="scene_apple"></div>
+<div class="canvas" id="scene_led"></div>
+<br>
+<br>
+<p>Light can come from other sources. Some <a href="https://en.wikipedia.org/wiki/Fluorescence">materials</a> glow when exposed to ultraviolet radiation, <a href="https://en.wikipedia.org/wiki/Phosphorescence">others</a> absorb that radiation and re-emit it after some time. Some animals like fireflies use special <a href="https://en.wikipedia.org/wiki/Luciferase">enzymes</a> to produce light.</p>
+<p>Check <a href="https://en.wikipedia.org/wiki/Luminescence">this page</a> to read more about luminescence.</p>
 
-    <p>We distinguish two types of materials by the nature of their interaction with light: <strong>conductors</strong> and <strong>nonconductors (or dielectrics)</strong></p>
+<h1>Chapter 2: Light Transport</h1>
+<p>Now that we understand the nature of light and how it can be generated, let's see how it interacts with matter and how we end up perceving it as "color".</p>
 
-    <h1>Chapter 2: Perceiving Light</h1>
-    
-    <h1>Chapter 3: Radiometry</h1>
-    <h1>Chapter 5: The Microfacet Theory</h1>
+<p>There are three components to our light transport, the <strong>source</strong> of illumination, the <strong>material</strong> hit by light and interacting with it (either absorbing or redistributing it), and the <strong>sensor</strong> detecting the light (either a camera or eyes).</p>
+<div class="canvas" id="scene_transport"></div>
+
+<p>When light interacts with an object, one of two things can happen: it can either be <strong>absorbed</strong> or <strong>redistributed</strong>.</p>
+<p>Absorption can be thought of as deleting certain wavelengths from the incoming light, while redistribution refers to light continuing to propagate after interaction with the object, with possible changes to its properties such as direction, wavelength, or polarization.</p>
+<p>If we take the example of a <strong class="red">red apple</strong>. When we shine a white light (which contains all visible wavelengths) on it, the apple's pigments (anthocyanins) absorb most of the wavelengths like <strong class="violet">violet</strong>, <strong class="blue">blue</strong> and <strong class="green">green</strong> wavelengths, thus decreasing the intensity of those colors from the light. The remaining wavelengths, mostly <strong class="red">red</strong>, gets scattered off the apple's surface making us perceive the apple as red.</p>
+<div class="canvas" id="scene_apple"></div>
+<p>We can graph a function that maps wavelength on the x-axis to intensity (y-axis).</p>
+
+<p>We distinguish two types of materials by the nature of their interaction with light: <strong>conductors</strong> and <strong>nonconductors (or dielectrics)</strong></p>
+
+<h1>Chapter 2: Perceiving Light</h1>
+
+<h1>Chapter 3: Radiometry</h1>
+<h1>Chapter 5: The Microfacet Theory</h1>
     
 
 

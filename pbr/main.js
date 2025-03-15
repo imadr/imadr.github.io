@@ -506,6 +506,104 @@ function create_arrow_3d(points, radius, segments, arrow_length = 0.15, arrow_ra
     return { vertices: vertices, indices: indices };
 }
 
+function create_uv_sphere(radius, latitudes, longitudes, smooth = true) {
+    let vertices = [];
+    let indices = [];
+    
+    for (let lat = 0; lat <= latitudes; lat++) {
+        let theta = lat * Math.PI / latitudes;
+        let sin_theta = Math.sin(theta);
+        let cos_theta = Math.cos(theta);
+        
+        for (let lon = 0; lon <= longitudes; lon++) {
+            let phi = lon * 2 * Math.PI / longitudes;
+            let sin_phi = Math.sin(phi);
+            let cos_phi = Math.cos(phi);
+            
+            let x = radius * sin_theta * cos_phi;
+            let y = radius * cos_theta;
+            let z = radius * sin_theta * sin_phi;
+            
+            let u = 1 - (lon / longitudes);
+            let v = 1 - (lat / latitudes);
+            
+            let nx = sin_theta * cos_phi;
+            let ny = cos_theta;
+            let nz = sin_theta * sin_phi;
+            
+            vertices.push(x, y, z, nx, ny, nz, u, v);
+        }
+    }
+    
+    if (smooth) {
+        for (let lat = 0; lat < latitudes; lat++) {
+            for (let lon = 0; lon < longitudes; lon++) {
+                let first = (lat * (longitudes + 1)) + lon;
+                let second = first + longitudes + 1;
+                
+                indices.push(first, first + 1, second);
+                indices.push(second, first + 1, second + 1);
+            }
+        }
+    } else {
+        let flat_vertices = [];
+        
+        for (let lat = 0; lat < latitudes; lat++) {
+            for (let lon = 0; lon < longitudes; lon++) {
+                let first = (lat * (longitudes + 1)) + lon;
+                let second = first + longitudes + 1;
+                let third = first + 1;
+                let fourth = second + 1;
+                
+                let v1 = { x: vertices[first * 8], y: vertices[first * 8 + 1], z: vertices[first * 8 + 2], u: vertices[first * 8 + 6], v: vertices[first * 8 + 7] };
+                let v2 = { x: vertices[second * 8], y: vertices[second * 8 + 1], z: vertices[second * 8 + 2], u: vertices[second * 8 + 6], v: vertices[second * 8 + 7] };
+                let v3 = { x: vertices[third * 8], y: vertices[third * 8 + 1], z: vertices[third * 8 + 2], u: vertices[third * 8 + 6], v: vertices[third * 8 + 7] };
+                let v4 = { x: vertices[fourth * 8], y: vertices[fourth * 8 + 1], z: vertices[fourth * 8 + 2], u: vertices[fourth * 8 + 6], v: vertices[fourth * 8 + 7] };
+                
+                let normal1 = calculate_normal(v1.x, v1.y, v1.z, v2.x, v2.y, v2.z, v3.x, v3.y, v3.z);
+                flat_vertices.push(v1.x, v1.y, v1.z, normal1.x, normal1.y, normal1.z, v1.u, v1.v,
+                                  v2.x, v2.y, v2.z, normal1.x, normal1.y, normal1.z, v2.u, v2.v,
+                                  v3.x, v3.y, v3.z, normal1.x, normal1.y, normal1.z, v3.u, v3.v);
+                
+                let normal2 = calculate_normal(v2.x, v2.y, v2.z, v4.x, v4.y, v4.z, v3.x, v3.y, v3.z);
+                flat_vertices.push(v2.x, v2.y, v2.z, normal2.x, normal2.y, normal2.z, v2.u, v2.v,
+                                  v4.x, v4.y, v4.z, normal2.x, normal2.y, normal2.z, v4.u, v4.v,
+                                  v3.x, v3.y, v3.z, normal2.x, normal2.y, normal2.z, v3.u, v3.v);
+            }
+        }
+        
+        vertices = flat_vertices;
+        for (let i = 0; i < vertices.length / 8; i++) {
+            indices.push(i);
+        }
+    }
+    
+    return { vertices, indices };
+}
+
+function calculate_normal(x1, y1, z1, x2, y2, z2, x3, y3, z3) {
+    let ux = x2 - x1;
+    let uy = y2 - y1;
+    let uz = z2 - z1;
+    
+    let vx = x3 - x1;
+    let vy = y3 - y1;
+    let vz = z3 - z1;
+    
+    let nx = uy * vz - uz * vy;
+    let ny = uz * vx - ux * vz;
+    let nz = ux * vy - uy * vx;
+    
+    let length = Math.sqrt(nx * nx + ny * ny + nz * nz);
+    if (length > 0) {
+        nx /= length;
+        ny /= length;
+        nz /= length;
+    }
+    
+    return { x: nx, y: ny, z: nz };
+}
+
 function create_triangle(start_position, size) {
     let [x, y, z] = start_position;
     let [width, height] = size;
@@ -637,51 +735,51 @@ function create_box(width, height, depth) {
     return { vertices, indices };
 }
 
-function create_cylinder(radius, height, segments){
-    let vertices = [];
-    let indices = [];
+// function create_cylinder(radius, height, segments){
+//     let vertices = [];
+//     let indices = [];
 
-    for (let i = 0; i <= segments; i++) {
-        let theta = (i / segments) * Math.PI * 2;
-        let x = Math.cos(theta) * radius;
-        let z = Math.sin(theta) * radius;
+//     for (let i = 0; i <= segments; i++) {
+//         let theta = (i / segments) * Math.PI * 2;
+//         let x = Math.cos(theta) * radius;
+//         let z = Math.sin(theta) * radius;
 
-        vertices.push(x, -height / 2, z, x, 0, z);
-        vertices.push(x, height / 2, z, x, 0, z);
-    }
+//         vertices.push(x, -height / 2, z, x, 0, z);
+//         vertices.push(x, height / 2, z, x, 0, z);
+//     }
 
-    for (let i = 0; i < segments; i++) {
-        let a = i * 2;
-        let b = a + 1;
-        let c = (a + 2) % (segments * 2);
-        let d = (a + 3) % (segments * 2);
+//     for (let i = 0; i < segments; i++) {
+//         let a = i * 2;
+//         let b = a + 1;
+//         let c = (a + 2) % (segments * 2);
+//         let d = (a + 3) % (segments * 2);
 
-        indices.push(a, b, c);
-        indices.push(b, d, c);
-    }
+//         indices.push(a, b, c);
+//         indices.push(b, d, c);
+//     }
 
-    let top_center = vertices.length / 6;
-    let bottom_center = top_center + 1;
+//     let top_center = vertices.length / 6;
+//     let bottom_center = top_center + 1;
 
-    vertices.push(0, height / 2, 0, 0, 1, 0);
-    vertices.push(0, -height / 2, 0, 0, -1, 0);
+//     vertices.push(0, height / 2, 0, 0, 1, 0);
+//     vertices.push(0, -height / 2, 0, 0, -1, 0);
 
-    for (let i = 0; i < segments; i++) {
-        let a = i * 2 + 1;
-        let b = (a + 2) % (segments * 2);
+//     for (let i = 0; i < segments; i++) {
+//         let a = i * 2 + 1;
+//         let b = (a + 2) % (segments * 2);
 
-        indices.push(top_center, b, a);
-    }
+//         indices.push(top_center, b, a);
+//     }
 
-    for (let i = 0; i < segments; i++) {
-        let a = i * 2;
-        let b = (a + 2) % (segments * 2);
+//     for (let i = 0; i < segments; i++) {
+//         let a = i * 2;
+//         let b = (a + 2) % (segments * 2);
 
-        indices.push(bottom_center, a, b);
-    }
+//         indices.push(bottom_center, a, b);
+//     }
 
-    return { vertices, indices };
-}
+//     return { vertices, indices };
+// }
 
 function create_arrow(from, to, size) {
     let [x1, y1, z1] = from;
@@ -914,6 +1012,7 @@ out vec4 frag_color;
 uniform sampler2D framebuffer_texture;
 uniform vec4 scissor_texcoords;
 uniform float brightness;
+uniform float lod;
 
 in vec3 position;
 in vec2 texcoord;
@@ -923,13 +1022,13 @@ void main(){
     vec4 sample_texture = texture(framebuffer_texture, texcoord_adjusted);
     vec4 color_total = vec4(0.0);
     float weight_total = 0.0;
-    float blur_radius = 4.0;
+    float blur_radius = 10.0;
     float blur_sigma = 4.0;
     for (float x = -blur_radius; x <= blur_radius; x++) {
         for (float y = -blur_radius; y <= blur_radius; y++) {
             float weight = exp(-(x * x + y * y) / (2.0 * blur_sigma * blur_sigma));
             vec2 pixel_offset = vec2(x, y) / vec2(textureSize(framebuffer_texture, 3));
-            vec4 lod_sample_texture = textureLod(framebuffer_texture, texcoord_adjusted + pixel_offset, 5.0);
+            vec4 lod_sample_texture = textureLod(framebuffer_texture, texcoord_adjusted + pixel_offset, lod);
             color_total += lod_sample_texture * weight;
             weight_total += weight;
         }
@@ -957,6 +1056,7 @@ void main(){
 precision highp float;
 
 uniform vec3 color;
+uniform sampler2D texture_uniform;
 
 out vec4 frag_color;
 
@@ -965,6 +1065,40 @@ in vec3 normal;
 
 void main(){
     frag_color = vec4(color, 1);
+}`);
+ctx.shaders["shader_eye"] = ctx.create_shader(`#version 300 es
+layout(location = 0) in vec3 position_attrib;
+layout(location = 1) in vec3 normal_attrib;
+layout(location = 2) in vec2 texcoord_attrib;
+
+uniform mat4 m;
+uniform mat4 v;
+uniform mat4 p;
+
+out vec3 position;
+out vec3 normal;
+out vec2 texcoord;
+
+void main(){
+    gl_Position = p*v*m*vec4(position_attrib, 1);
+    position = position_attrib;
+    normal = normal_attrib;
+    texcoord = texcoord_attrib;
+}`,
+`#version 300 es
+precision highp float;
+
+uniform vec3 color;
+uniform sampler2D texture_uniform;
+
+out vec4 frag_color;
+
+in vec3 position;
+in vec3 normal;
+in vec2 texcoord;
+
+void main(){
+    frag_color = vec4(texture(texture_uniform, texcoord*vec2(1, 1)).rgb-vec3(0.1), 1);
 }`);
 ctx.shaders["shader_spectrum"] = ctx.create_shader(`#version 300 es
 layout(location = 0) in vec3 position_attrib;
@@ -1114,6 +1248,118 @@ void main(){
         light = clamp(light, 0.0, 1.0);
         frag_color = vec4(color*1.1*light, 1.0);
     }
+}`);
+ctx.shaders["shader_sun_cross"] = ctx.create_shader(`#version 300 es
+layout(location = 0) in vec3 position_attrib;
+layout(location = 1) in vec3 normal_attrib;
+
+uniform mat4 m;
+uniform mat4 v;
+uniform mat4 p;
+
+out vec3 position;
+out vec3 normal;
+
+void main(){
+    gl_Position = p*v*m*vec4(position_attrib, 1);
+    position = position_attrib;
+    normal = normal_attrib;
+}`,
+`#version 300 es
+precision highp float;
+
+uniform vec3 color;
+uniform int metallic;
+
+out vec4 frag_color;
+
+in vec3 position;
+in vec3 normal;
+
+void main(){
+    vec3 color = mix(vec3(1.000, 0.796, 0.610), vec3(0.926, 0.244, 0.000), distance(position, vec3(0, 0, 0)));
+    frag_color = vec4(color, 1.0);
+}`);
+
+ctx.shaders["shader_sun_surface"] = ctx.create_shader(`#version 300 es
+layout(location = 0) in vec3 position_attrib;
+layout(location = 1) in vec3 normal_attrib;
+layout(location = 2) in vec2 texcoord_attrib;
+
+uniform mat4 m;
+uniform mat4 v;
+uniform mat4 p;
+
+out vec3 position;
+out vec3 normal;
+out vec2 texcoord;
+
+void main(){
+    gl_Position = p*v*m*vec4(position_attrib, 1);
+    position = position_attrib;
+    normal = normal_attrib;
+    texcoord = texcoord_attrib;
+}`,
+`#version 300 es
+precision highp float;
+
+uniform vec3 color;
+uniform int metallic;
+
+out vec4 frag_color;
+
+in vec3 position;
+in vec3 normal;
+in vec2 texcoord;
+
+float noise(vec2 p)
+{
+    return fract(sin(dot(p, vec2(127.1, 311.7))) * 43758.5453);
+}
+
+float smooth_noise(vec2 p)
+{
+    vec2 i = floor(p);
+    vec2 f = fract(p);
+    vec2 u = f * f * (3.0 - 2.0 * f);
+    
+    return mix(mix(noise(i + vec2(0.0, 0.0)), 
+                   noise(i + vec2(1.0, 0.0)), u.x),
+               mix(noise(i + vec2(0.0, 1.0)), 
+                   noise(i + vec2(1.0, 1.0)), u.x), u.y);
+}
+
+float fbm(vec3 p)
+{
+    float v = 0.0;
+    float a = 0.5;
+    vec3 shift = vec3(100.0);
+    
+    for (int i = 0; i < 6; ++i) {
+        v += a * smooth_noise(p.xy);
+        v += a * smooth_noise(p.xz);
+        v += a * smooth_noise(p.yz);
+        p = p * 2.0 + shift;
+        a *= 0.5;
+    }
+    return v / 3.0;
+}
+
+vec3 uv_to_sphere(vec2 uv)
+{
+    float theta = uv.x * 2.0 * 3.14159;
+    float phi = uv.y * 3.14159;
+    float x = sin(phi) * cos(theta);
+    float y = sin(phi) * sin(theta);
+    float z = cos(phi);
+    return vec3(x, y, z);
+}
+
+void main(){
+    vec3 yellow = vec3(1.000, 0.605, 0.020);
+    vec3 orange = vec3(1.000, 0.583, 0.035);
+    vec3 color = mix(yellow, orange, smoothstep(0.2, 0.8, fbm(normalize(position)))*16.0);
+    frag_color = vec4(color, 1.0);
 }`);
 ctx.shaders["shader_apple"] = ctx.create_shader(`#version 300 es
 layout(location = 0) in vec3 position_attrib;
@@ -1442,8 +1688,31 @@ ctx.scenes = {
                 pivot: [0, 0, 0],
                 zoom: 3.0
             }
-        },
-        particles: []},
+        }},
+    "scene_transport": {id: "scene_transport", el: null, ratio: 2.1, camera: null, dragging_rect: null, draggable_rects: {},
+        camera: {
+            fov: 40, z_near: 0.1, z_far: 1000,
+            position: [0, 0, 0], rotation: [0, 0, 0],
+            up_vector: [0, 1, 0],
+            view_matrix: mat4_identity(),
+            orbit: {
+                rotation: [-0.3, 0.3, 0],
+                pivot: [0, 0, 0],
+                zoom: 5.0
+            }
+        }},
+    "scene_sun": {id: "scene_sun", el: null, ratio: 2.1, camera: null, dragging_rect: null, draggable_rects: {"scene": []},
+        camera: {
+            fov: 25, z_near: 0.1, z_far: 1000,
+            position: [0, 0, 0], rotation: [0, 0, 0],
+            up_vector: [0, 1, 0],
+            view_matrix: mat4_identity(),
+            orbit: {
+                rotation: [-0.3, 0.3, 0],
+                pivot: [0, 0, 0],
+                zoom: 5.0
+            }
+        }},
 };
 
 function get_event_coordinates(e, element) {
@@ -1615,8 +1884,8 @@ ctx.create_drawable = function(shader, mesh, color, transform, custom_vertex_att
     let drawable = {
         shader: shader,
         vertex_buffer : mesh == null ? null : this.create_vertex_buffer(mesh.vertices, custom_vertex_attribs == null ? [
-                            { name: 'position_attrib', size: 3 },
-                            { name: 'normal_attrib', size: 3 }
+                            { name: "position_attrib", size: 3 },
+                            { name: "normal_attrib", size: 3 }
                         ] : custom_vertex_attribs, mesh.indices),
         color: color,
         transform: transform
@@ -1633,8 +1902,8 @@ ctx.update_drawable_mesh = function(drawable, mesh){
         gl.deleteBuffer(drawable.vertex_buffer.ebo);
     }
     drawable.vertex_buffer = this.create_vertex_buffer(mesh.vertices, [
-                            { name: 'position_attrib', size: 3 },
-                            { name: 'normal_attrib', size: 3 }
+                            { name: "position_attrib", size: 3 },
+                            { name: "normal_attrib", size: 3 }
                         ], mesh.indices);
 }
 
@@ -1654,8 +1923,8 @@ ctx.update_wave_3d = function(drawable, wave_param, lines_segments_3d) {
 
     if(drawable.vertex_buffer == null){
         drawable.vertex_buffer = this.create_vertex_buffer(mesh.vertices, [
-                                    { name: 'position_attrib', size: 3 },
-                                    { name: 'normal_attrib', size: 3 }
+                                    { name: "position_attrib", size: 3 },
+                                    { name: "normal_attrib", size: 3 }
                                 ], mesh.indices);
     }
     else{
@@ -2336,6 +2605,61 @@ setInterval(function(){
 }, 10);
 // scene_ampere setup
 
+// scene_transport
+let apple_transform_transport = mat4_mat4_mul(
+    translate_3d([0, -1, 0]),
+    scale_3d([0.5, 0.5, 0.5])
+);
+let sun = ctx.create_drawable("shader_basic", create_uv_sphere(0.5, 32, 32, true), [1, 1, 0], translate_3d([-2.8, 1, 0]),
+[
+    { name: "position_attrib", size: 3 },
+    { name: "normal_attrib", size: 3 },
+    { name: "texcoord_attrib", size: 2 },
+]);
+let eye = ctx.create_drawable("shader_eye", create_uv_sphere(0.4, 32, 32, true), [1, 1, 0], mat4_mat4_mul(
+    mat4_mat4_mul(
+        rotate_3d(axis_angle_to_quat(vec3_normalize([0, 1, 0]), rad(20))),
+        rotate_3d(axis_angle_to_quat(vec3_normalize([0, 0, 1]), rad(20))),
+    ),
+    translate_3d([2, 1, 0]),
+),
+[
+    { name: "position_attrib", size: 3 },
+    { name: "normal_attrib", size: 3 },
+    { name: "texcoord_attrib", size: 2 },
+]);
+let eye_texture = null;
+
+let wave_param_sun_to_apple = {
+    num_points: 500,
+    width: 3,
+    amplitude: 0.1,
+    frequency: 6,
+    thickness: 0.02,
+    z_range: 0,
+    time: 0,
+};
+let wave_sun_to_apple = {vertex_buffer: null, shader: "shader_basic"};
+wave_sun_to_apple.transform = mat4_mat4_mul(
+    rotate_3d(axis_angle_to_quat(vec3_normalize([0, 0, 1]), rad(-30))),
+    translate_3d([-3, 1, 0]),
+);
+
+let wave_param_apple_to_eye = {
+    num_points: 500,
+    width: 2,
+    amplitude: 0.1,
+    frequency: 6,
+    thickness: 0.02,
+    z_range: 0,
+    time: 0,
+};
+let wave_apple_to_eye = {vertex_buffer: null, shader: "shader_basic"};
+wave_apple_to_eye.transform = mat4_mat4_mul(
+    rotate_3d(axis_angle_to_quat(vec3_normalize([0, 0, 1]), rad(40))),
+    translate_3d([0.3, -0.4, 0]),
+);
+// scene_transport
 // scene_apple
 let apple_transform = mat4_identity();
 let apple = ctx.create_drawable("shader_apple", null, [1, 0, 0], apple_transform);
@@ -2498,9 +2822,19 @@ mat4_mat4_mul(
     scale_3d([1.5, 1.5, 1.5])
 );
 let led_metal = ctx.create_drawable("shader_shaded", null, [0.5, 0.5, 0.5], led_transform);
-let led_epoxy_case = ctx.create_drawable("shader_glass", null, [3.0, 0, 0], led_transform);
+let led_epoxy_case = ctx.create_drawable("shader_glass", null, [1, 1, 1], led_transform);
 let led_reflective_case = ctx.create_drawable("shader_shaded", null, [0.5, 0.5, 0.5], led_transform);
 // scene_led
+// scene_sun
+let sun_surface = ctx.create_drawable("shader_sun_surface", null, [1.000, 0.605, 0.020], mat4_identity());
+let sun_cross = ctx.create_drawable("shader_sun_cross", null, [0.826, 0.344, 0.000], mat4_identity());
+let sun_core = ctx.create_drawable("shader_basic", create_uv_sphere(0.4, 32, 32, true), [1.000, 0.948, 0.880], mat4_identity(),
+[
+    { name: "position_attrib", size: 3 },
+    { name: "normal_attrib", size: 3 },
+    { name: "texcoord_attrib", size: 2 },
+]);
+// scene_sun
 // scene_bulb
 let bulb_transform =
 mat4_mat4_mul(
@@ -2676,8 +3010,8 @@ let fullscreen_quad = ctx.create_drawable("shader_postprocess", {
         0, 2, 3
     ]
 }, [1, 0, 1], mat4_identity(), [
-    { name: 'position_attrib', size: 3 },
-    { name: 'texcoord_attrib', size: 2 }
+    { name: "position_attrib", size: 3 },
+    { name: "texcoord_attrib", size: 2 }
 ]);
 
 ctx.time = 0.0;
@@ -2793,6 +3127,30 @@ function update(current_time){
             ctx.draw(magnet_arrow1);
             ctx.draw(magnet_arrow2);
         }
+        else if(scene_id == "scene_transport"){
+            apple.transform = apple_transform_transport;
+            ctx.draw(apple);
+            apple_stem.transform = apple_transform_transport;
+            ctx.draw(apple_stem);
+            apple_leaf.transform = apple_transform_transport;
+            ctx.draw(apple_leaf);
+            
+            ctx.draw(sun);
+            gl.activeTexture(gl.TEXTURE0);
+            gl.bindTexture(gl.TEXTURE_2D, eye_texture);
+            ctx.draw(eye);
+
+            wave_sun_to_apple.color = [1, 1, 0];
+            wave_param_sun_to_apple.time -= 0.05;
+            ctx.update_wave_3d(wave_sun_to_apple, wave_param_sun_to_apple, lines_segments_3d);
+            ctx.draw(wave_sun_to_apple);
+            ctx.draw(eye);
+
+            wave_apple_to_eye.color = [1, 0, 0];
+            wave_param_apple_to_eye.time -= 0.05;
+            ctx.update_wave_3d(wave_apple_to_eye, wave_param_apple_to_eye, lines_segments_3d);
+            ctx.draw(wave_apple_to_eye);
+        }
         else if(scene_id == "scene_apple"){
             wave_red_2_3d.color = red;
             wave_red_3d.color = red;
@@ -2811,8 +3169,11 @@ function update(current_time){
             ctx.draw(wave_green_3d);
             ctx.draw(wave_blue_3d);
             ctx.draw(wave_violet_3d);
+            apple.transform = apple_transform;
             ctx.draw(apple);
+            apple_stem.transform = apple_transform;
             ctx.draw(apple_stem);
+            apple_leaf.transform = apple_transform;
             ctx.draw(apple_leaf);
         }
         else if(scene_id == "scene_bulb_graphs"){
@@ -2876,9 +3237,47 @@ function update(current_time){
             ctx.draw(ctx.text_buffers["graph_current_y_max"]);
             ctx.draw(ctx.text_buffers["graph_current_y_min"]);
         }
+        else if(scene_id == "scene_sun"){
+            gl.depthFunc(gl.LESS);
+
+            sun_core.transform = scale_3d([1, 1, 1]);
+            ctx.draw(sun_surface);
+            ctx.draw(sun_cross);
+            ctx.draw(sun_core);
+
+            ctx.gl.bindFramebuffer(ctx.gl.FRAMEBUFFER, postprocess_framebuffer);
+            gl.clearColor(0, 0, 0, 0);
+            gl.scissor(0, 0, gl.canvas.width, gl.canvas.height);
+            gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
+            sun_core.transform = scale_3d([1.5, 1.5, 1.5]);
+            gl.colorMask(false, false, false, false);
+            ctx.draw(sun_surface);
+            ctx.draw(sun_cross);
+            gl.colorMask(true, true, true, true);
+            ctx.draw(sun_core);
+            ctx.gl.bindFramebuffer(ctx.gl.FRAMEBUFFER, null);
+            
+            gl.useProgram(ctx.shaders["shader_postprocess"].program);
+            gl.activeTexture(gl.TEXTURE1);
+            gl.bindTexture(gl.TEXTURE_2D, postprocess_texture);
+            gl.generateMipmap(gl.TEXTURE_2D);
+            gl.uniform1i(ctx.shaders["shader_postprocess"].uniforms["framebuffer_texture"].location, 1);
+            const u_min = left / gl.canvas.width;
+            const v_min = bottom / gl.canvas.height;
+            const u_max = (left + width) / gl.canvas.width;
+            const v_max = (bottom + height) / gl.canvas.height;
+            gl.uniform4f(ctx.shaders["shader_postprocess"].uniforms["scissor_texcoords"].location, u_min, v_min, u_max, v_max);
+
+            gl.bindVertexArray(fullscreen_quad.vertex_buffer.vao);
+            ctx.set_shader_uniform(ctx.shaders["shader_postprocess"], "p", mat4_identity());
+            ctx.set_shader_uniform(ctx.shaders["shader_postprocess"], "v", mat4_identity());
+            ctx.set_shader_uniform(ctx.shaders["shader_postprocess"], "brightness", 1);
+            ctx.set_shader_uniform(ctx.shaders["shader_postprocess"], "lod", 1.0);
+            gl.drawElements(gl.TRIANGLES, fullscreen_quad.vertex_buffer.draw_count, gl.UNSIGNED_SHORT, 0);
+        }
         else if(scene_id == "scene_led"){
             ctx.draw(led_metal);
-            ctx.draw(led_epoxy_case, {"alpha": 0.7});
+            ctx.draw(led_epoxy_case, {"alpha": 0.5});
             ctx.draw(led_reflective_case);
         }
         else if(scene_id == "scene_bulb"){
@@ -2906,7 +3305,6 @@ function update(current_time){
             gl.stencilMask(0x00);
 
             gl.depthFunc(gl.ALWAYS);
-
 
             for (const particle_id of tungsten_particles) {
                 const particle = scene.particles[particle_id];
@@ -3271,6 +3669,8 @@ const meshes = [
     { path: "magnet.mesh", drawable: magnet },
     { path: "magnet_arrow.mesh", drawable: magnet_arrow1 },
     { path: "magnet_arrow.mesh", drawable: magnet_arrow2 },
+    { path: "sun_surface.mesh", drawable: sun_surface },
+    { path: "sun_cross.mesh", drawable: sun_cross },
 ];
 
 meshes.forEach(mesh => {
@@ -3278,6 +3678,31 @@ meshes.forEach(mesh => {
         mesh.drawable.vertex_buffer = ctx.create_vertex_buffer(data.vertices, data.attribs, data.indices);
     });
 });
+
+async function get_texture(ctx, url){
+    const gl = ctx.gl;
+    try {
+        let res = await fetch(url);
+        let blob = await res.blob();
+        let image = await createImageBitmap(blob);
+        
+        let texture = gl.createTexture();
+        gl.bindTexture(gl.TEXTURE_2D, texture);
+        gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, image);
+        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR_MIPMAP_LINEAR);
+        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
+        gl.generateMipmap(gl.TEXTURE_2D);
+      
+        return texture;
+    } catch (err) {
+        console.error(err);
+    }
+};
+
+get_texture(ctx, "eye_texture.jpg").then(function(data) {
+    eye_texture = data;
+});
+
 
 function parse_fnt(fnt_text) {
     const lines = fnt_text.split("\n").map(line => line.trim()).filter(line => line);
