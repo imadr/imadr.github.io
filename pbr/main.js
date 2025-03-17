@@ -1305,6 +1305,7 @@ precision highp float;
 
 uniform vec3 color;
 uniform int metallic;
+uniform float time;
 
 out vec4 frag_color;
 
@@ -1336,29 +1337,20 @@ float fbm(vec3 p)
     vec3 shift = vec3(100.0);
     
     for (int i = 0; i < 6; ++i) {
-        v += a * smooth_noise(p.xy);
-        v += a * smooth_noise(p.xz);
-        v += a * smooth_noise(p.yz);
-        p = p * 2.0 + shift;
+        v += a * smooth_noise(p.xy + time);
+        v += a * smooth_noise(p.xz + time);
+        v += a * smooth_noise(p.yz + time);
+        p = p * 3.0 + shift;
         a *= 0.5;
     }
     return v / 3.0;
 }
 
-vec3 uv_to_sphere(vec2 uv)
-{
-    float theta = uv.x * 2.0 * 3.14159;
-    float phi = uv.y * 3.14159;
-    float x = sin(phi) * cos(theta);
-    float y = sin(phi) * sin(theta);
-    float z = cos(phi);
-    return vec3(x, y, z);
-}
-
 void main(){
-    vec3 yellow = vec3(1.000, 0.605, 0.020);
-    vec3 orange = vec3(1.000, 0.583, 0.035);
-    vec3 color = mix(yellow, orange, smoothstep(0.2, 0.8, fbm(normalize(position)))*16.0);
+    vec3 yellow = vec3(1.000, 0.605, 0.0);
+    vec3 orange = vec3(1.000, 0.383, 0.0);
+    float n = pow(fbm(normalize(position)), 3.0)*3.0;
+    vec3 color = mix(yellow, orange, n);
     frag_color = vec4(color, 1.0);
 }`);
 ctx.shaders["shader_apple"] = ctx.create_shader(`#version 300 es
@@ -1701,18 +1693,30 @@ ctx.scenes = {
                 zoom: 5.0
             }
         }},
-    "scene_sun": {id: "scene_sun", el: null, ratio: 2.1, camera: null, dragging_rect: null, draggable_rects: {"scene": []},
-        camera: {
-            fov: 25, z_near: 0.1, z_far: 1000,
-            position: [0, 0, 0], rotation: [0, 0, 0],
-            up_vector: [0, 1, 0],
-            view_matrix: mat4_identity(),
-            orbit: {
-                rotation: [-0.3, 0.3, 0],
-                pivot: [0, 0, 0],
-                zoom: 5.0
-            }
-        }},
+    // "scene_sun": {id: "scene_sun", el: null, ratio: 1.7, camera: null, dragging_rect: null, draggable_rects: {"scene": []},
+    //     camera: {
+    //         fov: 30, z_near: 0.1, z_far: 1000,
+    //         position: [0, 0, 0], rotation: [0, 0, 0],
+    //         up_vector: [0, 1, 0],
+    //         view_matrix: mat4_identity(),
+    //         orbit: {
+    //             rotation: [-0.3, 0.3, 0],
+    //             pivot: [0, 0, 0],
+    //             zoom: 5.0
+    //         }
+    //     }},
+    "scene_sun": {id: "scene_sun", el: null, ratio: 1.7, camera: null, dragging_rect: null, draggable_rects: {"scene": []},
+    camera: {
+        fov: 30, z_near: 0.1, z_far: 1000,
+        position: [0, 0, 0], rotation: [0, 0, 0],
+        up_vector: [0, 1, 0],
+        view_matrix: mat4_identity(),
+        orbit: {
+            rotation: [0, 0, 0],
+            pivot: [0, 0, 0],
+            zoom: 5.0
+        }
+    }},
 };
 
 function get_event_coordinates(e, element) {
@@ -2834,6 +2838,9 @@ let sun_core = ctx.create_drawable("shader_basic", create_uv_sphere(0.4, 32, 32,
     { name: "normal_attrib", size: 3 },
     { name: "texcoord_attrib", size: 2 },
 ]);
+
+let line_core = ctx.create_drawable("shader_basic", create_line([], 0.01), [1, 1, 1], translate_3d([0, 0, 0]));
+update_camera_projection_matrix(ctx.scenes["scene_sun"].camera, ctx.scenes["scene_sun"].width/ctx.scenes["scene_sun"].height);
 // scene_sun
 // scene_bulb
 let bulb_transform =
@@ -3240,6 +3247,8 @@ function update(current_time){
         else if(scene_id == "scene_sun"){
             gl.depthFunc(gl.LESS);
 
+            gl.clearColor(0, 0, 0, 1);
+            gl.clear(gl.COLOR_BUFFER_BIT);
             sun_core.transform = scale_3d([1, 1, 1]);
             ctx.draw(sun_surface);
             ctx.draw(sun_cross);
@@ -3274,6 +3283,23 @@ function update(current_time){
             ctx.set_shader_uniform(ctx.shaders["shader_postprocess"], "brightness", 1);
             ctx.set_shader_uniform(ctx.shaders["shader_postprocess"], "lod", 1.0);
             gl.drawElements(gl.TRIANGLES, fullscreen_quad.vertex_buffer.draw_count, gl.UNSIGNED_SHORT, 0);
+
+            gl.depthFunc(gl.ALWAYS);
+            ctx.draw(line_core, {"metallic": 0}, ui_camera);
+
+            // let ui_camera = {
+            //     fov: 50, z_near: 0.1, z_far: 1000,
+            //     position: [0, 0, 0], rotation: [0, 0, 0],
+            //     up_vector: [0, 1, 0],
+            //     view_matrix: mat4_identity(),
+            //     orbit: {rotation: [0, 0, 0], pivot: [0, 0, 0], zoom: 3.0}
+            // };
+            let w = world_to_screen_space(ctx.scenes["scene_sun"], ctx.scenes["scene_sun"].camera, [0.4, 0, 0]);
+            let screen_space = [w[0]/ctx.scenes["scene_sun"].width, w[1]/ctx.scenes["scene_sun"].height, 0];
+            ctx.update_drawable_mesh(line_core, create_line([
+                screen_space,
+                [ 1, 0, 0 ],
+            ], 0.01, false));
         }
         else if(scene_id == "scene_led"){
             ctx.draw(led_metal);
