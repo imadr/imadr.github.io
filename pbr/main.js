@@ -876,7 +876,7 @@ function world_to_screen_space(scene, camera, point){
     return [screen_x, screen_y];
 }
 
-function screen_to_world_space(scene, screen_pos, z_distance) {
+function screen_to_world_space(scene, screen_pos, z_distance, camera) {
     const ndc_x = (screen_pos[0] / scene.width) * 2 - 1;
     const ndc_y = (1 - (screen_pos[1] / scene.height)) * 2 - 1;
     const ndc = [ndc_x, ndc_y, 1, 1];
@@ -888,12 +888,17 @@ function screen_to_world_space(scene, screen_pos, z_distance) {
         z_distance
     ];
 
-    const inv_projection_matrix = mat4_transpose(mat4_invert(scene.camera.projection_matrix));
+    let camera_ = camera;
+    if(camera_ === undefined){
+        camera_ = scene.camera;
+    }
+
+    const inv_projection_matrix = mat4_transpose(mat4_invert(camera_.projection_matrix));
     let view_space = mat4_vec4_mul(inv_projection_matrix, clip_space);
 
-    const inv_view_matrix = mat4_transpose(mat4_invert(scene.camera.view_matrix));
+    const inv_view_matrix = mat4_transpose(mat4_invert(camera_.view_matrix));
     let world_space = mat4_vec4_mul(inv_view_matrix, view_space);
-    return vec3_add(world_space, scene.camera.position);
+    return vec3_add(world_space, camera_.position);
 }
 
 ctx.canvas = document.getElementById("main-canvas");
@@ -988,7 +993,7 @@ in vec2 texcoord;
 
 void main(){
     vec4 font = texture(font_texture, texcoord);
-    frag_color = vec4(0, 0, 0, font.a > 0.5 ? font.a : 0.0);
+    frag_color = vec4(color, font.a);
 }`);
 ctx.shaders["shader_postprocess"] = ctx.create_shader(`#version 300 es
 layout(location = 0) in vec3 position_attrib;
@@ -1277,7 +1282,11 @@ in vec3 position;
 in vec3 normal;
 
 void main(){
-    vec3 color = mix(vec3(1.000, 0.796, 0.610), vec3(0.926, 0.244, 0.000), distance(position, vec3(0, 0, 0)));
+    float d = distance(position, vec3(0, 0, 0));
+    vec3 color = mix(vec3(1.000, 0.796, 0.610), vec3(0.926, 0.244, 0.000), d);
+    if(d > 0.8){
+        color = mix(vec3(0.9, 0.2, 0), vec3(0.7, 0.1, 0), (d - 0.8) / 0.2);
+    }
     frag_color = vec4(color, 1.0);
 }`);
 
@@ -1693,30 +1702,19 @@ ctx.scenes = {
                 zoom: 5.0
             }
         }},
-    // "scene_sun": {id: "scene_sun", el: null, ratio: 1.7, camera: null, dragging_rect: null, draggable_rects: {"scene": []},
-    //     camera: {
-    //         fov: 30, z_near: 0.1, z_far: 1000,
-    //         position: [0, 0, 0], rotation: [0, 0, 0],
-    //         up_vector: [0, 1, 0],
-    //         view_matrix: mat4_identity(),
-    //         orbit: {
-    //             rotation: [-0.3, 0.3, 0],
-    //             pivot: [0, 0, 0],
-    //             zoom: 5.0
-    //         }
-    //     }},
     "scene_sun": {id: "scene_sun", el: null, ratio: 1.7, camera: null, dragging_rect: null, draggable_rects: {"scene": []},
-    camera: {
-        fov: 30, z_near: 0.1, z_far: 1000,
-        position: [0, 0, 0], rotation: [0, 0, 0],
-        up_vector: [0, 1, 0],
-        view_matrix: mat4_identity(),
-        orbit: {
-            rotation: [0, 0, 0],
-            pivot: [0, 0, 0],
-            zoom: 5.0
-        }
-    }},
+        camera: {
+            fov: 50, z_near: 0.1, z_far: 1000,
+            position: [0, 0, 0], rotation: [0, 0, 0],
+            up_vector: [0, 1, 0],
+            view_matrix: mat4_identity(),
+            orbit: {
+                rotation: [-0.3, 0.3, 0],
+                pivot: [0, 0, 0],
+                zoom: 3.0
+            }
+        }},
+  
 };
 
 function get_event_coordinates(e, element) {
@@ -2839,8 +2837,156 @@ let sun_core = ctx.create_drawable("shader_basic", create_uv_sphere(0.4, 32, 32,
     { name: "texcoord_attrib", size: 2 },
 ]);
 
-let line_core = ctx.create_drawable("shader_basic", create_line([], 0.01), [1, 1, 1], translate_3d([0, 0, 0]));
-update_camera_projection_matrix(ctx.scenes["scene_sun"].camera, ctx.scenes["scene_sun"].width/ctx.scenes["scene_sun"].height);
+let core_position = [0, 0, 0, 1];
+let core_text_position = [1.72, 0.83, 0];
+let line_core = ctx.create_drawable("shader_basic", create_line([], 0.01), [0.8, 0.8, 0.8], translate_3d([0, 0, 0]));
+ctx.text_buffers["sun_core"] = {text: "Core", color: [0.8, 0.8, 0.8], transform: mat4_mat4_mul(scale_3d([0.0025, 0.0025, 0.0025]), translate_3d(core_text_position))};
+
+let radiativezone_position = [0.1, 0.6, 0, 1];
+let radiativezone_text_position = [0.8, 1.0, 0];
+let line_radiativezone = ctx.create_drawable("shader_basic", create_line([], 0.01), [0.8, 0.8, 0.8], translate_3d([0, 0, 0]));
+ctx.text_buffers["sun_radiativezone"] = {text: "Radiative Zone", color: [0.8, 0.8, 0.8], transform: mat4_mat4_mul(scale_3d([0.0025, 0.0025, 0.0025]), translate_3d(radiativezone_text_position))};
+
+let convectivezone_position = [0, 0.5, 0.75, 1];
+let convectivezone_text_position = [-1.5, 1.0, 0];
+let line_convectivezone = ctx.create_drawable("shader_basic", create_line([], 0.01), [0.8, 0.8, 0.8], translate_3d([0, 0, 0]));
+ctx.text_buffers["sun_convectivezone"] = {text: "Convective Zone", color: [0.8, 0.8, 0.8], transform: mat4_mat4_mul(scale_3d([0.0025, 0.0025, 0.0025]), translate_3d(convectivezone_text_position))};
+
+let photosphere_position = [...vec3_normalize(vec3_sub([0.2, -0.1, 0.3], [0, 0, 0])), 1];
+let photosphere_text_position = [1.5, -0.4, 0];
+let line_photosphere = ctx.create_drawable("shader_basic", create_line([], 0.01), [0.8, 0.8, 0.8], translate_3d([0, 0, 0]));
+ctx.text_buffers["sun_photosphere"] = {text: "Photosphere", color: [0.8, 0.8, 0.8], transform: mat4_mat4_mul(scale_3d([0.0025, 0.0025, 0.0025]), translate_3d(photosphere_text_position))};
+
+let ui_camera_sun = {
+    fov: 50, z_near: 0.1, z_far: 1000,
+    position: [0, 0, 0], rotation: [0, 0, 0],
+    up_vector: [0, 1, 0],
+    view_matrix: mat4_identity(),
+    orbit: {rotation: [0, 0, 0], pivot: [0, 0, 0], zoom: 3.0}
+};
+update_camera_orbit(ui_camera_sun);
+update_camera_projection_matrix(ui_camera_sun, ctx.scenes["scene_sun"].width/ctx.scenes["scene_sun"].height);
+
+function generate_random_photon_walk(){
+    const random_points = [[0, 0, 0]];
+    let current_position = [0, 0, 0];
+    const max_steps = 100;
+    const step_size = 0.05;
+    const forward_bias = 0.4;
+    for (let i = 0; i < max_steps; i++) {
+        let theta;
+        
+        if (Math.random() < forward_bias) {
+            theta = Math.random() * Math.PI * 0.5;
+        } else {
+            theta = Math.random() * Math.PI * 2;
+        }
+        
+        const dx = Math.cos(theta) * step_size;
+        const dy = Math.sin(theta) * step_size;
+        
+        const new_x = current_position[0] + dx;
+        const new_y = current_position[1] + dy;
+        
+        if (new_x >= 0 && new_y >= 0) {
+            current_position = [new_x, new_y, 0];
+            random_points.push([...current_position]);
+        } else {
+            i--;
+            continue;
+        }
+        
+        const distance = Math.sqrt(
+            current_position[0] * current_position[0] + 
+            current_position[1] * current_position[1]
+        );
+        
+        if (distance > 1) {
+            const normalized = [
+                current_position[0] / distance,
+                current_position[1] / distance,
+                0
+            ];
+            random_points[random_points.length - 1] = normalized;
+            break;
+        }
+    }
+    return random_points;
+}
+
+const num_rays = 5;
+const photon_rays = [];
+const photon_walks = [];
+const photon_steps = [];
+const photon_waits = [];
+const ejected_spheres = [];
+const sphere_positions = [];
+const sphere_velocities = [];
+const sphere_active = [];
+
+for (let i = 0; i < num_rays; i++) {
+    let line_ray = ctx.create_drawable("shader_basic", create_line_3d([0, 0, 0], 0.01, 16), [1, 1, 1], translate_3d([0, 0, 0]));
+    photon_rays.push(line_ray);
+    photon_walks.push(generate_random_photon_walk());
+    photon_steps.push(1);
+    photon_waits.push(0);
+    
+    let sphere = ctx.create_drawable("shader_basic", create_uv_sphere(0.02, 16, 16, true), [1, 1, 1], mat4_identity(),
+    [
+        { name: "position_attrib", size: 3 },
+        { name: "normal_attrib", size: 3 },
+        { name: "texcoord_attrib", size: 2 },
+    ]);
+    ejected_spheres.push(sphere);
+    sphere_positions.push([0, 0, 0]);
+    sphere_velocities.push([0, 0, 0]);
+    sphere_active.push(false);
+}
+
+setInterval(function() {
+    for (let i = 0; i < num_rays; i++) {
+        if (photon_steps[i] < photon_walks[i].length) {
+            photon_steps[i]++;
+            ctx.update_drawable_mesh(photon_rays[i], create_line_3d(photon_walks[i].slice(0, photon_steps[i]), 0.01, 16));
+            
+            if (photon_steps[i] === photon_walks[i].length - 1) {
+                const exit_point = photon_walks[i][photon_walks[i].length - 1];
+                sphere_positions[i] = [...exit_point];
+                sphere_velocities[i] = [exit_point[0] * 0.02, exit_point[1] * 0.02, exit_point[2] * 0.02];
+                sphere_active[i] = true;
+                ejected_spheres[i].transform = translate_3d(sphere_positions[i]);
+            }
+        } else {
+            photon_waits[i]++;
+            if (photon_waits[i] > 40) {
+                photon_walks[i] = generate_random_photon_walk();
+                photon_steps[i] = 1;
+                photon_waits[i] = 0;
+            }
+        }
+        
+        if (sphere_active[i]) {
+            sphere_positions[i][0] += sphere_velocities[i][0];
+            sphere_positions[i][1] += sphere_velocities[i][1];
+            sphere_positions[i][2] += sphere_velocities[i][2];
+            ejected_spheres[i].transform = translate_3d(sphere_positions[i]);
+            
+            const distance = Math.sqrt(
+                sphere_positions[i][0] * sphere_positions[i][0] + 
+                sphere_positions[i][1] * sphere_positions[i][1] + 
+                sphere_positions[i][2] * sphere_positions[i][2]
+            );
+            
+            if (distance > 2) {
+                sphere_active[i] = false;
+                sphere_positions[i] = [0, 0, 0];
+                sphere_velocities[i] = [0, 0, 0];
+                ejected_spheres[i].transform = translate_3d([10, 10, 10]);
+            }
+        }
+    }
+}, 10);
+
 // scene_sun
 // scene_bulb
 let bulb_transform =
@@ -3254,6 +3400,14 @@ function update(current_time){
             ctx.draw(sun_cross);
             ctx.draw(sun_core);
 
+            for(let ray of photon_rays){
+                ctx.draw(ray);
+            }
+
+            for(let sphere of ejected_spheres){
+                ctx.draw(sphere);
+            }
+
             ctx.gl.bindFramebuffer(ctx.gl.FRAMEBUFFER, postprocess_framebuffer);
             gl.clearColor(0, 0, 0, 0);
             gl.scissor(0, 0, gl.canvas.width, gl.canvas.height);
@@ -3285,21 +3439,40 @@ function update(current_time){
             gl.drawElements(gl.TRIANGLES, fullscreen_quad.vertex_buffer.draw_count, gl.UNSIGNED_SHORT, 0);
 
             gl.depthFunc(gl.ALWAYS);
-            ctx.draw(line_core, {"metallic": 0}, ui_camera);
 
-            // let ui_camera = {
-            //     fov: 50, z_near: 0.1, z_far: 1000,
-            //     position: [0, 0, 0], rotation: [0, 0, 0],
-            //     up_vector: [0, 1, 0],
-            //     view_matrix: mat4_identity(),
-            //     orbit: {rotation: [0, 0, 0], pivot: [0, 0, 0], zoom: 3.0}
-            // };
-            let w = world_to_screen_space(ctx.scenes["scene_sun"], ctx.scenes["scene_sun"].camera, [0.4, 0, 0]);
-            let screen_space = [w[0]/ctx.scenes["scene_sun"].width, w[1]/ctx.scenes["scene_sun"].height, 0];
-            ctx.update_drawable_mesh(line_core, create_line([
-                screen_space,
-                [ 1, 0, 0 ],
-            ], 0.01, false));
+            function weird_thing(point){
+                let tmp = world_to_screen_space(scene, scene.camera, point);
+                let tmp2 = screen_to_world_space(scene, tmp, ui_camera_sun.orbit.zoom, ui_camera_sun);
+                return [tmp2[0], tmp2[1], 0];
+            }
+
+            ctx.draw(line_core, {"metallic": 0}, ui_camera_sun);
+            ctx.update_drawable_mesh(line_core, create_line_dashed([
+                vec3_add(core_text_position, [-0.04, 0, 0]),
+                weird_thing(core_position)
+            ], 0.01, 0.03, 0.015));
+            ctx.draw(ctx.text_buffers["sun_core"], {}, ui_camera_sun);
+
+            ctx.draw(line_radiativezone, {"metallic": 0}, ui_camera_sun);
+            ctx.update_drawable_mesh(line_radiativezone, create_line_dashed([
+                vec3_add(radiativezone_text_position, [-0.03, -0.05, 0]),
+                weird_thing(radiativezone_position)
+            ], 0.01, 0.03, 0.015));
+            ctx.draw(ctx.text_buffers["sun_radiativezone"], {}, ui_camera_sun);
+
+            ctx.draw(line_convectivezone, {"metallic": 0}, ui_camera_sun);
+            ctx.update_drawable_mesh(line_convectivezone, create_line_dashed([
+                vec3_add(convectivezone_text_position, [0.35, -0.05, 0]),
+                weird_thing(convectivezone_position)
+            ], 0.01, 0.03, 0.015));
+            ctx.draw(ctx.text_buffers["sun_convectivezone"], {}, ui_camera_sun);
+
+            ctx.draw(line_photosphere, {"metallic": 0}, ui_camera_sun);
+            ctx.update_drawable_mesh(line_photosphere, create_line_dashed([
+                vec3_add(photosphere_text_position, [0.35, -0.05, 0]),
+                weird_thing(photosphere_position)
+            ], 0.01, 0.03, 0.015));
+            ctx.draw(ctx.text_buffers["sun_photosphere"], {}, ui_camera_sun);
         }
         else if(scene_id == "scene_led"){
             ctx.draw(led_metal);
