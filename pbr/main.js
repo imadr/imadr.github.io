@@ -1071,6 +1071,64 @@ in vec3 normal;
 void main(){
     frag_color = vec4(color, 1);
 }`);
+ctx.shaders["shader_spd"] = ctx.create_shader(`#version 300 es
+layout(location = 0) in vec3 position_attrib;
+layout(location = 1) in vec3 normal_attrib;
+
+uniform mat4 m;
+uniform mat4 v;
+uniform mat4 p;
+
+out vec3 position;
+out vec3 normal;
+
+void main(){
+    gl_Position = p*v*m*vec4(position_attrib, 1);
+    position = position_attrib;
+    normal = normal_attrib;
+}`,
+`#version 300 es
+precision highp float;
+
+uniform vec3 color;
+uniform sampler2D texture_uniform;
+
+out vec4 frag_color;
+
+in vec3 position;
+in vec3 normal;
+
+vec3 wavelength_to_rgb(float wavelength) {
+    float r = 0.0, g = 0.0, b = 0.0;
+
+    if (wavelength >= 380.0 && wavelength < 450.0) {
+        r = 0.5 * (450.0 - wavelength) / (450.0 - 380.0);
+        g = 0.0;
+        b = 1.0;
+    } 
+    else if (wavelength >= 450.0 && wavelength < 540.0) {
+        r = 0.0;
+        g = (wavelength - 450.0) / (540.0 - 450.0);
+        b = 1.0 - (wavelength - 450.0) / (540.0 - 450.0);
+    } 
+    else if (wavelength >= 540.0 && wavelength < 590.0) {
+        r = (wavelength - 540.0) / (590.0 - 540.0);
+        g = 1.0;
+        b = 0.0;
+    } 
+    else if (wavelength >= 590.0 && wavelength <= 700.0) {
+        r = 1.0;
+        g = 1.0 - (wavelength - 590.0) / (700.0 - 590.0);
+        b = 0.0;
+    }
+
+    float fade = smoothstep(370.0, 420.0, wavelength) * smoothstep(700.0, 650.0, wavelength);
+    return vec3(r, g, b) * fade;
+}
+
+void main(){
+    frag_color = vec4(wavelength_to_rgb(mix(330.0, 740.0, position.x/2.0)), 1);
+}`);
 ctx.shaders["shader_eye"] = ctx.create_shader(`#version 300 es
 layout(location = 0) in vec3 position_attrib;
 layout(location = 1) in vec3 normal_attrib;
@@ -1134,33 +1192,28 @@ in vec3 normal;
 vec3 wavelength_to_rgb(float wavelength) {
     float r = 0.0, g = 0.0, b = 0.0;
 
-    if (wavelength >= 380.0 && wavelength < 440.0) {
-        r = -(wavelength - 440.0) / (440.0 - 380.0);
+    if (wavelength >= 380.0 && wavelength < 450.0) {
+        r = 0.5 * (450.0 - wavelength) / (450.0 - 380.0);
         g = 0.0;
         b = 1.0;
-    } else if (wavelength >= 440.0 && wavelength < 490.0) {
+    } 
+    else if (wavelength >= 450.0 && wavelength < 540.0) {
         r = 0.0;
-        g = (wavelength - 440.0) / (490.0 - 440.0);
-        b = 1.0;
-    } else if (wavelength >= 490.0 && wavelength < 510.0) {
-        r = 0.0;
-        g = 1.0;
-        b = -(wavelength - 510.0) / (510.0 - 490.0);
-    } else if (wavelength >= 510.0 && wavelength < 580.0) {
-        r = (wavelength - 510.0) / (580.0 - 510.0);
+        g = (wavelength - 450.0) / (540.0 - 450.0);
+        b = 1.0 - (wavelength - 450.0) / (540.0 - 450.0);
+    } 
+    else if (wavelength >= 540.0 && wavelength < 590.0) {
+        r = (wavelength - 540.0) / (590.0 - 540.0);
         g = 1.0;
         b = 0.0;
-    } else if (wavelength >= 580.0 && wavelength < 645.0) {
+    } 
+    else if (wavelength >= 590.0 && wavelength <= 700.0) {
         r = 1.0;
-        g = -(wavelength - 645.0) / (645.0 - 580.0);
-        b = 0.0;
-    } else if (wavelength >= 645.0 && wavelength <= 700.0) {
-        r = 1.0;
-        g = 0.0;
+        g = 1.0 - (wavelength - 590.0) / (700.0 - 590.0);
         b = 0.0;
     }
 
-    float fade = smoothstep(370.0, 420.0, wavelength)*smoothstep(700.0, 650.0, wavelength);
+    float fade = smoothstep(370.0, 420.0, wavelength) * smoothstep(700.0, 650.0, wavelength);
     return vec3(r, g, b) * fade;
 }
 
@@ -1678,6 +1731,18 @@ ctx.scenes = {
                 zoom: 3.0
             }
         }},
+    "scene_spd": {id: "scene_spd", el: null, ratio: 2, camera: null, dragging_rect: null, draggable_rects: {},
+        camera: {
+        fov: 30, z_near: 0.1, z_far: 1000,
+        position: [0, 0, 0], rotation: [0, 0, 0],
+        up_vector: [0, 1, 0],
+        view_matrix: mat4_identity(),
+        orbit: {
+            rotation: [0, 0, 0],
+            pivot: [0, 0, 0],
+            zoom: 3.0
+        }
+    }},
     "scene_apple": {id: "scene_apple", el: null, ratio: 1.7, camera: null, dragging_rect: null, draggable_rects: {"scene": []},
         camera: {
             fov: 70, z_near: 0.1, z_far: 1000,
@@ -2298,32 +2363,28 @@ ctx.text_buffers["gamma_ray_text"] = {text: "Gamma rays          X rays         
 
 function wavelength_to_rgb(value, start, end) {
     let wavelength = 380 + (700 - 380) * ((start - value) / (start - end));
-    let r = 0, g = 0, b = 0;
 
-    if (wavelength >= 380 && wavelength < 440) {
-        r = -(wavelength - 440) / (440 - 380);
-        g = 0;
-        b = 1;
-    } else if (wavelength >= 440 && wavelength < 490) {
-        r = 0;
-        g = (wavelength - 440) / (490 - 440);
-        b = 1;
-    } else if (wavelength >= 490 && wavelength < 510) {
-        r = 0;
-        g = 1;
-        b = -(wavelength - 510) / (510 - 490);
-    } else if (wavelength >= 510 && wavelength < 580) {
-        r = (wavelength - 510) / (580 - 510);
-        g = 1;
-        b = 0;
-    } else if (wavelength >= 580 && wavelength < 645) {
-        r = 1;
-        g = -(wavelength - 645) / (645 - 580);
-        b = 0;
-    } else if (wavelength >= 645 && wavelength <= 700) {
-        r = 1;
-        g = 0;
-        b = 0;
+    let r = 0.0, g = 0.0, b = 0.0;
+
+    if (wavelength >= 380.0 && wavelength < 450.0) {
+        r = 0.5 * (450.0 - wavelength) / (450.0 - 380.0);
+        g = 0.0;
+        b = 1.0;
+    } 
+    else if (wavelength >= 450.0 && wavelength < 540.0) {
+        r = 0.0;
+        g = (wavelength - 450.0) / (540.0 - 450.0);
+        b = 1.0 - (wavelength - 450.0) / (540.0 - 450.0);
+    } 
+    else if (wavelength >= 540.0 && wavelength < 590.0) {
+        r = (wavelength - 540.0) / (590.0 - 540.0);
+        g = 1.0;
+        b = 0.0;
+    } 
+    else if (wavelength >= 590.0 && wavelength <= 700.0) {
+        r = 1.0;
+        g = 1.0 - (wavelength - 590.0) / (700.0 - 590.0);
+        b = 0.0;
     }
 
     function smoothstep(edge0, edge1, x) {
@@ -2331,7 +2392,7 @@ function wavelength_to_rgb(value, start, end) {
         return t * t * (3 - 2 * t);
     }
 
-    let fade = smoothstep(370, 420, wavelength) * smoothstep(700, 650, wavelength);
+    let fade = smoothstep(370.0, 420.0, wavelength) * smoothstep(700.0, 650.0, wavelength);
     return [r * fade, g * fade, b * fade];
 }
 // scene_spectrum setup
@@ -3151,6 +3212,143 @@ for (let i = 0; i < number_photons; i++) {
     photon_waves.push(photon_wave);
 }
 // scene_bulb
+// scene_spd
+function triangulate_points(points) {
+    let vertices = [];
+    for (let i = 0; i < points.length; i++) {
+        vertices.push([...points[i]]);
+    }
+
+    let indices = [];
+    let remaining_vertices = vertices.length;
+
+    let final_vertices = [];
+
+    function is_convex(prev, current, next) {
+        const [x1, y1] = prev;
+        const [x2, y2] = current;
+        const [x3, y3] = next;
+
+        const cross = (x2 - x1) * (y3 - y2) - (y2 - y1) * (x3 - x2);
+        return cross < 0;
+    }
+
+    function point_in_triangle(p, v0, v1, v2) {
+        function area(x1, y1, x2, y2, x3, y3) {
+            return Math.abs((x1 * (y2 - y3) + x2 * (y3 - y1) + x3 * (y1 - y2)) / 2.0);
+        }
+
+        const [px, py] = p;
+        const [x0, y0] = v0;
+        const [x1, y1] = v1;
+        const [x2, y2] = v2;
+
+        const A = area(x0, y0, x1, y1, x2, y2);
+        const A1 = area(px, py, x1, y1, x2, y2);
+        const A2 = area(x0, y0, px, py, x2, y2);
+        const A3 = area(x0, y0, x1, y1, px, py);
+
+        return Math.abs(A - (A1 + A2 + A3)) < 0.0001;
+    }
+
+    function is_ear(i, vertices, indices_left) {
+        const prev = vertices[(i - 1 + remaining_vertices) % remaining_vertices];
+        const curr = vertices[i];
+        const next = vertices[(i + 1) % remaining_vertices];
+
+        if (!is_convex(prev, curr, next)) {
+            return false;
+        }
+
+        for (let j = 0; j < remaining_vertices; j++) {
+            if (j !== i && j !== ((i - 1 + remaining_vertices) % remaining_vertices) &&
+                j !== ((i + 1) % remaining_vertices)) {
+                const p = vertices[j];
+                if (point_in_triangle(p, prev, curr, next)) {
+                    return false;
+                }
+            }
+        }
+        return true;
+    }
+
+    let i = 0;
+    let vertex_indices = Array.from({length: vertices.length}, (_, i) => i);
+
+    let infinite_loop = 0;
+    while (remaining_vertices > 3) {
+        infinite_loop++;
+        if(infinite_loop > 1000) break;
+        if (is_ear(i, vertices, vertex_indices)) {
+            const prev_idx = (i - 1 + remaining_vertices) % remaining_vertices;
+            const next_idx = (i + 1) % remaining_vertices;
+
+            indices.push(vertex_indices[next_idx], vertex_indices[i], vertex_indices[prev_idx]);
+
+            vertices.splice(i, 1);
+            vertex_indices.splice(i, 1);
+            remaining_vertices--;
+
+            if (i >= remaining_vertices) i = 0;
+        } else {
+            i = (i + 1) % remaining_vertices;
+        }
+    }
+
+    indices.push(vertex_indices[2], vertex_indices[1], vertex_indices[0]);
+
+    for (let v of points) {
+        final_vertices.push(v[0], v[1], v[2], 0, 0, 0);
+    }
+
+    return {
+        vertices: final_vertices,
+        indices: indices
+    };
+}
+
+let cie_d65 = "300,0.0341;301,0.36014;302,0.68618;303,1.01222;304,1.33826;305,1.6643;306,1.99034;307,2.31638;308,2.64242;309,2.96846;310,3.2945;311,4.98865;312,6.6828;313,8.37695;314,10.0711;315,11.7652;316,13.4594;317,15.1535;318,16.8477;319,18.5418;320,20.236;321,21.9177;322,23.5995;323,25.2812;324,26.963;325,28.6447;326,30.3265;327,32.0082;328,33.69;329,35.3717;330,37.0535;331,37.343;332,37.6326;333,37.9221;334,38.2116;335,38.5011;336,38.7907;337,39.0802;338,39.3697;339,39.6593;340,39.9488;341,40.4451;342,40.9414;343,41.4377;344,41.934;345,42.4302;346,42.9265;347,43.4228;348,43.9191;349,44.4154;350,44.9117;351,45.0844;352,45.257;353,45.4297;354,45.6023;355,45.775;356,45.9477;357,46.1203;358,46.293;359,46.4656;360,46.6383;361,47.1834;362,47.7285;363,48.2735;364,48.8186;365,49.3637;366,49.9088;367,50.4539;368,50.9989;369,51.544;370,52.0891;371,51.8777;372,51.6664;373,51.455;374,51.2437;375,51.0323;376,50.8209;377,50.6096;378,50.3982;379,50.1869;380,49.9755;381,50.4428;382,50.91;383,51.3773;384,51.8446;385,52.3118;386,52.7791;387,53.2464;388,53.7137;389,54.1809;390,54.6482;391,57.4589;392,60.2695;393,63.0802;394,65.8909;395,68.7015;396,71.5122;397,74.3229;398,77.1336;399,79.9442;400,82.7549;401,83.628;402,84.5011;403,85.3742;404,86.2473;405,87.1204;406,87.9936;407,88.8667;408,89.7398;409,90.6129;410,91.486;411,91.6806;412,91.8752;413,92.0697;414,92.2643;415,92.4589;416,92.6535;417,92.8481;418,93.0426;419,93.2372;420,93.4318;421,92.7568;422,92.0819;423,91.4069;424,90.732;425,90.057;426,89.3821;427,88.7071;428,88.0322;429,87.3572;430,86.6823;431,88.5006;432,90.3188;433,92.1371;434,93.9554;435,95.7736;436,97.5919;437,99.4102;438,101.228;439,103.047;440,104.865;441,106.079;442,107.294;443,108.508;444,109.722;445,110.936;446,112.151;447,113.365;448,114.579;449,115.794;450,117.008;451,117.088;452,117.169;453,117.249;454,117.33;455,117.41;456,117.49;457,117.571;458,117.651;459,117.732;460,117.812;461,117.517;462,117.222;463,116.927;464,116.632;465,116.336;466,116.041;467,115.746;468,115.451;469,115.156;470,114.861;471,114.967;472,115.073;473,115.18;474,115.286;475,115.392;476,115.498;477,115.604;478,115.711;479,115.817;480,115.923;481,115.212;482,114.501;483,113.789;484,113.078;485,112.367;486,111.656;487,110.945;488,110.233;489,109.522;490,108.811;491,108.865;492,108.92;493,108.974;494,109.028;495,109.082;496,109.137;497,109.191;498,109.245;499,109.3;500,109.354;501,109.199;502,109.044;503,108.888;504,108.733;505,108.578;506,108.423;507,108.268;508,108.112;509,107.957;510,107.802;511,107.501;512,107.2;513,106.898;514,106.597;515,106.296;516,105.995;517,105.694;518,105.392;519,105.091;520,104.79;521,105.08;522,105.37;523,105.66;524,105.95;525,106.239;526,106.529;527,106.819;528,107.109;529,107.399;530,107.689;531,107.361;532,107.032;533,106.704;534,106.375;535,106.047;536,105.719;537,105.39;538,105.062;539,104.733;540,104.405;541,104.369;542,104.333;543,104.297;544,104.261;545,104.225;546,104.19;547,104.154;548,104.118;549,104.082;550,104.046;551,103.641;552,103.237;553,102.832;554,102.428;555,102.023;556,101.618;557,101.214;558,100.809;559,100.405;560,100;561,99.6334;562,99.2668;563,98.9003;564,98.5337;565,98.1671;566,97.8005;567,97.4339;568,97.0674;569,96.7008;570,96.3342;571,96.2796;572,96.225;573,96.1703;574,96.1157;575,96.0611;576,96.0065;577,95.9519;578,95.8972;579,95.8426;580,95.788;581,95.0778;582,94.3675;583,93.6573;584,92.947;585,92.2368;586,91.5266;587,90.8163;588,90.1061;589,89.3958;590,88.6856;591,88.8177;592,88.9497;593,89.0818;594,89.2138;595,89.3459;596,89.478;597,89.61;598,89.7421;599,89.8741;600,90.0062;601,89.9655;602,89.9248;603,89.8841;604,89.8434;605,89.8026;606,89.7619;607,89.7212;608,89.6805;609,89.6398;610,89.5991;611,89.4091;612,89.219;613,89.029;614,88.8389;615,88.6489;616,88.4589;617,88.2688;618,88.0788;619,87.8887;620,87.6987;621,87.2577;622,86.8167;623,86.3757;624,85.9347;625,85.4936;626,85.0526;627,84.6116;628,84.1706;629,83.7296;630,83.2886;631,83.3297;632,83.3707;633,83.4118;634,83.4528;635,83.4939;636,83.535;637,83.576;638,83.6171;639,83.6581;640,83.6992;641,83.332;642,82.9647;643,82.5975;644,82.2302;645,81.863;646,81.4958;647,81.1285;648,80.7613;649,80.394;650,80.0268;651,80.0456;652,80.0644;653,80.0831;654,80.1019;655,80.1207;656,80.1395;657,80.1583;658,80.177;659,80.1958;660,80.2146;661,80.4209;662,80.6272;663,80.8336;664,81.0399;665,81.2462;666,81.4525;667,81.6588;668,81.8652;669,82.0715;670,82.2778;671,81.8784;672,81.4791;673,81.0797;674,80.6804;675,80.281;676,79.8816;677,79.4823;678,79.0829;679,78.6836;680,78.2842;681,77.4279;682,76.5716;683,75.7153;684,74.859;685,74.0027;686,73.1465;687,72.2902;688,71.4339;689,70.5776;690,69.7213;691,69.9101;692,70.0989;693,70.2876;694,70.4764;695,70.6652;696,70.854;697,71.0428;698,71.2315;699,71.4203;700,71.6091;701,71.8831;702,72.1571;703,72.4311;704,72.7051;705,72.979;706,73.253;707,73.527;708,73.801;709,74.075;710,74.349;711,73.0745;712,71.8;713,70.5255;714,69.251;715,67.9765;716,66.702;717,65.4275;718,64.153;719,62.8785;720,61.604;721,62.4322;722,63.2603;723,64.0885;724,64.9166;725,65.7448;726,66.573;727,67.4011;728,68.2293;729,69.0574;730,69.8856;731,70.4057;732,70.9259;733,71.446;734,71.9662;735,72.4863;736,73.0064;737,73.5266;738,74.0467;739,74.5669;740,75.087;741,73.9376;742,72.7881;743,71.6387;744,70.4893;745,69.3398;746,68.1904;747,67.041;748,65.8916;749,64.7421;750,63.5927;751,61.8752;752,60.1578;753,58.4403;754,56.7229;755,55.0054;756,53.288;757,51.5705;758,49.8531;759,48.1356;760,46.4182;761,48.4569;762,50.4956;763,52.5344;764,54.5731;765,56.6118;766,58.6505;767,60.6892;768,62.728;769,64.7667;770,66.8054;771,66.4631;772,66.1209;773,65.7786;774,65.4364;775,65.0941;776,64.7518;777,64.4096;778,64.0673;779,63.7251;780,63.3828;781,63.4749;782,63.567;783,63.6592;784,63.7513;785,63.8434;786,63.9355;787,64.0276;788,64.1198;789,64.2119;790,64.304;791,63.8188;792,63.3336;793,62.8484;794,62.3632;795,61.8779;796,61.3927;797,60.9075;798,60.4223;799,59.9371;800,59.4519;801,58.7026;802,57.9533;803,57.204;804,56.4547;805,55.7054;806,54.9562;807,54.2069;808,53.4576;809,52.7083;810,51.959;811,52.5072;812,53.0553;813,53.6035;814,54.1516;815,54.6998;816,55.248;817,55.7961;818,56.3443;819,56.8924;820,57.4406;821,57.7278;822,58.015;823,58.3022;824,58.5894;825,58.8765;826,59.1637;827,59.4509;828,59.7381;829,60.0253;830,60.3125;";
+cie_d65 = cie_d65.split(";").map(point =>
+    point.split(",").map(parseFloat)
+);
+
+let spd_graph_y_pos = -0.6;
+let spd_graph_position = [-1, 0, 0];
+let spd_graph_x_axis = ctx.create_drawable("shader_basic", create_arrow([0, spd_graph_y_pos, 0], [2.1, spd_graph_y_pos, 0], [0.02, 0.04]), [0.4, 0.4, 0.4], translate_3d(spd_graph_position));
+let spd_graph_y_axis = ctx.create_drawable("shader_basic", create_arrow([0.01, spd_graph_y_pos, 0], [0.01, -spd_graph_y_pos, 0], [0.02, 0.04]), [0.4, 0.4, 0.4], translate_3d(spd_graph_position));
+let spd_graph_num_points = cie_d65.length;
+let spd_graph = [];
+for(let i = 0; i < spd_graph_num_points; i++){
+    spd_graph.push(cie_d65[i][1]/350.0);
+}
+let spd_graph_drawable_points = [];
+let graph_width = 2.0;
+spd_graph_drawable_points.push([0, spd_graph_y_pos, 0]);
+for(let i = 0; i < spd_graph.length; i++){
+    let x = i/spd_graph_num_points * graph_width;
+    spd_graph_drawable_points.push([x, spd_graph[i], 0]);
+}
+spd_graph_drawable_points.push([graph_width, spd_graph_y_pos, 0]);
+
+let spd_graph_drawable = ctx.create_drawable("shader_spd", null, blue, translate_3d(spd_graph_position));
+let spd_graph_drawable_line = ctx.create_drawable("shader_basic", null, [0.3, 0.3, 0.3], translate_3d(spd_graph_position));
+ctx.update_drawable_mesh(spd_graph_drawable_line, create_line(spd_graph_drawable_points.slice(1, -1), 0.015, false));
+ctx.update_drawable_mesh(spd_graph_drawable, triangulate_points(spd_graph_drawable_points));
+
+ctx.text_buffers["spd_graph_x_axis"] = {text: "Wavelength (nm)", color: [0, 0, 0], transform: mat4_mat4_mul(
+    scale_3d([0.002, 0.002, 0.002]),
+    translate_3d([-0.34, -0.74, 0]))};
+ctx.text_buffers["spd_graph_y_axis"] = {text: "Relative power", color: [0, 0, 0], transform: 
+mat4_mat4_mul(
+    rotate_3d(axis_angle_to_quat([0, 0, 1], rad(90))),
+    mat4_mat4_mul(
+        scale_3d([0.002, 0.002, 0.002]),
+        translate_3d([-1.05, -0.3, 0])
+    ),
+)
+};
+// scene_spd
+
 let fullscreen_quad = ctx.create_drawable("shader_postprocess", {
     vertices: [
         -1, -1, 0, 0, 0,
@@ -3328,6 +3526,15 @@ function update(current_time){
             ctx.draw(apple_stem);
             apple_leaf.transform = apple_transform;
             ctx.draw(apple_leaf);
+        }
+        else if(scene_id == "scene_spd"){
+            ctx.draw(spd_graph_x_axis);
+            ctx.draw(spd_graph_y_axis);
+            ctx.draw(spd_graph_drawable_line);
+            ctx.draw(spd_graph_drawable);
+
+            ctx.draw(ctx.text_buffers["spd_graph_x_axis"]);
+            ctx.draw(ctx.text_buffers["spd_graph_y_axis"]);
         }
         else if(scene_id == "scene_bulb_graphs"){
             ctx.draw(scene_bulb_graph_x_axis);
