@@ -139,23 +139,40 @@ $$
 <div class="canvas" id="scene_led"></div>
 <br>
 <br>
-<p>Light can come from other sources. Some <a href="https://en.wikipedia.org/wiki/Fluorescence">materials</a> glow when exposed to ultraviolet radiation, <a href="https://en.wikipedia.org/wiki/Phosphorescence">others</a> absorb that radiation and re-emit it after some time. Some animals like fireflies use special <a href="https://en.wikipedia.org/wiki/Luciferase">enzymes</a> to produce light.</p>
-<p>Check <a href="https://en.wikipedia.org/wiki/Luminescence">this page</a> to read more about luminescence.</p>
+<p>Aside from incandescence and electroluminescence, which are the two most common sources of light we encounter in everyday life, light can come from other places. Some <a href="https://en.wikipedia.org/wiki/Fluorescence">materials</a> glow when exposed to ultraviolet radiation, <a href="https://en.wikipedia.org/wiki/Phosphorescence">others</a> absorb that radiation and re-emit it after some time. Some animals like fireflies use special <a href="https://en.wikipedia.org/wiki/Luciferase">enzymes</a> to produce light. You can read <a href="https://en.wikipedia.org/wiki/Luminescence">this page</a> to learn more about other sources of luminescence.</p>
 
 <h1>Chapter 2: Light Transport</h1>
-<p>Now that we understand the nature of light and how it can be generated, let's see how it interacts with matter and how we end up perceving it as "color".</p>
 
-<p>There are three components to our light transport, the <strong>source</strong> of illumination, the <strong>material</strong> hit by light and interacting with it (either absorbing or redistributing it), and the <strong>sensor</strong> detecting the light (either a camera or eyes).</p>
+<p>We call <strong>light transport</strong> the entire process by which light is emitted by a <strong>source</strong> of illumination, interacts with a <strong>material</strong>, getting either absorbed or redistributed, and ultimately detected by a <strong>sensor</strong> such as a camera or the human eye.</p>
+<p>In the previous chapter, we examined the nature of light and the various methods by which it can be emitted, we will now focus on how it interacts with matter.</p>
 <div class="canvas" id="scene_transport"></div>
 
 <p>When light interacts with an object, one of two things can happen: it can either be <strong>absorbed</strong> or <strong>redistributed</strong>.</p>
-<p>Absorption can be thought of as deleting certain wavelengths from the incoming light, while redistribution refers to light continuing to propagate after interaction with the object, with possible changes to its properties such as direction, wavelength, or polarization.</p>
-<p>If we take the example of a <strong class="red">red apple</strong>. When we shine a white light (which contains all visible wavelengths) on it, the apple's pigments (anthocyanins) absorb most of the wavelengths like <strong class="violet">violet</strong>, <strong class="blue">blue</strong> and <strong class="green">green</strong> wavelengths, thus decreasing the intensity of those colors from the light. The remaining wavelengths, mostly <strong class="red">red</strong>, gets scattered off the apple's surface making us perceive the apple as red.</p>
+<p>Absorption can be thought of as deleting certain wavelengths from the incoming light, while redistribution refers to light continuing to propagate after the interaction with the object, with possible changes to its properties such as direction, wavelength, or polarization.</p>
+<p>If we take the example of a <strong class="red">red apple</strong>. When we shine a white light (which contains all visible wavelengths) on it, the apple's pigments (anthocyanins) absorb most of the wavelengths such as <strong class="violet">violet</strong>, <strong class="blue">blue</strong> and <strong class="green">green</strong>, thus decreasing the intensity of those colors from the light. The remaining wavelengths, mostly <strong class="red">red</strong>, gets scattered off the apple's surface making us perceive the apple as red.</p>
 <div class="canvas" id="scene_apple"></div>
-<p>We can characterize a light by the amount of energy it contains at each wavelength using a function, we call this function a <strong>Spectral power distribution</strong> or <strong>SPD</strong> for short.</p>
 
+<h2>Spectral Power Distribution</h2>
+<p>We can characterize light by describing the amount of energy it carries at each wavelength using a function called the <strong>Spectral Power Distribution</strong> or <strong>SPD</strong> for short.</p>
+<p>For example, below is the SPD for <a href="https://cie.co.at/datatable/cie-standard-illuminant-d65">D65</a>, a theoretical source of light standardized by The International Commission on Illumination (CIE). It represents the spectrum of average midday light in Western Europe or North America:</p>
 <div class="canvas" id="scene_spd"></div>
+<p>We can compare this SPD to AM0, which is the measured solar radiation in outer space before entering Earth's atmosphere. Notice the absence of a dip in the ultraviolet range:</p>
+<div class="canvas" id="scene_spd_sun_space"></div>
 
+<p>And here is the SPD a typical tungsten incandescent light:</p>
+<div class="canvas" id="scene_spd_lamp"></div>
+
+<p>Going back to our apple example, if we change the color of the light we shine on the apple, the color we perceive will change:</p>
+<div class="canvas" id="scene_apple_lights"></div>
+<div class="slider-container">
+    <input id="light-r-input" type="range" min="0" max="1" step="0.01" data-color="#ff0000" style="margin-top:40px;">
+    <input id="light-g-input" type="range" min="0" max="1" step="0.01" data-color="#00ff00" style="margin-top:40px;">
+    <input id="light-b-input" type="range" min="0" max="1" step="0.01" data-color="#0000ff" style="margin-top:40px;">    
+</div>
+<br><br><br><br><br>
+<br><br><br><br><br>
+<br><br><br><br><br>
+<br><br><br><br><br>
 <p>We distinguish two types of materials by the nature of their interaction with light: <strong>conductors</strong> and <strong>nonconductors (or dielectrics)</strong></p>
 <br><br><br><br><br>
 <br><br><br><br><br>
