@@ -509,75 +509,150 @@ function create_arrow_3d(points, radius, segments, arrow_length = 0.15, arrow_ra
 function create_uv_sphere(radius, latitudes, longitudes, smooth = true) {
     let vertices = [];
     let indices = [];
-    
+
     for (let lat = 0; lat <= latitudes; lat++) {
         let theta = lat * Math.PI / latitudes;
         let sin_theta = Math.sin(theta);
         let cos_theta = Math.cos(theta);
-        
+
         for (let lon = 0; lon <= longitudes; lon++) {
             let phi = lon * 2 * Math.PI / longitudes;
             let sin_phi = Math.sin(phi);
             let cos_phi = Math.cos(phi);
-            
+
             let x = radius * sin_theta * cos_phi;
             let y = radius * cos_theta;
             let z = radius * sin_theta * sin_phi;
-            
+
             let u = 1 - (lon / longitudes);
             let v = 1 - (lat / latitudes);
-            
+
             let nx = sin_theta * cos_phi;
             let ny = cos_theta;
             let nz = sin_theta * sin_phi;
-            
+
             vertices.push(x, y, z, nx, ny, nz, u, v);
         }
     }
-    
+
     if (smooth) {
         for (let lat = 0; lat < latitudes; lat++) {
             for (let lon = 0; lon < longitudes; lon++) {
                 let first = (lat * (longitudes + 1)) + lon;
                 let second = first + longitudes + 1;
-                
+
                 indices.push(first, first + 1, second);
                 indices.push(second, first + 1, second + 1);
             }
         }
     } else {
         let flat_vertices = [];
-        
+
         for (let lat = 0; lat < latitudes; lat++) {
             for (let lon = 0; lon < longitudes; lon++) {
                 let first = (lat * (longitudes + 1)) + lon;
                 let second = first + longitudes + 1;
                 let third = first + 1;
                 let fourth = second + 1;
-                
+
                 let v1 = { x: vertices[first * 8], y: vertices[first * 8 + 1], z: vertices[first * 8 + 2], u: vertices[first * 8 + 6], v: vertices[first * 8 + 7] };
                 let v2 = { x: vertices[second * 8], y: vertices[second * 8 + 1], z: vertices[second * 8 + 2], u: vertices[second * 8 + 6], v: vertices[second * 8 + 7] };
                 let v3 = { x: vertices[third * 8], y: vertices[third * 8 + 1], z: vertices[third * 8 + 2], u: vertices[third * 8 + 6], v: vertices[third * 8 + 7] };
                 let v4 = { x: vertices[fourth * 8], y: vertices[fourth * 8 + 1], z: vertices[fourth * 8 + 2], u: vertices[fourth * 8 + 6], v: vertices[fourth * 8 + 7] };
-                
+
                 let normal1 = calculate_normal(v1.x, v1.y, v1.z, v2.x, v2.y, v2.z, v3.x, v3.y, v3.z);
                 flat_vertices.push(v1.x, v1.y, v1.z, normal1.x, normal1.y, normal1.z, v1.u, v1.v,
                                   v2.x, v2.y, v2.z, normal1.x, normal1.y, normal1.z, v2.u, v2.v,
                                   v3.x, v3.y, v3.z, normal1.x, normal1.y, normal1.z, v3.u, v3.v);
-                
+
                 let normal2 = calculate_normal(v2.x, v2.y, v2.z, v4.x, v4.y, v4.z, v3.x, v3.y, v3.z);
                 flat_vertices.push(v2.x, v2.y, v2.z, normal2.x, normal2.y, normal2.z, v2.u, v2.v,
                                   v4.x, v4.y, v4.z, normal2.x, normal2.y, normal2.z, v4.u, v4.v,
                                   v3.x, v3.y, v3.z, normal2.x, normal2.y, normal2.z, v3.u, v3.v);
             }
         }
-        
+
         vertices = flat_vertices;
         for (let i = 0; i < vertices.length / 8; i++) {
             indices.push(i);
         }
     }
-    
+
+    return { vertices, indices };
+}
+
+function create_uv_hemisphere(radius, latitudes, longitudes, smooth = true){
+    let vertices = [];
+    let indices = [];
+
+    for (let lat = 0; lat <= latitudes / 2; lat++) {
+        let theta = lat * Math.PI / latitudes;
+        let sin_theta = Math.sin(theta);
+        let cos_theta = Math.cos(theta);
+
+        for (let lon = 0; lon <= longitudes; lon++) {
+            let phi = lon * 2 * Math.PI / longitudes;
+            let sin_phi = Math.sin(phi);
+            let cos_phi = Math.cos(phi);
+
+            let x = radius * sin_theta * cos_phi;
+            let y = radius * cos_theta;
+            let z = radius * sin_theta * sin_phi;
+
+            let u = 1 - (lon / longitudes);
+            let v = 1 - (lat / (latitudes / 2));
+
+            let nx = sin_theta * cos_phi;
+            let ny = cos_theta;
+            let nz = sin_theta * sin_phi;
+
+            vertices.push(x, y, z, nx, ny, nz, u, v);
+        }
+    }
+
+    if (smooth) {
+        for (let lat = 0; lat < latitudes / 2; lat++) {
+            for (let lon = 0; lon < longitudes; lon++) {
+                let first = (lat * (longitudes + 1)) + lon;
+                let second = first + longitudes + 1;
+
+                indices.push(first, first + 1, second);
+                indices.push(second, first + 1, second + 1);
+            }
+        }
+    } else {
+        let flat_vertices = [];
+
+        for (let lat = 0; lat < latitudes / 2; lat++) {
+            for (let lon = 0; lon < longitudes; lon++) {
+                let first = (lat * (longitudes + 1)) + lon;
+                let second = first + longitudes + 1;
+                let third = first + 1;
+                let fourth = second + 1;
+
+                let v1 = { x: vertices[first * 8], y: vertices[first * 8 + 1], z: vertices[first * 8 + 2], u: vertices[first * 8 + 6], v: vertices[first * 8 + 7] };
+                let v2 = { x: vertices[second * 8], y: vertices[second * 8 + 1], z: vertices[second * 8 + 2], u: vertices[second * 8 + 6], v: vertices[second * 8 + 7] };
+                let v3 = { x: vertices[third * 8], y: vertices[third * 8 + 1], z: vertices[third * 8 + 2], u: vertices[third * 8 + 6], v: vertices[third * 8 + 7] };
+                let v4 = { x: vertices[fourth * 8], y: vertices[fourth * 8 + 1], z: vertices[fourth * 8 + 2], u: vertices[fourth * 8 + 6], v: vertices[fourth * 8 + 7] };
+
+                let normal1 = calculate_normal(v1.x, v1.y, v1.z, v2.x, v2.y, v2.z, v3.x, v3.y, v3.z);
+                flat_vertices.push(v1.x, v1.y, v1.z, normal1.x, normal1.y, normal1.z, v1.u, v1.v,
+                                  v2.x, v2.y, v2.z, normal1.x, normal1.y, normal1.z, v2.u, v2.v,
+                                  v3.x, v3.y, v3.z, normal1.x, normal1.y, normal1.z, v3.u, v3.v);
+
+                let normal2 = calculate_normal(v2.x, v2.y, v2.z, v4.x, v4.y, v4.z, v3.x, v3.y, v3.z);
+                flat_vertices.push(v2.x, v2.y, v2.z, normal2.x, normal2.y, normal2.z, v2.u, v2.v,
+                                  v4.x, v4.y, v4.z, normal2.x, normal2.y, normal2.z, v4.u, v4.v,
+                                  v3.x, v3.y, v3.z, normal2.x, normal2.y, normal2.z, v3.u, v3.v);
+            }
+        }
+
+        vertices = flat_vertices;
+        for (let i = 0; i < vertices.length / 8; i++) {
+            indices.push(i);
+        }
+    }
+
     return { vertices, indices };
 }
 
@@ -585,22 +660,22 @@ function calculate_normal(x1, y1, z1, x2, y2, z2, x3, y3, z3) {
     let ux = x2 - x1;
     let uy = y2 - y1;
     let uz = z2 - z1;
-    
+
     let vx = x3 - x1;
     let vy = y3 - y1;
     let vz = z3 - z1;
-    
+
     let nx = uy * vz - uz * vy;
     let ny = uz * vx - ux * vz;
     let nz = ux * vy - uy * vx;
-    
+
     let length = Math.sqrt(nx * nx + ny * ny + nz * nz);
     if (length > 0) {
         nx /= length;
         ny /= length;
         nz /= length;
     }
-    
+
     return { x: nx, y: ny, z: nz };
 }
 
@@ -1025,6 +1100,36 @@ in vec3 normal;
 void main(){
     frag_color = vec4(color, 1);
 }`);
+ctx.shaders["shader_basic_alpha"] = ctx.create_shader(`#version 300 es
+layout(location = 0) in vec3 position_attrib;
+layout(location = 1) in vec3 normal_attrib;
+
+uniform mat4 m;
+uniform mat4 v;
+uniform mat4 p;
+
+out vec3 position;
+out vec3 normal;
+
+void main(){
+    gl_Position = p*v*m*vec4(position_attrib, 1);
+    position = position_attrib;
+    normal = normal_attrib;
+}`,
+`#version 300 es
+precision highp float;
+
+uniform vec3 color;
+uniform float alpha;
+
+out vec4 frag_color;
+
+in vec3 position;
+in vec3 normal;
+
+void main(){
+    frag_color = vec4(color, alpha);
+}`);
 ctx.shaders["shader_spd"] = ctx.create_shader(`#version 300 es
 layout(location = 0) in vec3 position_attrib;
 layout(location = 1) in vec3 normal_attrib;
@@ -1059,17 +1164,17 @@ vec3 wavelength_to_rgb(float wavelength) {
         r = 0.5 * (450.0 - wavelength) / (450.0 - 380.0);
         g = 0.0;
         b = 1.0;
-    } 
+    }
     else if (wavelength >= 450.0 && wavelength < 540.0) {
         r = 0.0;
         g = (wavelength - 450.0) / (540.0 - 450.0);
         b = 1.0 - (wavelength - 450.0) / (540.0 - 450.0);
-    } 
+    }
     else if (wavelength >= 540.0 && wavelength < 590.0) {
         r = (wavelength - 540.0) / (590.0 - 540.0);
         g = 1.0;
         b = 0.0;
-    } 
+    }
     else if (wavelength >= 590.0 && wavelength <= 700.0) {
         r = 1.0;
         g = 1.0 - (wavelength - 590.0) / (700.0 - 590.0);
@@ -1150,17 +1255,17 @@ vec3 wavelength_to_rgb(float wavelength) {
         r = 0.5 * (450.0 - wavelength) / (450.0 - 380.0);
         g = 0.0;
         b = 1.0;
-    } 
+    }
     else if (wavelength >= 450.0 && wavelength < 540.0) {
         r = 0.0;
         g = (wavelength - 450.0) / (540.0 - 450.0);
         b = 1.0 - (wavelength - 450.0) / (540.0 - 450.0);
-    } 
+    }
     else if (wavelength >= 540.0 && wavelength < 590.0) {
         r = (wavelength - 540.0) / (590.0 - 540.0);
         g = 1.0;
         b = 0.0;
-    } 
+    }
     else if (wavelength >= 590.0 && wavelength <= 700.0) {
         r = 1.0;
         g = 1.0 - (wavelength - 590.0) / (700.0 - 590.0);
@@ -1339,10 +1444,10 @@ float smooth_noise(vec2 p)
     vec2 i = floor(p);
     vec2 f = fract(p);
     vec2 u = f * f * (3.0 - 2.0 * f);
-    
-    return mix(mix(noise(i + vec2(0.0, 0.0)), 
+
+    return mix(mix(noise(i + vec2(0.0, 0.0)),
                    noise(i + vec2(1.0, 0.0)), u.x),
-               mix(noise(i + vec2(0.0, 1.0)), 
+               mix(noise(i + vec2(0.0, 1.0)),
                    noise(i + vec2(1.0, 1.0)), u.x), u.y);
 }
 
@@ -1351,7 +1456,7 @@ float fbm(vec3 p)
     float v = 0.0;
     float a = 0.5;
     vec3 shift = vec3(100.0);
-    
+
     for (int i = 0; i < 6; ++i) {
         v += a * smooth_noise(p.xy + time);
         v += a * smooth_noise(p.xz + time);
@@ -1390,6 +1495,7 @@ void main(){
 `#version 300 es
 precision highp float;
 
+uniform vec3 light_pos;
 uniform vec3 color;
 uniform int metallic;
 
@@ -1400,7 +1506,6 @@ in vec3 normal;
 in vec3 camera_pos;
 
 void main(){
-    vec3 light_pos = vec3(0, 1, 1);
     vec3 light_dir = normalize(light_pos - position);
     vec3 view_dir = normalize(camera_pos - position);
     vec3 reflect_dir = reflect(-light_dir, normal);
@@ -1830,7 +1935,18 @@ ctx.scenes = {
                 zoom: 3.0
             }
         }},
-  
+    "scene_reflection": {id: "scene_reflection", el: null, ratio: 1.5, camera: null, dragging_rect: null, draggable_rects: {"scene": []},
+        camera: {
+            fov: 50, z_near: 0.1, z_far: 1000,
+            position: [0, 0, 0], rotation: [0, 0, 0],
+            up_vector: [0, 1, 0],
+            view_matrix: mat4_identity(),
+            orbit: {
+                rotation: [-0.5, 0, 0],
+                pivot: [0, 0, 0],
+                zoom: 2.0
+            }
+        }},
 };
 
 function get_event_coordinates(e, element) {
@@ -1982,7 +2098,7 @@ ctx.draw = function(drawable, custom_uniforms, custom_camera, custom_shader){
         this.previous_scene = this.current_scene;
         this.current_scene.camera_dirty = true;
     }
-    
+
     ctx.set_shader_uniform(shader, "time", this.time);
     gl.bindVertexArray(drawable.vertex_buffer.vao);
     this.set_shader_uniform(this.shaders[drawable.shader], "color", drawable.color);
@@ -2421,17 +2537,17 @@ function wavelength_to_rgb(value, start, end) {
         r = 0.5 * (450.0 - wavelength) / (450.0 - 380.0);
         g = 0.0;
         b = 1.0;
-    } 
+    }
     else if (wavelength >= 450.0 && wavelength < 540.0) {
         r = 0.0;
         g = (wavelength - 450.0) / (540.0 - 450.0);
         b = 1.0 - (wavelength - 450.0) / (540.0 - 450.0);
-    } 
+    }
     else if (wavelength >= 540.0 && wavelength < 590.0) {
         r = (wavelength - 540.0) / (590.0 - 540.0);
         g = 1.0;
         b = 0.0;
-    } 
+    }
     else if (wavelength >= 590.0 && wavelength <= 700.0) {
         r = 1.0;
         g = 1.0 - (wavelength - 590.0) / (700.0 - 590.0);
@@ -2597,7 +2713,7 @@ document.getElementById("show-field-checkbox").addEventListener("change", functi
 document.getElementById("magnet-input").value = magnet_pos;
 document.getElementById("magnet-input").addEventListener("input", function(e){
     magnet_pos = parseFloat(e.target.value);
-    
+
     if(magnet_pos_average.length < 10){
         magnet_pos_average.push(magnet_pos);
     }
@@ -2803,9 +2919,12 @@ flashlight_light.alpha = 1.0;
 // scene_apple_lights
 // scene_apple
 let apple_transform = mat4_identity();
-let apple = ctx.create_drawable("shader_apple", null, [1, 0, 0], apple_transform);
-let apple_stem = ctx.create_drawable("shader_apple", null, [0.467, 0.318, 0.251], apple_transform);
-let apple_leaf = ctx.create_drawable("shader_apple", null, [0.380, 0.627, 0.149], apple_transform);
+let apple_color = [1, 0, 0];
+let apple_stem_color = [0.467, 0.318, 0.251];
+let apple_leaf_color = [0.380, 0.627, 0.149];
+let apple = ctx.create_drawable("shader_apple", null, [0, 0, 0], apple_transform);
+let apple_stem = ctx.create_drawable("shader_apple", null, [0, 0, 0], apple_transform);
+let apple_leaf = ctx.create_drawable("shader_apple", null, [0, 0, 0], apple_transform);
 
 let wave_param_apple = {
     num_points: 500,
@@ -2948,13 +3067,13 @@ ctx.update_drawable_mesh(current_graph_drawable, create_line(current_graph_drawa
 
 ctx.text_buffers["graph_current_y_axis"] = {text: "Current", color: [0, 0, 0], transform: mat4_mat4_mul(
                     scale_3d([0.0025, 0.0025, 0.0025]),
-                    translate_3d(vec3_add(current_graph_position, [-0.22, 1.05, 0])))}; 
+                    translate_3d(vec3_add(current_graph_position, [-0.22, 1.05, 0])))};
 ctx.text_buffers["graph_current_y_max"] = {text: "2 A", color: [0, 0, 0], transform: mat4_mat4_mul(
                     scale_3d([0.0025, 0.0025, 0.0025]),
-                    translate_3d(vec3_add(current_graph_position, [-0.24, 0.75, 0])))}; 
+                    translate_3d(vec3_add(current_graph_position, [-0.24, 0.75, 0])))};
 ctx.text_buffers["graph_current_y_min"] = {text: "0 A", color: [0, 0, 0], transform: mat4_mat4_mul(
                     scale_3d([0.0025, 0.0025, 0.0025]),
-                    translate_3d(vec3_add(current_graph_position, [-0.24, 0.1, 0])))}; 
+                    translate_3d(vec3_add(current_graph_position, [-0.24, 0.1, 0])))};
 // scene_bulb_graphs
 // scene_led
 let led_transform =
@@ -2966,6 +3085,21 @@ let led_metal = ctx.create_drawable("shader_shaded", null, [0.5, 0.5, 0.5], led_
 let led_epoxy_case = ctx.create_drawable("shader_glass", null, [1, 1, 1], led_transform);
 let led_reflective_case = ctx.create_drawable("shader_shaded", null, [0.5, 0.5, 0.5], led_transform);
 // scene_led
+// scene_reflection
+let hemisphere = ctx.create_drawable("shader_basic_alpha", create_uv_hemisphere(0.25, 32, 32), [0, 0, 0], mat4_identity(),
+[
+    { name: "position_attrib", size: 3 },
+    { name: "normal_attrib", size: 3 },
+    { name: "texcoord_attrib", size: 2 },
+]);
+let reflection_plane = ctx.create_drawable("shader_basic",
+    create_rect([0, 0, 0], [1, 1]),
+    [0.7, 0.7, 0.7],
+    mat4_mat4_mul(
+        rotate_3d(axis_angle_to_quat([1, 0, 0], rad(90))),
+        translate_3d([-0.5, 0, -0.5]),
+    ));
+// scene_reflection
 // scene_sun
 let sun_surface = ctx.create_drawable("shader_sun_surface", null, [1.000, 0.605, 0.020], mat4_identity());
 let sun_cross = ctx.create_drawable("shader_sun_cross", null, [0.826, 0.344, 0.000], mat4_identity());
@@ -3014,19 +3148,19 @@ function generate_random_photon_walk(){
     const forward_bias = 0.4;
     for (let i = 0; i < max_steps; i++) {
         let theta;
-        
+
         if (Math.random() < forward_bias) {
             theta = Math.random() * Math.PI * 0.5;
         } else {
             theta = Math.random() * Math.PI * 2;
         }
-        
+
         const dx = Math.cos(theta) * step_size;
         const dy = Math.sin(theta) * step_size;
-        
+
         const new_x = current_position[0] + dx;
         const new_y = current_position[1] + dy;
-        
+
         if (new_x >= 0 && new_y >= 0) {
             current_position = [new_x, new_y, 0];
             random_points.push([...current_position]);
@@ -3034,12 +3168,12 @@ function generate_random_photon_walk(){
             i--;
             continue;
         }
-        
+
         const distance = Math.sqrt(
-            current_position[0] * current_position[0] + 
+            current_position[0] * current_position[0] +
             current_position[1] * current_position[1]
         );
-        
+
         if (distance > 1) {
             const normalized = [
                 current_position[0] / distance,
@@ -3069,7 +3203,7 @@ for (let i = 0; i < num_rays; i++) {
     photon_walks.push(generate_random_photon_walk());
     photon_steps.push(1);
     photon_waits.push(0);
-    
+
     let sphere = ctx.create_drawable("shader_basic", create_uv_sphere(0.02, 16, 16, true), [1, 1, 1], mat4_identity(),
     [
         { name: "position_attrib", size: 3 },
@@ -3087,7 +3221,7 @@ setInterval(function() {
         if (photon_steps[i] < photon_walks[i].length) {
             photon_steps[i]++;
             ctx.update_drawable_mesh(photon_rays[i], create_line_3d(photon_walks[i].slice(0, photon_steps[i]), 0.01, 16));
-            
+
             if (photon_steps[i] === photon_walks[i].length - 1) {
                 const exit_point = photon_walks[i][photon_walks[i].length - 1];
                 sphere_positions[i] = [...exit_point];
@@ -3103,19 +3237,19 @@ setInterval(function() {
                 photon_waits[i] = 0;
             }
         }
-        
+
         if (sphere_active[i]) {
             sphere_positions[i][0] += sphere_velocities[i][0];
             sphere_positions[i][1] += sphere_velocities[i][1];
             sphere_positions[i][2] += sphere_velocities[i][2];
             ejected_spheres[i].transform = translate_3d(sphere_positions[i]);
-            
+
             const distance = Math.sqrt(
-                sphere_positions[i][0] * sphere_positions[i][0] + 
-                sphere_positions[i][1] * sphere_positions[i][1] + 
+                sphere_positions[i][0] * sphere_positions[i][0] +
+                sphere_positions[i][1] * sphere_positions[i][1] +
                 sphere_positions[i][2] * sphere_positions[i][2]
             );
-            
+
             if (distance > 2) {
                 sphere_active[i] = false;
                 sphere_positions[i] = [0, 0, 0];
@@ -3316,24 +3450,24 @@ function triangulate_points(points) {
         const [x0, y0] = v0;
         const [x1, y1] = v1;
         const [x2, y2] = v2;
-        
+
         const v0x = x2 - x0;
         const v0y = y2 - y0;
         const v1x = x1 - x0;
         const v1y = y1 - y0;
         const v2x = px - x0;
         const v2y = py - y0;
-        
+
         const dot00 = v0x * v0x + v0y * v0y;
         const dot01 = v0x * v1x + v0y * v1y;
         const dot02 = v0x * v2x + v0y * v2y;
         const dot11 = v1x * v1x + v1y * v1y;
         const dot12 = v1x * v2x + v1y * v2y;
-        
+
         const inv_denom = 1 / (dot00 * dot11 - dot01 * dot01);
         const u = (dot11 * dot02 - dot01 * dot12) * inv_denom;
         const v = (dot00 * dot12 - dot01 * dot02) * inv_denom;
-        
+
         return (u >= 0) && (v >= 0) && (u + v <= 1);
     }
 
@@ -3460,16 +3594,14 @@ function create_spd_graph(scene, data, stuff){
     ctx.scenes[scene].el.addEventListener("mousemove", function(e){
         const coords = get_event_coordinates(e, ctx.scenes[scene].el);
         let current_selection = ctx.scenes[scene].current_selection;
-        
         let min_world_space = spd_graph_drawable_points[0][0];
         let max_world_space = spd_graph_drawable_points[spd_graph_drawable_points.length-1][0];
-        let current_selection_x = clamp(remap_value(coords.x+10, graph_screen_space_left, graph_screen_space_right, min_world_space, max_world_space), min_world_space, max_world_space);
+        let current_selection_x = clamp(remap_value(coords.x, graph_screen_space_left, graph_screen_space_right, min_world_space, max_world_space), min_world_space, max_world_space);
 
         let new_current_selection = Math.floor(current_selection_x/graph_width*spd_graph_num_points);
         if(new_current_selection > 0 && new_current_selection < data.length-1){
             current_selection = new_current_selection;
         }
-        console.log(current_selection, data.length)
         ctx.scenes[scene].current_selection = new_current_selection;
         current_selection_x = current_selection/spd_graph_num_points * graph_width;
         let current_selection_y = data[current_selection][1]/stuff.scale_y+stuff.offset_y;
@@ -3628,13 +3760,20 @@ function update(current_time){
             ctx.draw(magnet_arrow2);
         }
         else if(scene_id == "scene_transport"){
+            apple_color = [1, 0, 0];
+            apple_stem_color = [0.467, 0.318, 0.251];
+            apple_leaf_color = [0.380, 0.627, 0.149];
+            apple.color = apple_color;
+            apple_stem.color = apple_stem_color;
+            apple_leaf.color = apple_leaf_color;
+
             apple.transform = apple_transform_transport;
-            ctx.draw(apple);
+            ctx.draw(apple, {"light_pos": [0, 1, 1]});
             apple_stem.transform = apple_transform_transport;
-            ctx.draw(apple_stem);
+            ctx.draw(apple_stem, {"light_pos": [0, 1, 1]});
             apple_leaf.transform = apple_transform_transport;
-            ctx.draw(apple_leaf);
-            
+            ctx.draw(apple_leaf, {"light_pos": [0, 1, 1]});
+
             ctx.draw(sun);
             gl.activeTexture(gl.TEXTURE0);
             gl.bindTexture(gl.TEXTURE_2D, eye_texture);
@@ -3652,20 +3791,35 @@ function update(current_time){
             ctx.draw(wave_apple_to_eye);
         }
         else if(scene_id == "scene_apple_lights"){
+            apple_color = vec3_hadamard([1, 0, 0], flashlight_color);
+            apple_stem_color = vec3_hadamard([0.467, 0.318, 0.251], flashlight_color);
+            apple_leaf_color = vec3_hadamard([0.380, 0.627, 0.149], flashlight_color);
+            apple.color = apple_color;
+            apple_stem.color = apple_stem_color;
+            apple_leaf.color = apple_leaf_color;
+
             gl.clearColor(0, 0, 0, 1);
             gl.clear(gl.COLOR_BUFFER_BIT);
             apple.transform = apple_transform;
-            ctx.draw(apple);
+            let light_pos = [-1, 0.5, 0.1];
+            ctx.draw(apple, {"light_pos": light_pos});
             apple_stem.transform = apple_transform;
-            ctx.draw(apple_stem);
+            ctx.draw(apple_stem, {"light_pos": light_pos});
             apple_leaf.transform = apple_transform;
-            ctx.draw(apple_leaf);
+            ctx.draw(apple_leaf, {"light_pos": light_pos});
             ctx.draw(flashlight);
             ctx.draw(flashlight_inside);
+
+            apple.transform = translate_3d([2, 0, 0]);
+            apple.color = vec3_hadamard([0.83, 0.8, 0], flashlight_color);
+            ctx.draw(apple, {"light_pos": light_pos});
+            apple.transform = apple_transform;
+
             gl.cullFace(gl.FRONT);
             ctx.draw(flashlight_light, {"alpha": flashlight_light.alpha});
             gl.cullFace(gl.BACK);
             ctx.draw(flashlight_light, {"alpha": flashlight_light.alpha});
+
         }
         else if(scene_id == "scene_apple"){
             wave_red_2_3d.color = red;
@@ -3686,11 +3840,19 @@ function update(current_time){
             ctx.draw(wave_blue_3d);
             ctx.draw(wave_violet_3d);
             apple.transform = apple_transform;
-            ctx.draw(apple);
+
+            apple_color = [1, 0, 0];
+            apple_stem_color = [0.467, 0.318, 0.251];
+            apple_leaf_color = [0.380, 0.627, 0.149];
+            apple.color = apple_color;
+            apple_stem.color = apple_stem_color;
+            apple_leaf.color = apple_leaf_color;
+
+            ctx.draw(apple, {"light_pos": [0, 1, 1]});
             apple_stem.transform = apple_transform;
-            ctx.draw(apple_stem);
+            ctx.draw(apple_stem, {"light_pos": [0, 1, 1]});
             apple_leaf.transform = apple_transform;
-            ctx.draw(apple_leaf);
+            ctx.draw(apple_leaf, {"light_pos": [0, 1, 1]});
         }
         else if(scene_id in scenes_spd){
             for(const [key, scene] of Object.entries(scenes_spd)){
@@ -3768,6 +3930,12 @@ function update(current_time){
             ctx.draw(ctx.text_buffers["graph_current_y_max"]);
             ctx.draw(ctx.text_buffers["graph_current_y_min"]);
         }
+        else if(scene_id == "scene_reflection"){
+            gl.disable(gl.CULL_FACE);
+            ctx.draw(reflection_plane);
+            gl.enable(gl.CULL_FACE);
+            ctx.draw(hemisphere, {"alpha": 0.4});
+        }
         else if(scene_id == "scene_sun"){
             gl.depthFunc(gl.LESS);
 
@@ -3797,7 +3965,7 @@ function update(current_time){
             gl.colorMask(true, true, true, true);
             ctx.draw(sun_core);
             ctx.gl.bindFramebuffer(ctx.gl.FRAMEBUFFER, null);
-            
+
             gl.useProgram(ctx.shaders["shader_postprocess"].program);
             gl.activeTexture(gl.TEXTURE1);
             gl.bindTexture(gl.TEXTURE_2D, postprocess_texture);
@@ -3864,7 +4032,7 @@ function update(current_time){
             ctx.draw(bulb_wire_holder, {"metallic": 0});
             ctx.draw(bulb2, {"alpha": 0.4});
             ctx.draw(bulb, {"alpha": 0.4});
-            
+
             gl.clear(gl.STENCIL_BUFFER_BIT);
             gl.enable(gl.STENCIL_TEST);
 
@@ -3978,7 +4146,7 @@ function update(current_time){
             gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
             ctx.draw(bulb, {"color": [1.000, 0.577, 0.000], "m": bulb_transform}, null, "shader_basic");
             ctx.gl.bindFramebuffer(ctx.gl.FRAMEBUFFER, null);
-            
+
             gl.useProgram(ctx.shaders["shader_postprocess"].program);
             gl.activeTexture(gl.TEXTURE1);
             gl.bindTexture(gl.TEXTURE_2D, postprocess_texture);
@@ -4265,14 +4433,14 @@ async function get_texture(ctx, url){
         let res = await fetch(url);
         let blob = await res.blob();
         let image = await createImageBitmap(blob);
-        
+
         let texture = gl.createTexture();
         gl.bindTexture(gl.TEXTURE_2D, texture);
         gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, image);
         gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR_MIPMAP_LINEAR);
         gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
         gl.generateMipmap(gl.TEXTURE_2D);
-      
+
         return texture;
     } catch (err) {
         console.error(err);
