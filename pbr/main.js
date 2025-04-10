@@ -1151,6 +1151,8 @@ precision highp float;
 
 uniform vec3 color;
 uniform sampler2D texture_uniform;
+uniform int small_graph;
+uniform int grayed;
 
 out vec4 frag_color;
 
@@ -1185,8 +1187,45 @@ vec3 wavelength_to_rgb(float wavelength) {
     return vec3(r, g, b) * fade;
 }
 
+
+vec3 wavelength_to_rgb_small(float wavelength) {
+    float r = 0.0, g = 0.0, b = 0.0;
+
+    if (wavelength >= 380.0 && wavelength < 450.0) {
+        r = 0.5 * (450.0 - wavelength) / (450.0 - 380.0);
+        g = 0.0;
+        b = 1.0;
+    }
+    else if (wavelength >= 450.0 && wavelength < 540.0) {
+        r = 0.0;
+        g = (wavelength - 450.0) / (540.0 - 450.0);
+        b = 1.0 - (wavelength - 450.0) / (540.0 - 450.0);
+    }
+    else if (wavelength >= 540.0 && wavelength < 590.0) {
+        r = (wavelength - 540.0) / (590.0 - 540.0);
+        g = 1.0;
+        b = 0.0;
+    }
+    else if (wavelength >= 590.0 ) {
+        r = 1.0;
+        g = 1.0 - (wavelength - 590.0) / (700.0 - 590.0);
+        b = 0.0;
+    }
+
+    return vec3(r, g, b);
+}
+
 void main(){
-    frag_color = vec4(wavelength_to_rgb(mix(350.0, 720.0, position.x/2.0)), 1);
+    if(small_graph == 1){
+        float grayed_scale = 0.0;
+        if(grayed == 1){
+            grayed_scale = 0.85;
+        }
+        frag_color = vec4(wavelength_to_rgb_small(mix(420.0, 760.0, position.x*1.7)) * 1.2 - vec3(grayed_scale), 1);
+    }
+    else{
+        frag_color = vec4(wavelength_to_rgb(mix(350.0, 720.0, position.x/2.0)), 1);
+    }
 }`);
 ctx.shaders["shader_eye"] = ctx.create_shader(`#version 300 es
 layout(location = 0) in vec3 position_attrib;
@@ -1497,7 +1536,7 @@ precision highp float;
 
 uniform vec3 light_pos;
 uniform vec3 color;
-uniform int metallic;
+uniform int specular_factor;
 
 out vec4 frag_color;
 
@@ -1510,9 +1549,12 @@ void main(){
     vec3 view_dir = normalize(camera_pos - position);
     vec3 reflect_dir = reflect(-light_dir, normal);
     float specular = pow(max(dot(view_dir, reflect_dir), 0.0), 8.0);
+    if(specular_factor == 1){
+        specular *= 0.0;
+    }
     float angle = clamp(dot(normalize(light_pos), normal), 0.0, 1.0);
     float diffuse = angle;
-    frag_color = vec4(color*(diffuse*0.6+ 0.4) + vec3(specular)*0.5, 1.0);
+    frag_color = vec4(color*(diffuse*0.6+ 0.5) + vec3(specular)*0.5*(color.r+color.g+color.b)/3.0, 1.0);
 }`);
 ctx.shaders["shader_glass"] = ctx.create_shader(`#version 300 es
 layout(location = 0) in vec3 position_attrib;
@@ -1874,6 +1916,19 @@ ctx.scenes = {
         },
         current_selection: 0
     }},
+    "scene_apple_reflectance": {id: "scene_apple_reflectance", el: null, ratio: 2, camera: null, dragging_rect: null, draggable_rects: {},
+        camera: {
+        fov: 30, z_near: 0.1, z_far: 1000,
+        position: [0, 0, 0], rotation: [0, 0, 0],
+        up_vector: [0, 1, 0],
+        view_matrix: mat4_identity(),
+        orbit: {
+            rotation: [0, 0, 0],
+            pivot: [0, 0, 0],
+            zoom: 3.0,
+        },
+        current_selection: 0
+    }},
     "scene_spd_sun_space": {id: "scene_spd_sun_space", el: null, ratio: 2, camera: null, dragging_rect: null, draggable_rects: {},
         camera: {
         fov: 30, z_near: 0.1, z_far: 1000,
@@ -1900,6 +1955,18 @@ ctx.scenes = {
             }
         }},
     "scene_apple_lights": {id: "scene_apple_lights", el: null, ratio: 1.7, camera: null, dragging_rect: null, draggable_rects: {"scene": []},
+        camera: {
+            fov: 40, z_near: 0.1, z_far: 1000,
+            position: [0, 0, 0], rotation: [0, 0, 0],
+            up_vector: [0, 1, 0],
+            view_matrix: mat4_identity(),
+            orbit: {
+                rotation: [-0.3, 0.3, 0],
+                pivot: [0, 0, 0],
+                zoom: 7.0
+            }
+        }},
+    "scene_metamers": {id: "scene_metamers", el: null, ratio: 1.7, camera: null, dragging_rect: null, draggable_rects: {"scene": []},
         camera: {
             fov: 40, z_near: 0.1, z_far: 1000,
             position: [0, 0, 0], rotation: [0, 0, 0],
@@ -2472,7 +2539,7 @@ update_drag_charges_relativity(ctx.scenes["scene_relativity"]);
 let cable = ctx.create_drawable("shader_basic",
     create_rect([-5, ctx.scenes["scene_relativity"].cable_y_pos-0.44, 0], [10, 0.6]),
     [0.5, 0.5, 0.5], translate_3d([0, 0, 0]));
-
+ctx.create_drawable("shader_basic", create_rect([0, 0, 0], [2,2]), [0.9, 0.9, 0.9], mat4_identity())
 let position_range = {x: [-3.5, 3.5], y: [-1.7, 1.7]};
 let random_circles = [];
 let random_circles_pos = [];
@@ -2894,19 +2961,139 @@ wave_apple_to_eye.transform = mat4_mat4_mul(
 let flashlight_transform = mat4_mat4_mul(
     scale_3d([0.4, 0.4, 0.4]),
     mat4_mat4_mul(
-        translate_3d([0, 0, -3]),
+        translate_3d([0, 0, -3.7]),
         mat4_mat4_mul(
-            rotate_3d(axis_angle_to_quat(vec3_normalize([0, 1, 0]), rad(65))),
+            rotate_3d(axis_angle_to_quat(vec3_normalize([0, 1, 0]), rad(70))),
             rotate_3d(axis_angle_to_quat(vec3_normalize([1, 0, 0]), rad(80))),
         ),
     ),
 );
-let flashlight = ctx.create_drawable("shader_shaded", null, [0.3, 0.3, 0.3], flashlight_transform);
+
+let apple_transform_flashlight = mat4_mat4_mul(
+    scale_3d([1, 1, 1]),
+    translate_3d([0, 0, 0]),
+);
+
 let flashlight_color = [1, 1, 1];
 let flashlight_inside = ctx.create_drawable("shader_shaded", null, flashlight_color, flashlight_transform);
 let flashlight_light = ctx.create_drawable("shader_flashlight", null, flashlight_color, flashlight_transform);
 flashlight_light.alpha = 1.0;
 
+
+function create_small_graph(graph_position, data){
+    let axis_color = [0.4, 0.4, 0.4];
+    let graph_x_axis = ctx.create_drawable("shader_basic", create_arrow([0, 0, 0], [0.7, 0, 0], [0.02, 0.04]), axis_color, translate_3d(graph_position));
+    let graph_y_axis = ctx.create_drawable("shader_basic", create_arrow([0.01, 0, 0], [0.01, 0.5, 0], [0.02, 0.04]), axis_color, translate_3d(graph_position));
+
+    let graph_drawable_line = ctx.create_drawable("shader_spd", null, [1, 1, 1], translate_3d(graph_position));
+
+    return {
+        "graph_x_axis": graph_x_axis,
+        "graph_y_axis": graph_y_axis,
+        "graph_drawable_line": graph_drawable_line,
+    };
+}
+
+function update_small_graph(graph, data){
+    let graph_drawable_points = [];
+    let graph_width = 0.6;
+    let graph_height = 0.28;
+    let graph_height_min = 0.05;
+    for(let i = 0; i < data.length; i++){
+        let x = i/data.length * graph_width + 0.02;
+        graph_drawable_points.push([x, data[i]*graph_height + graph_height_min, 0]);
+    }
+    ctx.update_drawable_mesh(graph["graph_drawable_line"], create_line(graph_drawable_points, 0.017, false));
+}
+
+let ui_camera_small_graph = {
+    fov: 50, z_near: 0.1, z_far: 1000,
+    position: [0, 0, 0], rotation: [0, 0, 0],
+    up_vector: [0, 1, 0],
+    view_matrix: mat4_identity(),
+    orbit: {rotation: [0, 0, 0], pivot: [0, 0, 0], zoom: 3.0}
+};
+update_camera_orbit(ui_camera_small_graph);
+update_camera_projection_matrix(ui_camera_small_graph, ctx.scenes["scene_apple_lights"].width/ctx.scenes["scene_apple_lights"].height);
+function rgb_to_spectral_distribution(r, g, b) {
+    const num_points = 80;
+    const min_wavelength = 420;
+    const max_wavelength = 740;
+    const distribution = [];
+
+    let r_spread = 30;
+    let g_spread = 15;
+    let b_spread = 10;
+
+    for (let i = 0; i < num_points; i++) {
+        const wavelength = min_wavelength + (i / (num_points - 1)) * (max_wavelength - min_wavelength);
+
+        const red_contribution = r * Math.exp(-0.5 * Math.pow((wavelength - 660) / r_spread, 2));
+        const green_contribution = g * Math.exp(-0.5 * Math.pow((wavelength - 530) / g_spread, 2));
+        const blue_contribution = b * Math.exp(-0.5 * Math.pow((wavelength - 460) / b_spread, 2));
+
+        let value = red_contribution + green_contribution + blue_contribution;
+        value = Math.min(1, value);
+        distribution.push(value);
+    }
+    return distribution;
+}
+
+function combine_spectra(light_spectrum, reflectance_spectrum){
+    const result_spectrum = [];
+
+    for (let i = 0; i < light_spectrum.length; i++) {
+        result_spectrum.push(light_spectrum[i] * reflectance_spectrum[i]);
+    }
+
+    return result_spectrum;
+}
+
+let small_graph_spd_data = [];
+let small_graph_spd = create_small_graph([1.6, -0.2+0.9, 0], small_graph_spd_data);
+let small_graph_apple_data = [];
+let small_graph_apple = create_small_graph([1.6, -0.20, 0], small_graph_apple_data);
+let small_graph_result_data = [];
+let small_graph_result = create_small_graph([1.6, -0.2-0.9, 0], small_graph_result_data);
+
+let small_graph_spd_metamers_data = [];
+let small_graph_spd_metamers = create_small_graph([1.6, -0.2+0.9, 0], small_graph_spd_metamers_data);
+let small_graph_banana_data = [];
+let small_graph_banana = create_small_graph([1.6, -0.20, 0], small_graph_banana_data);
+let small_graph_apple_metamers_data = [];
+let small_graph_apple_metamers = create_small_graph([1.6, -0.20, 0], small_graph_apple_metamers_data);
+
+let small_graph_result_metamers_banana_data = [];
+let small_graph_result_metamers_banana = create_small_graph([1.6, -0.2-0.9, 0], small_graph_result_metamers_banana_data);
+
+let small_graph_result_metamers_apple_data = [];
+let small_graph_result_metamers_apple = create_small_graph([1.6, -0.2-0.9, 0], small_graph_result_metamers_apple_data);
+
+let show_apple_graph = true;
+
+
+let multiply_sign = ctx.create_drawable("shader_basic", create_plus_sign([0, 0, 0], 0.2, 0.025), [0.4, 0.4, 0.4],
+    mat4_mat4_mul(
+        rotate_3d(axis_angle_to_quat(vec3_normalize([0, 0, 1]), rad(-45))),
+        translate_3d([1.6+0.35, 0.45, 0]),
+    )
+);
+let equal_sign_width = 0.11;
+let equal_sign_start_left = 1.6+0.35;
+let equal_sign_height = 0.045;
+let equal_sign_start_top = -0.45;
+let equal_sign1 = ctx.create_drawable("shader_basic", create_line([
+    [equal_sign_start_left-equal_sign_width, equal_sign_start_top+equal_sign_height, 0],
+    [equal_sign_start_left+equal_sign_width, equal_sign_start_top+equal_sign_height, 0]
+], 0.025), [0.4, 0.4, 0.4],
+    mat4_identity()
+);
+let equal_sign2 = ctx.create_drawable("shader_basic", create_line([
+    [equal_sign_start_left-equal_sign_width, equal_sign_start_top-equal_sign_height, 0],
+    [equal_sign_start_left+equal_sign_width, equal_sign_start_top-equal_sign_height, 0]
+], 0.025), [0.4, 0.4, 0.4],
+    mat4_identity()
+);
 ["r", "g", "b"].forEach(function(component, i){
     const elem = document.getElementById("light-"+component+"-input");
     elem.value = flashlight_color[i];
@@ -2914,9 +3101,178 @@ flashlight_light.alpha = 1.0;
         flashlight_light.alpha = Math.max(flashlight_color[0], Math.max(flashlight_color[1], flashlight_color[2]));
         flashlight_color[i] = parseFloat(e.target.value);
         flashlight_light.color = flashlight_inside.color = flashlight_color;
+        update_small_graphs();
     });
 });
+
+function ease_out_cubic(x) {
+    return 1 - Math.pow(1 - x, 3);
+}
+
+function update_small_graphs(){
+    small_graph_spd_data = rgb_to_spectral_distribution(flashlight_color[0], flashlight_color[1], flashlight_color[2]);
+    update_small_graph(small_graph_spd, small_graph_spd_data);
+
+    small_graph_apple_data = rgb_to_spectral_distribution(1, 0, 0);
+    update_small_graph(small_graph_apple, small_graph_apple_data);
+
+    small_graph_result_data = combine_spectra(small_graph_spd_data, small_graph_apple_data);
+    update_small_graph(small_graph_result, small_graph_result_data);
+}
+
+function update_small_graphs_metamers(){
+    small_graph_spd_metamers_data = rgb_to_spectral_distribution(flashlight_color_m[0], flashlight_color_m[1], flashlight_color_m[2]);
+    update_small_graph(small_graph_spd_metamers, small_graph_spd_metamers_data);
+
+    small_graph_banana_data = rgb_to_spectral_distribution(0.88, 0.8, 0);
+    update_small_graph(small_graph_banana, small_graph_banana_data);
+
+    small_graph_apple_metamers_data = rgb_to_spectral_distribution(1, 0, 0);
+    update_small_graph(small_graph_apple_metamers, small_graph_apple_metamers_data);
+
+    small_graph_result_metamers_banana_data = combine_spectra(small_graph_spd_metamers_data, small_graph_banana_data);
+    update_small_graph(small_graph_result_metamers_banana, small_graph_result_metamers_banana_data);
+
+    small_graph_result_metamers_apple_data = combine_spectra(small_graph_spd_metamers_data, small_graph_apple_metamers_data);
+    update_small_graph(small_graph_result_metamers_apple, small_graph_result_metamers_apple_data);
+}
+
+function animate_sliders(flashlight_color, flashlight_light, target_color, id){
+    const current_color = [...flashlight_color];
+
+    const duration = 100;
+    const fps = 200;
+    const steps = duration / (1000 / fps);
+    let step = 0;
+
+    const increment_r = target_color[0] - current_color[0];
+    const increment_g = target_color[1] - current_color[1];
+    const increment_b = target_color[2] - current_color[2];
+
+    if (window.slider_interval) {
+        clearInterval(window.slider_interval);
+    }
+
+    window.slider_interval = setInterval(() => {
+        if(id == "-m"){
+            update_small_graphs_metamers();
+        }
+        else{
+            update_small_graphs();
+        }
+
+        if (step >= steps) {
+            flashlight_color = [...target_color];
+            document.getElementById("light-r-input"+id).value = target_color[0];
+            document.getElementById("light-g-input"+id).value = target_color[1];
+            document.getElementById("light-b-input"+id).value = target_color[2];
+
+            update_slider_background(document.getElementById("light-r-input"+id));
+            update_slider_background(document.getElementById("light-g-input"+id));
+            update_slider_background(document.getElementById("light-b-input"+id));
+
+            flashlight_light.alpha = Math.max(flashlight_color[0], Math.max(flashlight_color[1], flashlight_color[2]));
+            flashlight_light.color = flashlight_inside.color = flashlight_color;
+
+            clearInterval(window.slider_interval);
+            return;
+        }
+
+        const progress = step / steps;
+        const eased_progress = ease_out_cubic(progress);
+
+        flashlight_color[0] = current_color[0] + (increment_r * eased_progress);
+        flashlight_color[1] = current_color[1] + (increment_g * eased_progress);
+        flashlight_color[2] = current_color[2] + (increment_b * eased_progress);
+
+        document.getElementById("light-r-input"+id).value = flashlight_color[0];
+        document.getElementById("light-g-input"+id).value = flashlight_color[1];
+        document.getElementById("light-b-input"+id).value = flashlight_color[2];
+
+        update_slider_background(document.getElementById("light-r-input"+id));
+        update_slider_background(document.getElementById("light-g-input"+id));
+        update_slider_background(document.getElementById("light-b-input"+id));
+
+        flashlight_light.alpha = Math.max(flashlight_color[0], Math.max(flashlight_color[1], flashlight_color[2]));
+        flashlight_light.color = flashlight_inside.color = flashlight_color;
+
+        step++;
+    }, 1000 / fps);
+}
+
+update_small_graphs();
 // scene_apple_lights
+// scene_metamers
+let flashlight = ctx.create_drawable("shader_shaded", null, [0.3, 0.3, 0.3], flashlight_transform);
+let flashlight_color_m = [1, 1, 1];
+let flashlight_inside_m = ctx.create_drawable("shader_shaded", null, flashlight_color_m, flashlight_transform);
+let flashlight_light_m = ctx.create_drawable("shader_flashlight", null, flashlight_color_m, flashlight_transform);
+flashlight_light_m.alpha = 1.0;
+
+["r", "g", "b"].forEach(function(component, i){
+    const elem = document.getElementById("light-"+component+"-input-m");
+    elem.value = flashlight_color_m[i];
+    elem.addEventListener("input", e => {
+        flashlight_light_m.alpha = Math.max(flashlight_color_m[0], Math.max(flashlight_color_m[1], flashlight_color_m[2]));
+        flashlight_color_m[i] = parseFloat(e.target.value);
+        flashlight_light_m.color = flashlight_inside_m.color = flashlight_color_m;
+        update_small_graphs_metamers();
+    });
+});
+
+let apple_transform_metamers = mat4_mat4_mul(
+    scale_3d([0.8, 0.8, 0.8]),
+    translate_3d([-1.2, 0, 0]),
+);
+
+let banana_transform =
+mat4_mat4_mul(
+    rotate_3d(axis_angle_to_quat(vec3_normalize([0, 1, 0]), rad(-40))),
+    mat4_mat4_mul(
+        scale_3d([0.4, 0.4, 0.4]),
+        translate_3d([1.2, -0.5, 0])
+    ),
+);
+let banana = ctx.create_drawable("shader_apple", null, [0, 0, 0], banana_transform);
+let banana_head = ctx.create_drawable("shader_apple", null, [0, 0, 0], banana_transform);
+
+update_small_graphs_metamers();
+
+const color_map = {
+    "white": [1, 1, 1],
+    "red": [1, 0, 0],
+    "green": [0, 1, 0]
+};
+
+function setup_buttons(button_class, other_button_class, color_var, light_var, suffix = "") {
+    const buttons = document.querySelectorAll(button_class);
+    buttons.forEach(button => {
+        button.addEventListener("click", () => {
+            const color = button.getAttribute("data-color");
+            const target_color = color_map[color];
+
+            animate_sliders(color_var, light_var, target_color, suffix);
+
+            buttons.forEach(b => b.classList.remove("active"));
+            button.classList.add("active");
+
+            const other_buttons = document.querySelectorAll(other_button_class);
+            other_buttons.forEach(b => b.classList.remove("active"));
+
+            for(let other_button of other_buttons) {
+                if(other_button.getAttribute("data-color") === color) {
+                    other_button.classList.add("active");
+                }
+            }
+        });
+    });
+}
+
+setup_buttons(".button-light", ".button-light-inline", flashlight_color, flashlight_light);
+setup_buttons(".button-light-inline", ".button-light", flashlight_color, flashlight_light);
+setup_buttons(".button-light-m", ".button-light-inline-m", flashlight_color_m, flashlight_light_m, "-m");
+setup_buttons(".button-light-inline-m", ".button-light-m", flashlight_color_m, flashlight_light_m, "-m");
+// scene_metamers
 // scene_apple
 let apple_transform = mat4_identity();
 let apple_color = [1, 0, 0];
@@ -3530,7 +3886,9 @@ function triangulate_points(points) {
 let cie_d65 = "300,0.0341;301,0.36014;302,0.68618;303,1.01222;304,1.33826;305,1.6643;306,1.99034;307,2.31638;308,2.64242;309,2.96846;310,3.2945;311,4.98865;312,6.6828;313,8.37695;314,10.0711;315,11.7652;316,13.4594;317,15.1535;318,16.8477;319,18.5418;320,20.236;321,21.9177;322,23.5995;323,25.2812;324,26.963;325,28.6447;326,30.3265;327,32.0082;328,33.69;329,35.3717;330,37.0535;331,37.343;332,37.6326;333,37.9221;334,38.2116;335,38.5011;336,38.7907;337,39.0802;338,39.3697;339,39.6593;340,39.9488;341,40.4451;342,40.9414;343,41.4377;344,41.934;345,42.4302;346,42.9265;347,43.4228;348,43.9191;349,44.4154;350,44.9117;351,45.0844;352,45.257;353,45.4297;354,45.6023;355,45.775;356,45.9477;357,46.1203;358,46.293;359,46.4656;360,46.6383;361,47.1834;362,47.7285;363,48.2735;364,48.8186;365,49.3637;366,49.9088;367,50.4539;368,50.9989;369,51.544;370,52.0891;371,51.8777;372,51.6664;373,51.455;374,51.2437;375,51.0323;376,50.8209;377,50.6096;378,50.3982;379,50.1869;380,49.9755;381,50.4428;382,50.91;383,51.3773;384,51.8446;385,52.3118;386,52.7791;387,53.2464;388,53.7137;389,54.1809;390,54.6482;391,57.4589;392,60.2695;393,63.0802;394,65.8909;395,68.7015;396,71.5122;397,74.3229;398,77.1336;399,79.9442;400,82.7549;401,83.628;402,84.5011;403,85.3742;404,86.2473;405,87.1204;406,87.9936;407,88.8667;408,89.7398;409,90.6129;410,91.486;411,91.6806;412,91.8752;413,92.0697;414,92.2643;415,92.4589;416,92.6535;417,92.8481;418,93.0426;419,93.2372;420,93.4318;421,92.7568;422,92.0819;423,91.4069;424,90.732;425,90.057;426,89.3821;427,88.7071;428,88.0322;429,87.3572;430,86.6823;431,88.5006;432,90.3188;433,92.1371;434,93.9554;435,95.7736;436,97.5919;437,99.4102;438,101.228;439,103.047;440,104.865;441,106.079;442,107.294;443,108.508;444,109.722;445,110.936;446,112.151;447,113.365;448,114.579;449,115.794;450,117.008;451,117.088;452,117.169;453,117.249;454,117.33;455,117.41;456,117.49;457,117.571;458,117.651;459,117.732;460,117.812;461,117.517;462,117.222;463,116.927;464,116.632;465,116.336;466,116.041;467,115.746;468,115.451;469,115.156;470,114.861;471,114.967;472,115.073;473,115.18;474,115.286;475,115.392;476,115.498;477,115.604;478,115.711;479,115.817;480,115.923;481,115.212;482,114.501;483,113.789;484,113.078;485,112.367;486,111.656;487,110.945;488,110.233;489,109.522;490,108.811;491,108.865;492,108.92;493,108.974;494,109.028;495,109.082;496,109.137;497,109.191;498,109.245;499,109.3;500,109.354;501,109.199;502,109.044;503,108.888;504,108.733;505,108.578;506,108.423;507,108.268;508,108.112;509,107.957;510,107.802;511,107.501;512,107.2;513,106.898;514,106.597;515,106.296;516,105.995;517,105.694;518,105.392;519,105.091;520,104.79;521,105.08;522,105.37;523,105.66;524,105.95;525,106.239;526,106.529;527,106.819;528,107.109;529,107.399;530,107.689;531,107.361;532,107.032;533,106.704;534,106.375;535,106.047;536,105.719;537,105.39;538,105.062;539,104.733;540,104.405;541,104.369;542,104.333;543,104.297;544,104.261;545,104.225;546,104.19;547,104.154;548,104.118;549,104.082;550,104.046;551,103.641;552,103.237;553,102.832;554,102.428;555,102.023;556,101.618;557,101.214;558,100.809;559,100.405;560,100;561,99.6334;562,99.2668;563,98.9003;564,98.5337;565,98.1671;566,97.8005;567,97.4339;568,97.0674;569,96.7008;570,96.3342;571,96.2796;572,96.225;573,96.1703;574,96.1157;575,96.0611;576,96.0065;577,95.9519;578,95.8972;579,95.8426;580,95.788;581,95.0778;582,94.3675;583,93.6573;584,92.947;585,92.2368;586,91.5266;587,90.8163;588,90.1061;589,89.3958;590,88.6856;591,88.8177;592,88.9497;593,89.0818;594,89.2138;595,89.3459;596,89.478;597,89.61;598,89.7421;599,89.8741;600,90.0062;601,89.9655;602,89.9248;603,89.8841;604,89.8434;605,89.8026;606,89.7619;607,89.7212;608,89.6805;609,89.6398;610,89.5991;611,89.4091;612,89.219;613,89.029;614,88.8389;615,88.6489;616,88.4589;617,88.2688;618,88.0788;619,87.8887;620,87.6987;621,87.2577;622,86.8167;623,86.3757;624,85.9347;625,85.4936;626,85.0526;627,84.6116;628,84.1706;629,83.7296;630,83.2886;631,83.3297;632,83.3707;633,83.4118;634,83.4528;635,83.4939;636,83.535;637,83.576;638,83.6171;639,83.6581;640,83.6992;641,83.332;642,82.9647;643,82.5975;644,82.2302;645,81.863;646,81.4958;647,81.1285;648,80.7613;649,80.394;650,80.0268;651,80.0456;652,80.0644;653,80.0831;654,80.1019;655,80.1207;656,80.1395;657,80.1583;658,80.177;659,80.1958;660,80.2146;661,80.4209;662,80.6272;663,80.8336;664,81.0399;665,81.2462;666,81.4525;667,81.6588;668,81.8652;669,82.0715;670,82.2778;671,81.8784;672,81.4791;673,81.0797;674,80.6804;675,80.281;676,79.8816;677,79.4823;678,79.0829;679,78.6836;680,78.2842;681,77.4279;682,76.5716;683,75.7153;684,74.859;685,74.0027;686,73.1465;687,72.2902;688,71.4339;689,70.5776;690,69.7213;691,69.9101;692,70.0989;693,70.2876;694,70.4764;695,70.6652;696,70.854;697,71.0428;698,71.2315;699,71.4203;700,71.6091;701,71.8831;702,72.1571;703,72.4311;704,72.7051;705,72.979;706,73.253;707,73.527;708,73.801;709,74.075;710,74.349;711,73.0745;712,71.8;713,70.5255;714,69.251;715,67.9765;716,66.702;717,65.4275;718,64.153;719,62.8785;720,61.604;721,62.4322;722,63.2603;723,64.0885;724,64.9166;725,65.7448;726,66.573;727,67.4011;728,68.2293;729,69.0574;730,69.8856;731,70.4057;732,70.9259;733,71.446;734,71.9662;735,72.4863;736,73.0064;737,73.5266;738,74.0467;739,74.5669;740,75.087;741,73.9376;742,72.7881;743,71.6387;744,70.4893;745,69.3398;746,68.1904;747,67.041;748,65.8916;749,64.7421;750,63.5927;751,61.8752;752,60.1578;753,58.4403;754,56.7229;755,55.0054;756,53.288;757,51.5705;758,49.8531;759,48.1356;760,46.4182;761,48.4569;762,50.4956;763,52.5344;764,54.5731;765,56.6118;766,58.6505;767,60.6892;768,62.728;769,64.7667;770,66.8054;771,66.4631;772,66.1209;773,65.7786;774,65.4364;775,65.0941;776,64.7518;777,64.4096;778,64.0673;779,63.7251;780,63.3828;781,63.4749;782,63.567;783,63.6592;784,63.7513;785,63.8434;786,63.9355;787,64.0276;788,64.1198;789,64.2119;790,64.304;791,63.8188;792,63.3336;793,62.8484;794,62.3632;795,61.8779;796,61.3927;797,60.9075;798,60.4223;799,59.9371;800,59.4519;801,58.7026;802,57.9533;803,57.204;804,56.4547;805,55.7054;806,54.9562;807,54.2069;808,53.4576;809,52.7083;810,51.959;811,52.5072;812,53.0553;813,53.6035;814,54.1516;815,54.6998;816,55.248;817,55.7961;818,56.3443;819,56.8924;820,57.4406;821,57.7278;822,58.015;823,58.3022;824,58.5894;825,58.8765;826,59.1637;827,59.4509;828,59.7381;829,60.0253;830,60.3125";
 let cie_a = "300,0.930483;301,0.967643;302,1.00597;303,1.04549;304,1.08623;305,1.12821;306,1.17147;307,1.21602;308,1.26188;309,1.3091;310,1.35769;311,1.40768;312,1.4591;313,1.51198;314,1.56633;315,1.62219;316,1.67959;317,1.73855;318,1.7991;319,1.86127;320,1.92508;321,1.99057;322,2.05776;323,2.12667;324,2.19734;325,2.2698;326,2.34406;327,2.42017;328,2.49814;329,2.57801;330,2.65981;331,2.74355;332,2.82928;333,2.91701;334,3.00678;335,3.09861;336,3.19253;337,3.28857;338,3.38676;339,3.48712;340,3.58968;341,3.69447;342,3.80152;343,3.91085;344,4.0225;345,4.13648;346,4.25282;347,4.37156;348,4.49272;349,4.61631;350,4.74238;351,4.87095;352,5.00204;353,5.13568;354,5.27189;355,5.4107;356,5.55213;357,5.69622;358,5.84298;359,5.99244;360,6.14462;361,6.29955;362,6.45724;363,6.61774;364,6.78105;365,6.9472;366,7.11621;367,7.28811;368,7.46292;369,7.64066;370,7.82135;371,8.00501;372,8.19167;373,8.38134;374,8.57404;375,8.7698;376,8.96864;377,9.17056;378,9.37561;379,9.58378;380,9.7951;381,10.0096;382,10.2273;383,10.4481;384,10.6722;385,10.8996;386,11.1302;387,11.364;388,11.6012;389,11.8416;390,12.0853;391,12.3324;392,12.5828;393,12.8366;394,13.0938;395,13.3543;396,13.6182;397,13.8855;398,14.1563;399,14.4304;400,14.708;401,14.9891;402,15.2736;403,15.5616;404,15.853;405,16.148;406,16.4464;407,16.7484;408,17.0538;409,17.3628;410,17.6753;411,17.9913;412,18.3108;413,18.6339;414,18.9605;415,19.2907;416,19.6244;417,19.9617;418,20.3026;419,20.647;420,20.995;421,21.3465;422,21.7016;423,22.0603;424,22.4225;425,22.7883;426,23.1577;427,23.5307;428,23.9072;429,24.2873;430,24.6709;431,25.0581;432,25.4489;433,25.8432;434,26.2411;435,26.6425;436,27.0475;437,27.456;438,27.8681;439,28.2836;440,28.7027;441,29.1253;442,29.5515;443,29.9811;444,30.4142;445,30.8508;446,31.2909;447,31.7345;448,32.1815;449,32.632;450,33.0859;451,33.5432;452,34.004;453,34.4682;454,34.9358;455,35.4068;456,35.8811;457,36.3588;458,36.8399;459,37.3243;460,37.8121;461,38.3031;462,38.7975;463,39.2951;464,39.796;465,40.3002;466,40.8076;467,41.3182;468,41.832;469,42.3491;470,42.8693;471,43.3926;472,43.9192;473,44.4488;474,44.9816;475,45.5174;476,46.0563;477,46.5983;478,47.1433;479,47.6913;480,48.2423;481,48.7963;482,49.3533;483,49.9132;484,50.476;485,51.0418;486,51.6104;487,52.1818;488,52.7561;489,53.3332;490,53.9132;491,54.4958;492,55.0813;493,55.6694;494,56.2603;495,56.8539;496,57.4501;497,58.0489;498,58.6504;499,59.2545;500,59.8611;501,60.4703;502,61.082;503,61.6962;504,62.3128;505,62.932;506,63.5535;507,64.1775;508,64.8038;509,65.4325;510,66.0635;511,66.6968;512,67.3324;513,67.9702;514,68.6102;515,69.2525;516,69.8969;517,70.5435;518,71.1922;519,71.843;520,72.4959;521,73.1508;522,73.8077;523,74.4666;524,75.1275;525,75.7903;526,76.4551;527,77.1217;528,77.7902;529,78.4605;530,79.1326;531,79.8065;532,80.4821;533,81.1595;534,81.8386;535,82.5193;536,83.2017;537,83.8856;538,84.5712;539,85.2584;540,85.947;541,86.6372;542,87.3288;543,88.0219;544,88.7165;545,89.4124;546,90.1097;547,90.8083;548,91.5082;549,92.2095;550,92.912;551,93.6157;552,94.3206;553,95.0267;554,95.7339;555,96.4423;556,97.1518;557,97.8623;558,98.5739;559,99.2864;560,100;561,100.715;562,101.43;563,102.146;564,102.864;565,103.582;566,104.301;567,105.02;568,105.741;569,106.462;570,107.184;571,107.906;572,108.63;573,109.354;574,110.078;575,110.803;576,111.529;577,112.255;578,112.982;579,113.709;580,114.436;581,115.164;582,115.893;583,116.622;584,117.351;585,118.08;586,118.81;587,119.54;588,120.27;589,121.001;590,121.731;591,122.462;592,123.193;593,123.924;594,124.655;595,125.386;596,126.118;597,126.849;598,127.58;599,128.312;600,129.043;601,129.774;602,130.505;603,131.236;604,131.966;605,132.697;606,133.427;607,134.157;608,134.887;609,135.617;610,136.346;611,137.075;612,137.804;613,138.532;614,139.26;615,139.988;616,140.715;617,141.441;618,142.167;619,142.893;620,143.618;621,144.343;622,145.067;623,145.79;624,146.513;625,147.235;626,147.957;627,148.678;628,149.398;629,150.117;630,150.836;631,151.554;632,152.271;633,152.988;634,153.704;635,154.418;636,155.132;637,155.845;638,156.558;639,157.269;640,157.979;641,158.689;642,159.397;643,160.104;644,160.811;645,161.516;646,162.221;647,162.924;648,163.626;649,164.327;650,165.028;651,165.726;652,166.424;653,167.121;654,167.816;655,168.51;656,169.203;657,169.895;658,170.586;659,171.275;660,171.963;661,172.65;662,173.335;663,174.019;664,174.702;665,175.383;666,176.063;667,176.741;668,177.419;669,178.094;670,178.769;671,179.441;672,180.113;673,180.783;674,181.451;675,182.118;676,182.783;677,183.447;678,184.109;679,184.77;680,185.429;681,186.087;682,186.743;683,187.397;684,188.05;685,188.701;686,189.35;687,189.998;688,190.644;689,191.288;690,191.931;691,192.572;692,193.211;693,193.849;694,194.484;695,195.118;696,195.75;697,196.381;698,197.009;699,197.636;700,198.261;701,198.884;702,199.506;703,200.125;704,200.743;705,201.359;706,201.972;707,202.584;708,203.195;709,203.803;710,204.409;711,205.013;712,205.616;713,206.216;714,206.815;715,207.411;716,208.006;717,208.599;718,209.189;719,209.778;720,210.365;721,210.949;722,211.532;723,212.112;724,212.691;725,213.268;726,213.842;727,214.415;728,214.985;729,215.553;730,216.12;731,216.684;732,217.246;733,217.806;734,218.364;735,218.92;736,219.473;737,220.025;738,220.574;739,221.122;740,221.667;741,222.21;742,222.751;743,223.29;744,223.826;745,224.361;746,224.893;747,225.423;748,225.951;749,226.477;750,227;751,227.522;752,228.041;753,228.558;754,229.073;755,229.585;756,230.096;757,230.604;758,231.11;759,231.614;760,232.115;761,232.615;762,233.112;763,233.606;764,234.099;765,234.589;766,235.078;767,235.564;768,236.047;769,236.529;770,237.008;771,237.485;772,237.959;773,238.432;774,238.902;775,239.37;776,239.836;777,240.299;778,240.76;779,241.219;780,241.675;781,242.13;782,242.582;783,243.031;784,243.479;785,243.924;786,244.367;787,244.808;788,245.246;789,245.682;790,246.116;791,246.548;792,246.977;793,247.404;794,247.829;795,248.251;796,248.671;797,249.089;798,249.505;799,249.918;800,250.329;801,250.738;802,251.144;803,251.548;804,251.95;805,252.35;806,252.747;807,253.142;808,253.535;809,253.925;810,254.314;811,254.7;812,255.083;813,255.465;814,255.844;815,256.221;816,256.595;817,256.968;818,257.338;819,257.706;820,258.071;821,258.434;822,258.795;823,259.154;824,259.511;825,259.865;826,260.217;827,260.567;828,260.914;829,261.259;830,261.602";
 let am0 = "300,0.420000;301,0.455500;302,0.489000;303,0.620600;304,0.602500;305,0.594800;306,0.555700;307,0.615000;308,0.611400;309,0.496500;310,0.622400;311,0.729200;312,0.655900;313,0.699900;314,0.662900;315,0.633000;316,0.633200;317,0.773900;318,0.664900;319,0.710500;320,0.805100;321,0.699500;322,0.688600;323,0.661300;324,0.760800;325,0.875800;326,0.979500;327,0.952700;328,0.917600;329,1.061000;330,1.016000;331,0.965700;332,0.954900;333,0.921600;334,0.958900;335,0.943400;336,0.809500;337,0.841800;338,0.921500;339,0.958100;340,1.007000;341,0.923800;342,0.993000;343,0.950600;344,0.795700;345,0.939200;346,0.926400;347,0.901700;348,0.897200;349,0.889800;350,1.050000;351,0.979500;352,0.907900;353,1.033000;354,1.111000;355,1.045000;356,0.912300;357,0.796000;358,0.693600;359,0.991100;360,0.970800;361,0.878100;362,0.997800;363,0.996900;364,1.013000;365,1.152000;366,1.233000;367,1.180000;368,1.101000;369,1.226000;370,1.139000;371,1.175000;372,1.054000;373,0.920200;374,0.900400;375,1.062000;376,1.085000;377,1.282000;378,1.327000;379,1.066000;380,1.202000;381,1.082000;382,0.791300;383,0.684100;384,0.959700;385,1.008000;386,1.007000;387,1.004000;388,0.984300;389,1.174000;390,1.247000;391,1.342000;392,1.019000;393,0.582300;394,1.026000;395,1.314000;396,0.854500;397,0.928800;398,1.522000;399,1.663000;400,1.682000;401,1.746000;402,1.759000;403,1.684000;404,1.674000;405,1.667000;406,1.589000;407,1.628000;408,1.735000;409,1.715000;410,1.532000;411,1.817000;412,1.789000;413,1.756000;414,1.737000;415,1.734000;416,1.842000;417,1.665000;418,1.684000;419,1.701000;420,1.757000;421,1.797000;422,1.582000;423,1.711000;424,1.767000;425,1.695000;426,1.698000;427,1.569000;428,1.587000;429,1.475000;430,1.135000;431,1.686000;432,1.646000;433,1.731000;434,1.670000;435,1.723000;436,1.929000;437,1.806000;438,1.567000;439,1.825000;440,1.713000;441,1.931000;442,1.980000;443,1.909000;444,1.973000;445,1.821000;446,1.891000;447,2.077000;448,1.973000;449,2.027000;450,2.144000;451,2.109000;452,1.941000;453,1.970000;454,1.979000;455,2.034000;456,2.077000;457,2.100000;458,1.971000;459,2.009000;460,2.040000;461,2.055000;462,2.104000;463,2.040000;464,1.976000;465,2.042000;466,1.921000;467,2.015000;468,1.994000;469,1.990000;470,1.877000;471,2.018000;472,2.041000;473,1.991000;474,2.051000;475,2.016000;476,1.956000;477,2.075000;478,2.009000;479,2.076000;480,2.035000;481,2.090000;482,2.023000;483,2.019000;484,1.969000;485,1.830000;486,1.625000;487,1.830000;488,1.914000;489,1.960000;490,2.007000;491,1.896000;492,1.896000;493,1.888000;494,2.058000;495,1.926000;496,2.017000;497,2.018000;498,1.866000;499,1.970000;500,1.857000;501,1.812000;502,1.894000;503,1.934000;504,1.869000;505,1.993000;506,1.961000;507,1.906000;508,1.919000;509,1.916000;510,1.947000;511,1.997000;512,1.867000;513,1.861000;514,1.874000;515,1.900000;516,1.669000;517,1.726000;518,1.654000;519,1.828000;520,1.831000;521,1.906000;522,1.823000;523,1.894000;524,1.958000;525,1.930000;526,1.674000;527,1.828000;528,1.897000;529,1.918000;530,1.952000;531,1.963000;532,1.770000;533,1.923000;534,1.858000;535,1.990000;536,1.871000;537,1.882000;538,1.904000;539,1.832000;540,1.769000;541,1.881000;542,1.825000;543,1.879000;544,1.879000;545,1.901000;546,1.879000;547,1.833000;548,1.863000;549,1.895000;550,1.862000;551,1.871000;552,1.846000;553,1.882000;554,1.898000;555,1.897000;556,1.821000;557,1.846000;558,1.787000;559,1.808000;560,1.843000;561,1.824000;562,1.850000;563,1.861000;564,1.854000;565,1.798000;566,1.829000;567,1.887000;568,1.810000;569,1.860000;570,1.769000;571,1.823000;572,1.892000;573,1.876000;574,1.867000;575,1.830000;576,1.846000;577,1.857000;578,1.783000;579,1.828000;580,1.838000;581,1.853000;582,1.873000;583,1.857000;584,1.860000;585,1.783000;586,1.830000;587,1.848000;588,1.750000;589,1.612000;590,1.813000;591,1.787000;592,1.808000;593,1.796000;594,1.773000;595,1.782000;596,1.805000;597,1.780000;598,1.757000;599,1.774000;600,1.746000;601,1.751000;602,1.719000;603,1.787000;604,1.776000;605,1.763000;606,1.759000;607,1.757000;608,1.743000;609,1.744000;610,1.703000;611,1.746000;612,1.705000;613,1.683000;614,1.713000;615,1.713000;616,1.609000;617,1.707000;618,1.724000;619,1.707000;620,1.734000;621,1.690000;622,1.713000;623,1.666000;624,1.656000;625,1.632000;626,1.697000;627,1.697000;628,1.697000;629,1.677000;630,1.658000;631,1.639000;632,1.645000;633,1.651000;634,1.653500;635,1.656000;636,1.655000;637,1.654000;638,1.652500;639,1.651000;640,1.632500;641,1.614000;642,1.617500;643,1.621000;644,1.624000;645,1.627000;646,1.615000;647,1.603000;648,1.580500;649,1.558000;650,1.582000;651,1.606000;652,1.602500;653,1.599000;654,1.565500;655,1.532000;656,1.458000;657,1.384000;658,1.466500;659,1.549000;660,1.560000;661,1.571000;662,1.563000;663,1.555000;664,1.557500;665,1.560000;666,1.547500;667,1.535000;668,1.540500;669,1.546000;670,1.531000;671,1.516000;672,1.518500;673,1.521000;674,1.515500;675,1.510000;676,1.509000;677,1.508000;678,1.503000;679,1.498000;680,1.495000;681,1.492000;682,1.485500;683,1.479000;684,1.467000;685,1.455000;686,1.461000;687,1.467000;688,1.464000;689,1.461000;690,1.454500;691,1.448000;692,1.448000;693,1.448000;694,1.442000;695,1.436000;696,1.426000;697,1.416000;698,1.420500;699,1.425000;700,1.405500;701,1.386000;702,1.387000;703,1.388000;704,1.401500;705,1.415000;706,1.407500;707,1.400000;708,1.392000;709,1.384000;710,1.384500;711,1.385000;712,1.379000;713,1.373000;714,1.369500;715,1.366000;716,1.360000;717,1.354000;718,1.341000;719,1.328000;720,1.329500;721,1.331000;722,1.339500;723,1.348000;724,1.349000;725,1.350000;726,1.348000;727,1.346000;728,1.332500;729,1.319000;730,1.322500;731,1.326000;732,1.322000;733,1.318000;734,1.313500;735,1.309000;736,1.308000;737,1.307000;738,1.292500;739,1.278000;740,1.268000;741,1.258000;742,1.272000;743,1.286000;744,1.282500;745,1.279000;746,1.281000;747,1.283000;748,1.276500;749,1.270000;750,1.266000;751,1.262000;752,1.260500;753,1.259000;754,1.257000;755,1.255000;756,1.251500;757,1.248000;758,1.244000;759,1.240000;760,1.238500;761,1.237000;762,1.239000;763,1.241000;764,1.231000;765,1.221000;766,1.203000;767,1.185000;768,1.194000;769,1.203000;770,1.203500;771,1.204000;772,1.206000;773,1.208000;774,1.198000;775,1.188000;776,1.192000;777,1.196000;778,1.191500;779,1.187000;780,1.187000;781,1.187000;782,1.181500;783,1.176000;784,1.178000;785,1.180000;786,1.178500;787,1.177000;788,1.175500;789,1.174000;790,1.166000;791,1.158000;792,1.150500;793,1.143000;794,1.138500;795,1.134000;796,1.143000;797,1.152000;798,1.143500;799,1.135000;800,1.138500;801,1.142000;802,1.135500;803,1.129000;804,1.122000;805,1.115000;806,1.117500;807,1.120000;808,1.107500;809,1.095000;810,1.104500;811,1.114000;812,1.114500;813,1.115000;814,1.111000;815,1.107000;816,1.105500;817,1.104000;818,1.083500;819,1.063000;820,1.071500;821,1.080000;822,1.076500;823,1.073000;824,1.074000;825,1.075000;826,1.080000;827,1.080500;828,1.081000;829,1.072000;830,1.063000";
-function create_spd_graph(scene, data, stuff){
+let apple_reflectance = "400,0.06;410,0.05;420,0.05;430,0.04;440,0.04;450,0.03;460,0.03;470,0.025;480,0.02;490,0.02;500,0.02;510,0.015;520,0.015;530,0.01;540,0.01;550,0.015;560,0.05;570,0.15;580,0.3;590,0.45;600,0.6;610,0.7;620,0.75;630,0.8;640,0.82;650,0.85;660,0.86;670,0.87;680,0.88;690,0.89;700,0.9";
+
+function create_spd_graph(scene, data, stuff, spd){
     data = data.split(";").map(point =>
         point.split(",").map(parseFloat)
     );
@@ -3565,7 +3923,7 @@ function create_spd_graph(scene, data, stuff){
     ctx.text_buffers["spd_graph_x_axis_text_"+scene] = {text: "Wavelength (nm)", color: [0, 0, 0], transform: mat4_mat4_mul(
         scale_3d([0.002, 0.002, 0.002]),
         translate_3d([-0.34, -0.74, 0]))};
-    ctx.text_buffers["spd_graph_y_axis_text_"+scene] = {text: "Relative power", color: [0, 0, 0], transform:
+    ctx.text_buffers["spd_graph_y_axis_text_"+scene] = {text: spd ? "Relative power" : "Reflectance", color: [0, 0, 0], transform:
         mat4_mat4_mul(
             rotate_3d(axis_angle_to_quat([0, 0, 1], rad(90))),
             mat4_mat4_mul(
@@ -3575,7 +3933,7 @@ function create_spd_graph(scene, data, stuff){
         )
     };
 
-    ctx.scenes[scene].current_selection = 250;
+    ctx.scenes[scene].current_selection = 0;
 
     let current_selection_x = ctx.scenes[scene].current_selection/spd_graph_num_points * graph_width;
     let current_selection_y = data[ctx.scenes[scene].current_selection][1]/stuff.scale_y+stuff.offset_y;
@@ -3623,9 +3981,10 @@ function create_spd_graph(scene, data, stuff){
 }
 
 let scenes_spd = {
-    "scene_spd": create_spd_graph("scene_spd", cie_d65, {scale_y: 120.0, offset_y: -0.45}),
-    "scene_spd_sun_space": create_spd_graph("scene_spd_sun_space", am0, {scale_y: 2.0, offset_y: -0.45}),
-    "scene_spd_lamp": create_spd_graph("scene_spd_lamp", cie_a, {scale_y: 250.0, offset_y: -0.45}),
+    "scene_spd": create_spd_graph("scene_spd", cie_d65, {scale_y: 120.0, offset_y: -0.45}, true),
+    "scene_spd_sun_space": create_spd_graph("scene_spd_sun_space", am0, {scale_y: 2.0, offset_y: -0.45}, true),
+    "scene_spd_lamp": create_spd_graph("scene_spd_lamp", cie_a, {scale_y: 250.0, offset_y: -0.45}, true),
+    "scene_apple_reflectance": create_spd_graph("scene_apple_reflectance", apple_reflectance, {scale_y: 1.0, offset_y: -0.45}, false),
 };
 
 // scene_spd
@@ -3800,26 +4159,108 @@ function update(current_time){
 
             gl.clearColor(0, 0, 0, 1);
             gl.clear(gl.COLOR_BUFFER_BIT);
-            apple.transform = apple_transform;
             let light_pos = [-1, 0.5, 0.1];
-            ctx.draw(apple, {"light_pos": light_pos});
-            apple_stem.transform = apple_transform;
-            ctx.draw(apple_stem, {"light_pos": light_pos});
-            apple_leaf.transform = apple_transform;
-            ctx.draw(apple_leaf, {"light_pos": light_pos});
             ctx.draw(flashlight);
             ctx.draw(flashlight_inside);
 
-            apple.transform = translate_3d([2, 0, 0]);
-            apple.color = vec3_hadamard([0.83, 0.8, 0], flashlight_color);
-            ctx.draw(apple, {"light_pos": light_pos});
-            apple.transform = apple_transform;
+            apple.transform = apple_transform_flashlight;
+            ctx.draw(apple, {"light_pos": light_pos, "specular_factor": 0});
+            apple_stem.transform = apple_transform_flashlight;
+            ctx.draw(apple_stem, {"light_pos": light_pos});
+            apple_leaf.transform = apple_transform_flashlight;
+            ctx.draw(apple_leaf, {"light_pos": light_pos});
 
             gl.cullFace(gl.FRONT);
             ctx.draw(flashlight_light, {"alpha": flashlight_light.alpha});
             gl.cullFace(gl.BACK);
             ctx.draw(flashlight_light, {"alpha": flashlight_light.alpha});
 
+            gl.disable(gl.DEPTH_TEST);
+
+            ctx.draw(small_graph_spd["graph_x_axis"], {"metallic": 0}, ui_camera_small_graph);
+            ctx.draw(small_graph_spd["graph_y_axis"], {"metallic": 0}, ui_camera_small_graph);
+            ctx.draw(small_graph_spd["graph_drawable_line"], {"metallic": 0, "small_graph": 1, "grayed": 0}, ui_camera_small_graph);
+
+            ctx.draw(small_graph_apple["graph_x_axis"], {"metallic": 0}, ui_camera_small_graph);
+            ctx.draw(small_graph_apple["graph_y_axis"], {"metallic": 0}, ui_camera_small_graph);
+            ctx.draw(small_graph_apple["graph_drawable_line"], {"metallic": 0, "small_graph": 1, "grayed": 0}, ui_camera_small_graph);
+
+            ctx.draw(small_graph_result["graph_x_axis"], {"metallic": 0}, ui_camera_small_graph);
+            ctx.draw(small_graph_result["graph_y_axis"], {"metallic": 0}, ui_camera_small_graph);
+            ctx.draw(small_graph_result["graph_drawable_line"], {"metallic": 0, "small_graph": 1, "grayed": 0}, ui_camera_small_graph);
+            ctx.draw(multiply_sign, {"metallic": 0}, ui_camera_small_graph);
+            ctx.draw(equal_sign1, {"metallic": 0}, ui_camera_small_graph);
+            ctx.draw(equal_sign2, {"metallic": 0}, ui_camera_small_graph);
+
+            gl.enable(gl.DEPTH_TEST);
+        }
+        else if(scene_id == "scene_metamers"){
+            apple_color = vec3_hadamard([1, 0, 0], flashlight_color_m);
+            apple_stem_color = vec3_hadamard([0.467, 0.318, 0.251], flashlight_color_m);
+            apple_leaf_color = vec3_hadamard([0.380, 0.627, 0.149], flashlight_color_m);
+            apple.color = apple_color;
+            apple_stem.color = apple_stem_color;
+            apple_leaf.color = apple_leaf_color;
+
+            gl.clearColor(0, 0, 0, 1);
+            gl.clear(gl.COLOR_BUFFER_BIT);
+            let light_pos = [-1, 0.5, 0.1];
+            ctx.draw(flashlight);
+            ctx.draw(flashlight_inside_m);
+
+            apple.transform = apple_transform_metamers;
+            ctx.draw(apple, {"light_pos": light_pos, "specular_factor": 0});
+            apple_stem.transform = apple_transform_metamers;
+            ctx.draw(apple_stem, {"light_pos": light_pos});
+            apple_leaf.transform = apple_transform_metamers;
+            ctx.draw(apple_leaf, {"light_pos": light_pos});
+
+            banana.color = vec3_hadamard([0.88, 0.8, 0], flashlight_color_m);
+            ctx.draw(banana, {"light_pos": light_pos, "specular_factor": 1});
+            banana_head.color = vec3_hadamard([0.432, 0.220, 0.032], flashlight_color_m);
+            ctx.draw(banana_head, {"light_pos": light_pos, "specular_factor": 1});
+
+            gl.cullFace(gl.FRONT);
+            ctx.draw(flashlight_light_m, {"alpha": flashlight_light_m.alpha});
+            gl.cullFace(gl.BACK);
+            ctx.draw(flashlight_light_m, {"alpha": flashlight_light_m.alpha});
+
+            gl.disable(gl.DEPTH_TEST);
+
+            ctx.draw(small_graph_apple_metamers["graph_x_axis"], {"metallic": 0}, ui_camera_small_graph);
+            ctx.draw(small_graph_apple_metamers["graph_y_axis"], {"metallic": 0}, ui_camera_small_graph);
+
+            ctx.draw(small_graph_spd_metamers["graph_x_axis"], {"metallic": 0}, ui_camera_small_graph);
+            ctx.draw(small_graph_spd_metamers["graph_y_axis"], {"metallic": 0}, ui_camera_small_graph);
+            ctx.draw(small_graph_spd_metamers["graph_drawable_line"], {"metallic": 0, "small_graph": 1, "grayed": 0}, ui_camera_small_graph);
+
+            if(show_apple_graph){
+                ctx.draw(small_graph_banana["graph_drawable_line"], {"metallic": 0, "small_graph": 1, "grayed": 1}, ui_camera_small_graph);
+                ctx.draw(small_graph_apple_metamers["graph_drawable_line"], {"metallic": 0, "small_graph": 1, "grayed": 0}, ui_camera_small_graph);
+            }
+            else{
+                ctx.draw(small_graph_apple_metamers["graph_drawable_line"], {"metallic": 0, "small_graph": 1, "grayed": 1}, ui_camera_small_graph);
+                ctx.draw(small_graph_banana["graph_drawable_line"], {"metallic": 0, "small_graph": 1, "grayed": 0}, ui_camera_small_graph);
+            }
+
+            ctx.draw(small_graph_result_metamers_banana["graph_x_axis"], {"metallic": 0}, ui_camera_small_graph);
+            ctx.draw(small_graph_result_metamers_banana["graph_y_axis"], {"metallic": 0}, ui_camera_small_graph);
+
+            if(show_apple_graph){
+                ctx.draw(small_graph_result_metamers_banana["graph_drawable_line"], {"metallic": 0, "small_graph": 1, "grayed": 1}, ui_camera_small_graph);
+                ctx.draw(small_graph_result_metamers_apple["graph_drawable_line"], {"metallic": 0, "small_graph": 1, "grayed": 0}, ui_camera_small_graph);
+            }
+            else{
+                ctx.draw(small_graph_result_metamers_apple["graph_drawable_line"], {"metallic": 0, "small_graph": 1, "grayed": 1}, ui_camera_small_graph);
+                ctx.draw(small_graph_result_metamers_banana["graph_drawable_line"], {"metallic": 0, "small_graph": 1, "grayed": 0}, ui_camera_small_graph);
+            }
+
+
+            ctx.draw(multiply_sign, {"metallic": 0}, ui_camera_small_graph);
+            ctx.draw(equal_sign1, {"metallic": 0}, ui_camera_small_graph);
+            ctx.draw(equal_sign2, {"metallic": 0}, ui_camera_small_graph);
+
+            gl.enable(gl.DEPTH_TEST);
         }
         else if(scene_id == "scene_apple"){
             wave_red_2_3d.color = red;
@@ -3848,7 +4289,7 @@ function update(current_time){
             apple_stem.color = apple_stem_color;
             apple_leaf.color = apple_leaf_color;
 
-            ctx.draw(apple, {"light_pos": [0, 1, 1]});
+            ctx.draw(apple, {"light_pos": [0, 1, 1], "specular_factor": 0});
             apple_stem.transform = apple_transform;
             ctx.draw(apple_stem, {"light_pos": [0, 1, 1]});
             apple_leaf.transform = apple_transform;
@@ -3862,7 +4303,7 @@ function update(current_time){
                     ctx.draw(scene["spd_graph_drawable_line"]);
                     ctx.draw(scene["spd_graph_selection_line_x"]);
                     ctx.draw(scene["spd_graph_selection_line_y"]);
-                    ctx.draw(scene["spd_graph_drawable"]);
+                    ctx.draw(scene["spd_graph_drawable"], {"small_graph": 0});
                     ctx.draw(ctx.text_buffers[scene["spd_graph_x_axis_wavelength_text"]]);
                     ctx.draw(ctx.text_buffers[scene["spd_graph_x_axis_text"]]);
                     ctx.draw(ctx.text_buffers[scene["spd_graph_y_axis_text"]]);
@@ -4419,6 +4860,10 @@ const meshes = [
     { path: "flashlight.mesh", drawable: flashlight },
     { path: "flashlight_inside.mesh", drawable: flashlight_inside },
     { path: "flashlight_light.mesh", drawable: flashlight_light },
+    { path: "flashlight_inside.mesh", drawable: flashlight_inside_m },
+    { path: "flashlight_light.mesh", drawable: flashlight_light_m },
+    { path: "banana.mesh", drawable: banana },
+    { path: "banana_head.mesh", drawable: banana_head },
 ];
 
 meshes.forEach(mesh => {

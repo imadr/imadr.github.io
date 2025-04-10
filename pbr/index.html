@@ -162,13 +162,50 @@ $$
 <p>And here is the SPD of a typical tungsten incandescent light:</p>
 <div class="canvas" id="scene_spd_lamp"></div>
 
-<p>Going back to our apple example, if we change the color of the light we shine on the apple, the color we perceive will change:</p>
+<h2>Spectral Reflectance Curve</h2>
+<p>The SPD shows us how much of each "color" a light is composed of. Another interesting function we can look at is called the spectral reflectance curve, which shows the fraction of incident light reflected by an object at each wavelength, effectivly representing the color of said object.</p>
+<p>Going back to our apple example, since it reflects most of its light in the red wavelength, its spectral reflectance curve might look like this:</p>
+<div class="canvas" id="scene_apple_reflectance"></div>
+
+<p>Like we saw earlier, the light transport depends on three components, the illuminant, the material or the object being illuminated and the sensor.<br>If we ignore the sensor for now, the light we see is the combination of the light spectral power distribution with the object spectral reflectance.</p>
+<p>If we shine a light on our red apple, depending on the wavelengths of the light, the final color we see changes. A <button data-color="white" class="white-light-button button-light-inline button-inline active">white light</button> makes the apple appear red, because it's like multiplying the apple's color by one. We get the same result with a <button data-color="red" class="red-light-button button-light-inline button-inline">red light</button>, because the apple reflects mostly in the red spectrum.<br>However if we shine a <button data-color="green" class="green-light-button button-light-inline button-inline">green light</button>, besides the leaf, the rest of the apple doesn't reflect any light, thus appearing black.</p>
+<p>On the top right you can see the SPD of the flashlight, under it the reflectance curve of the apple, and the resulting reflected light below it:</p>
 <div class="canvas" id="scene_apple_lights"></div>
-<div class="slider-container">
-    <input id="light-r-input" type="range" min="0" max="1" step="0.01" data-color="#ff0000" style="margin-top:40px;">
-    <input id="light-g-input" type="range" min="0" max="1" step="0.01" data-color="#00ff00" style="margin-top:40px;">
-    <input id="light-b-input" type="range" min="0" max="1" step="0.01" data-color="#0000ff" style="margin-top:40px;">    
+<div class="slider-container-buttons">
+    <div class="slider-group-vertical">
+        <input id="light-r-input" type="range" min="0" max="1" step="0.01" data-color="#ff0000">
+        <input id="light-g-input" type="range" min="0" max="1" step="0.01" data-color="#00ff00">
+        <input id="light-b-input" type="range" min="0" max="1" step="0.01" data-color="#0000ff">
+    </div>
+    <div class="button-group-vertical">
+        <button data-color="white" class="button-light button button-light-white active">White light</button>
+        <button data-color="red" class="button-light button button-light-red">Red light</button>
+        <button data-color="green" class="button-light button button-light-green">Green light</button>
+    </div>
 </div>
+
+<br><br>
+<p>If we now add a banana and shine a <button data-color="white" class="white-light-button button-light-inline-m button-inline active">white light</button>, we can obviously tell the apple and the banana apart, one being red while the other is yellow.<br>But what happens when the light is <button data-color="red" class="red-light-button button-light-inline-m button-inline">red</button>? Both objects appear reddish to our eyes, because the banana doesn't have any green light to reflect, making it lose its yellow color.</p>
+<p>This phenomenon is called <strong>metamerism</strong>.</p>
+
+<div class="canvas" id="scene_metamers"></div>
+<div class="slider-container-buttons">
+    <div class="slider-group-vertical">
+        <input id="light-r-input-m" type="range" min="0" max="1" step="0.01" data-color="#ff0000">
+        <input id="light-g-input-m" type="range" min="0" max="1" step="0.01" data-color="#00ff00">
+        <input id="light-b-input-m" type="range" min="0" max="1" step="0.01" data-color="#0000ff">
+    </div>
+    <div class="button-group-vertical">
+        <button data-color="white" class="button-light-m button button-light-white active">White light</button>
+        <button data-color="red" class="button-light-m button button-light-red">Red light</button>
+        <button data-color="green" class="button-light-m button button-light-green">Green light</button>
+    </div>
+</div>
+
+<br>
+<p>There are different types of metamerism, depending on when it happens during the light transport process. The apple and banana example is called <strong>illuminant metamerism</strong>, where objects that reflect light differently appear the same under some specific illumination.</p>
+<p><strong>Observer metamerism</strong> is when objects appear different between observers, a good example of this is <strong>colorblindness</strong>.</p>
+<p></p>
 <br><br><br><br><br>
 <br><br><br><br><br>
 <br><br><br><br><br>
