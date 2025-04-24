@@ -1721,7 +1721,7 @@ void main(){
     float decay_factor = 2.0;
     float max_distance = 0.0;
     for (int i = 0; i < NUM_POSITIVE; i++) {
-        float dist_to_positive = distance(origin, positive_charge[i]+vec2(1, 0));
+        float dist_to_positive = distance(origin, positive_charge[i]+vec2(1.5, 0));
         float positive_decay = exp(-dist_to_positive * decay_factor) * 1.0;
         charge += positive_decay;
         charge_normalized += dist_to_positive;
@@ -1731,7 +1731,7 @@ void main(){
     }
 
     for (int i = 0; i < NUM_NEGATIVE; i++) {
-        float dist_to_negative = distance(origin, negative_charge[i]+vec2(1, 0));
+        float dist_to_negative = distance(origin, negative_charge[i]+vec2(1.5, 0));
         float negative_decay = exp(-dist_to_negative * decay_factor) * 1.0;
         charge -= negative_decay;
         charge_normalized -= dist_to_negative;
@@ -1766,7 +1766,7 @@ ctx.scenes = {
             }
         },
         charges: []},
-    "scene_electric_field": {id: "scene_electric_field", el: null, ratio: 2.5, camera: null, dragging_rect: null, draggable_rects: {},
+    "scene_electric_field": {id: "scene_electric_field", el: null, ratio: 2.3, camera: null, dragging_rect: null, draggable_rects: {},
         camera: {
             fov: 60, z_near: 0.1, z_far: 1000,
             position: [0, 0, 0], rotation: [0, 0, 0],
@@ -1778,7 +1778,7 @@ ctx.scenes = {
                 zoom: 3.0
             }
         },
-        charges: [], field_lines: []},
+        charges: [], field_lines: [], vector_field: []},
     "scene_wave": {el: null, ratio: 1.8, camera: null, dragging_rect: null, draggable_rects: {"scene": []},
         camera: {
             fov: 60, z_near: 0.1, z_far: 1000,
@@ -1803,7 +1803,7 @@ ctx.scenes = {
                 zoom: 3.0
             }
         }},
-    "scene_field_gradient": {id: "scene_field_gradient", el: null, ratio: 2.5, camera: null, dragging_rect: null, draggable_rects: {},
+    "scene_field_gradient": {id: "scene_field_gradient", el: null, ratio: 2, camera: null, dragging_rect: null, draggable_rects: {},
         camera: {
             fov: 60, z_near: 0.1, z_far: 1000,
             position: [0, 0, 0], rotation: [0, 0, 0],
@@ -2014,6 +2014,18 @@ ctx.scenes = {
                 zoom: 2.0
             }
         }},
+    "scene_snells": {id: "scene_snells", el: null, ratio: 1.8, camera: null, dragging_rect: null, draggable_rects: {},
+        camera: {
+            fov: 50, z_near: 0.1, z_far: 1000,
+            position: [0, 0, 0], rotation: [0, 0, 0],
+            up_vector: [0, 1, 0],
+            view_matrix: mat4_identity(),
+            orbit: {
+                rotation: [0, 0, 0],
+                pivot: [0, 0, 0],
+                zoom: 2.0
+            }
+        }},
 };
 
 function get_event_coordinates(e, element) {
@@ -2113,6 +2125,7 @@ function handle_global_move(e) {
             update_drag_charges(scene);
             if(scene_id == "scene_electric_field") {
                 update_electric_field(scene);
+                update_vector_field(scene);
             }
         }
 
@@ -2378,6 +2391,88 @@ function update_drag_charges(scene){
 update_drag_charges(ctx.scenes["scene_charges"]);
 // scene_charges setup
 
+// scene_snells
+let incidence_angle = -30;
+let snells_len = 0.8;
+let snells_len_curve = 0.7;
+let incident_ray_1 = ctx.create_drawable("shader_basic", null, [1, 0, 0], translate_3d([0, 0, 0]));
+let incident_ray_2 = ctx.create_drawable("shader_basic", null, [1, 0, 0], translate_3d([0, 0, 0]));
+let refracted_ray_1 = ctx.create_drawable("shader_basic", null, [1, 0, 0], translate_3d([0, 0, 0]));
+let refracted_ray_2 = ctx.create_drawable("shader_basic", null, [1, 0, 0], translate_3d([0, 0, 0]));
+let medium_width = 2;
+let medium_height = 1;
+let medium_1 = ctx.create_drawable("shader_basic",
+    create_rect([0, 0, 0], [medium_width, medium_height]),
+    [0.8, 0.9, 1], translate_3d([-medium_width/2, -medium_height, 0]));
+let medium_2 = ctx.create_drawable("shader_basic",
+    create_rect([0, 0, 0], [medium_width, medium_height]),
+    [0.960, 0.980, 1.000], translate_3d([-medium_width/2, 0, 0]));
+let normal_line = ctx.create_drawable("shader_basic", create_line_dashed([[0, -1, 0], [0, 1, 0]], 0.01, 0.03, 0.015), [0.4, 0.4, 0.4], translate_3d([0, 0, 0]));
+let medium_boundary = ctx.create_drawable("shader_basic", create_line([[-medium_width/2, 0, 0], [medium_width/2, 0, 0]], 0.02), [0.787, 0.860, 0.932], translate_3d([0, 0, 0]));
+let angle_1_curve = ctx.create_drawable("shader_basic", null, [0, 0, 0], translate_3d([0, 0, 0]));
+let angle_2_curve = ctx.create_drawable("shader_basic", null, [0, 0, 0], translate_3d([0, 0, 0]));
+let ior_1 = 1.5;
+let ior_2 = 1;
+
+function update_snells_scene(){
+    let incident_ray_start = vec3_scale([Math.sin(rad(incidence_angle)), Math.cos(rad(incidence_angle)), 0], snells_len);
+    let incident_ray_vector = vec3_normalize(incident_ray_start);
+    let incident_ray_end = [0, 0, 0];
+    let incident_ray_mid_1 = vec3_scale(incident_ray_vector, snells_len/2 - 0.01);
+    let incident_ray_mid = vec3_scale(incident_ray_vector, snells_len/2);
+    ctx.update_drawable_mesh(incident_ray_1, create_arrow(incident_ray_start, incident_ray_mid_1, [0.017, 0.05]));
+    ctx.update_drawable_mesh(incident_ray_2, create_line([incident_ray_mid, incident_ray_end], 0.017));
+
+    let refraction_angle = Math.asin((ior_2/ior_1)*Math.sin(rad(incidence_angle)))+Math.PI;
+
+    let refracted_ray_start = [0, 0, 0];
+    let refracted_ray_vector = vec3_normalize([Math.sin(refraction_angle), Math.cos(refraction_angle), 0]);
+    let refracted_ray_end = vec3_scale([Math.sin(refraction_angle), Math.cos(refraction_angle), 0], snells_len);
+    let refracted_ray_mid_1 = vec3_scale(refracted_ray_vector, snells_len/2 + 0.01);
+    let refracted_ray_mid = vec3_scale(refracted_ray_vector, snells_len/2);
+    ctx.update_drawable_mesh(refracted_ray_1, create_arrow(refracted_ray_start, refracted_ray_mid_1, [0.017, 0.05]));
+    ctx.update_drawable_mesh(refracted_ray_2, create_line([refracted_ray_mid, refracted_ray_end], 0.017));
+
+    medium_1.color = vec3_lerp([1, 1, 1], [0.8, 0.9, 1], remap_value(ior_1, 1, 2.5, 0, 1));
+    medium_2.color = vec3_lerp([1, 1, 1], [0.8, 0.9, 1], remap_value(ior_2, 1, 2.5, 0, 1));
+
+    let curve_n = 10;
+
+    let points_angle_1_curve = [];
+    let angle_1 = incidence_angle / curve_n;
+    for(let i = 0; i < curve_n+1; i++){
+        points_angle_1_curve.push(vec3_scale([Math.sin(rad(angle_1*i)), Math.cos(rad(angle_1*i)), 0], snells_len_curve));
+    }
+    ctx.update_drawable_mesh(angle_1_curve, create_line(points_angle_1_curve, 0.01));
+
+    let points_angle_2_curve = [];
+    let angle_2 = (refraction_angle-Math.PI) / curve_n;
+    for(let i = 0; i < curve_n+1; i++){
+        let angle = refraction_angle - angle_2*i;
+        points_angle_2_curve.push(vec3_scale([Math.sin(angle), Math.cos(angle), 0], snells_len_curve));
+    }
+    ctx.update_drawable_mesh(angle_2_curve, create_line(points_angle_2_curve, 0.01));
+}
+
+update_snells_scene();
+
+document.getElementById("snells-angle-input").value = incidence_angle;
+document.getElementById("snells-angle-input").addEventListener("input", function(e){
+    incidence_angle = parseFloat(e.target.value);
+    update_snells_scene();
+});
+document.getElementById("snells-ior1-input").value = ior_1;
+document.getElementById("snells-ior1-input").addEventListener("input", function(e){
+    ior_1 = parseFloat(e.target.value);
+    update_snells_scene();
+});
+document.getElementById("snells-ior2-input").value = ior_2;
+document.getElementById("snells-ior2-input").addEventListener("input", function(e){
+    ior_2 = parseFloat(e.target.value);
+    update_snells_scene();
+});
+
+// scene_snells
 
 // scene_electric_field setup
 add_charge(ctx.scenes["scene_electric_field"], "negative", [1.0, 0.8, 0], 0.25, 0.21, 0.16, 0.04, 0, true);
@@ -2468,9 +2563,87 @@ function update_electric_field(scene) {
         }
     }
 }
+function update_vector_field(scene) {
+    let grid_size = 30;
+    let grid_spacing = 0.3;
+    let vector_scale = 0.2;
+    let arrow_thickness = 0.02;
+    let arrow_head_size = 0.045;
+
+    function calculate_field_at_point(point, charges) {
+        let field = [0, 0, 0];
+        for (let charge of charges) {
+            let dir = vec3_sub(charge.pos, point);
+            let dist = vec3_magnitude(dir);
+            if (dist < 0.1) continue;
+            let strength = charge.id.includes("negative") ? 1 : -1;
+            strength /= (dist * dist * dist);
+            field = vec3_add(field, vec3_scale(dir, strength));
+        }
+        return field;
+    }
+
+    const arrows = [];
+    const grid_offset = (grid_size - 1) * grid_spacing / 2;
+
+    for (let i = 0; i < grid_size; i++) {
+        for (let j = 0; j < grid_size; j++) {
+            const x = i * grid_spacing - grid_offset;
+            const y = j * grid_spacing - grid_offset;
+            const point = [x, y, 0];
+
+            const field = calculate_field_at_point(point, scene.charges);
+            const magnitude = vec3_magnitude(field);
+
+            let current_arrow_thickness = arrow_thickness;
+            let current_arrow_head_size = arrow_head_size;
+            let current_vector_scale = vector_scale;
+
+            const normalized_field = vec3_normalize(field);
+            const scaled_length = Math.min(0.4, Math.max(0.1, current_vector_scale * Math.pow(magnitude, 0.3)));
+            const end_point = vec3_add(point, vec3_scale(normalized_field, scaled_length));
+
+            const arrow = create_arrow(point, end_point, [current_arrow_thickness, current_arrow_head_size]);
+            arrows.push(arrow);
+        }
+    }
+
+    if (scene.vector_field.length == 0) {
+        console.log("creating vector field");
+
+        scene.vector_field = [];
+        for (let arrow of arrows) {
+            const arrow_drawable = ctx.create_drawable(
+                "shader_basic",
+                arrow,
+                [0, 0, 0],
+                translate_3d([0, 0, 0])
+            );
+            scene.vector_field.push(arrow_drawable);
+        }
+    } else {
+        for (let i = 0; i < arrows.length; i++) {
+            ctx.update_drawable_mesh(scene.vector_field[i], arrows[i]);
+        }
+    }
+}
 
 update_drag_charges(ctx.scenes["scene_electric_field"]);
 update_electric_field(ctx.scenes["scene_electric_field"]);
+update_vector_field(ctx.scenes["scene_electric_field"]);
+
+let show_field_line = true;
+
+document.getElementById("display-field-line").addEventListener("click", function(e){
+    document.getElementById("display-field-line").classList.add("active");
+    document.getElementById("display-vector-field").classList.remove("active");
+    show_field_line = true;
+});
+document.getElementById("display-vector-field").addEventListener("click", function(e){
+    document.getElementById("display-vector-field").classList.add("active");
+    document.getElementById("display-field-line").classList.remove("active");
+    show_field_line = false;
+});
 // scene_electric_field setup
 
 // scene_relativity setup
@@ -3071,6 +3244,16 @@ let small_graph_result_metamers_apple = create_small_graph([1.6, -0.2-0.9, 0], s
 
 let show_apple_graph = true;
 
+document.getElementById("display-banana-curve").addEventListener("click", function(e){
+    document.getElementById("display-banana-curve").classList.add("active");
+    document.getElementById("display-apple-curve").classList.remove("active");
+    show_apple_graph = false;
+});
+document.getElementById("display-apple-curve").addEventListener("click", function(e){
+    document.getElementById("display-apple-curve").classList.add("active");
+    document.getElementById("display-banana-curve").classList.remove("active");
+    show_apple_graph = true;
+});
 
 let multiply_sign = ctx.create_drawable("shader_basic", create_plus_sign([0, 0, 0], 0.2, 0.025), [0.4, 0.4, 0.4],
     mat4_mat4_mul(
@@ -3349,14 +3532,14 @@ mat4_mat4_mul(
 let voltage_graph_position = [-2.4, -0.5, 0];
 let scene_bulb_graph_x_axis = ctx.create_drawable("shader_basic", create_arrow([0, 0, 0], [1.4, 0, 0], [0.02, 0.04]), [0.4, 0.4, 0.4], translate_3d(voltage_graph_position));
 let scene_bulb_graph_y_axis = ctx.create_drawable("shader_basic", create_arrow([0, 0, 0], [0, 1, 0], [0.02, 0.04]), [0.4, 0.4, 0.4], translate_3d(voltage_graph_position));
-let voltage_graph_num_points = 400;
+let graph_num_points = 200;
 let voltage_graph = [];
-for(let i = 0; i < voltage_graph_num_points; i++){
+for(let i = 0; i < graph_num_points; i++){
     voltage_graph.push(0.1);
 }
 let voltage_graph_drawable_points = [];
 for(let i = 0; i < voltage_graph.length; i++){
-    let x = i * 1.3 / (voltage_graph_num_points-1);
+    let x = i * 1.3 / (graph_num_points-1);
     voltage_graph_drawable_points.push([x, voltage_graph[i], 0]);
 }
 let voltage_graph_drawable = ctx.create_drawable("shader_basic", null, blue, translate_3d(voltage_graph_position));
@@ -3383,14 +3566,13 @@ ctx.text_buffers["graph_voltage_y_min"] = {text: "0 V", color: [0, 0, 0], transf
 let temperature_graph_position = [-0.5, -0.5, 0];
 let scene_bulb_graph_x_axis_temperature = ctx.create_drawable("shader_basic", create_arrow([0, 0, 0], [1.4, 0, 0], [0.02, 0.04]), [0.4, 0.4, 0.4], translate_3d(temperature_graph_position));
 let scene_bulb_graph_y_axis_temperature = ctx.create_drawable("shader_basic", create_arrow([0, 0, 0], [0, 1, 0], [0.02, 0.04]), [0.4, 0.4, 0.4], translate_3d(temperature_graph_position));
-let temperature_graph_num_points = 400;
 let temperature_graph = [];
-for(let i = 0; i < temperature_graph_num_points; i++){
+for(let i = 0; i < graph_num_points; i++){
     temperature_graph.push(0.1);
 }
 let temperature_graph_drawable_points = [];
 for(let i = 0; i < temperature_graph.length; i++){
-    let x = i * 1.3 / (temperature_graph_num_points-1);
+    let x = i * 1.3 / (graph_num_points-1);
     temperature_graph_drawable_points.push([x, temperature_graph[i], 0]);
 }
 let temperature_graph_drawable = ctx.create_drawable("shader_basic", null, red, translate_3d(temperature_graph_position));
@@ -3408,14 +3590,13 @@ ctx.text_buffers["graph_temperature_y_min"] = {text: "20°C", color: [0, 0, 0], 
 let current_graph_position = [1.4, -0.5, 0];
 let scene_bulb_graph_x_axis_current = ctx.create_drawable("shader_basic", create_arrow([0, 0, 0], [1.4, 0, 0], [0.02, 0.04]), [0.4, 0.4, 0.4], translate_3d(current_graph_position));
 let scene_bulb_graph_y_axis_current = ctx.create_drawable("shader_basic", create_arrow([0, 0, 0], [0, 1, 0], [0.02, 0.04]), [0.4, 0.4, 0.4], translate_3d(current_graph_position));
-let current_graph_num_points = 400;
 let current_graph = [];
-for(let i = 0; i < current_graph_num_points; i++){
+for(let i = 0; i < graph_num_points; i++){
     current_graph.push(0.1);
 }
 let current_graph_drawable_points = [];
 for(let i = 0; i < current_graph.length; i++){
-    let x = i * 1.3 / (current_graph_num_points-1);
+    let x = i * 1.3 / (graph_num_points-1);
     current_graph_drawable_points.push([x, current_graph[i], 0]);
 }
 let current_graph_drawable = ctx.create_drawable("shader_basic", null, green, translate_3d(current_graph_position));
@@ -4047,7 +4228,15 @@ function update(current_time){
         gl.clearColor(0, 0, 0, 0);
         gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
 
-        if(scene_id == "scene_charges" || scene_id == "scene_electric_field"){
+        if(scene_id == "scene_charges"){
+            for(const charge of scene.charges){
+                ctx.draw(charge.sign);
+                ctx.draw(charge.charge);
+                ctx.draw(charge.charge_background);
+                ctx.draw(charge.arrow);
+            }
+        }
+        else if(scene_id == "scene_electric_field"){
             for(const charge of scene.charges){
                 ctx.draw(charge.sign);
                 ctx.draw(charge.charge);
@@ -4055,11 +4244,28 @@ function update(current_time){
                 ctx.draw(charge.arrow);
             }
 
-            if(scene_id == "scene_electric_field"){
+            if(show_field_line){
                 for(const line of scene.field_lines){
                     ctx.draw(line);
                 }
             }
+            else{
+                for(const vector of scene.vector_field){
+                    ctx.draw(vector);
+                }
+            }
+        }
+        else if(scene_id == "scene_snells"){
+            ctx.draw(incident_ray_1);
+            ctx.draw(incident_ray_2);
+            ctx.draw(refracted_ray_1);
+            ctx.draw(refracted_ray_2);
+            ctx.draw(normal_line);
+            ctx.draw(angle_1_curve);
+            ctx.draw(angle_2_curve);
+            ctx.draw(medium_boundary);
+            ctx.draw(medium_1);
+            ctx.draw(medium_2);
         }
         else if(scene_id == "scene_spectrum"){
             ctx.draw(spectrum);
@@ -4320,7 +4526,7 @@ function update(current_time){
 
             voltage_graph_drawable_points = [];
             for(let i = 0; i < voltage_graph.length; i++){
-                let x = i * 1.3 / (voltage_graph_num_points-1);
+                let x = i * 1.3 / (graph_num_points-1);
                 voltage_graph_drawable_points.push([x, voltage_graph[i], 0]);
             }
             ctx.update_drawable_mesh(voltage_graph_drawable, create_line(voltage_graph_drawable_points, 0.03, false));
@@ -4340,7 +4546,7 @@ function update(current_time){
 
             temperature_graph_drawable_points = [];
             for(let i = 0; i < temperature_graph.length; i++){
-                let x = i * 1.3 / (temperature_graph_num_points-1);
+                let x = i * 1.3 / (graph_num_points-1);
                 temperature_graph_drawable_points.push([x, temperature_graph[i], 0]);
             }
             ctx.update_drawable_mesh(temperature_graph_drawable, create_line(temperature_graph_drawable_points, 0.03, false));
@@ -4361,7 +4567,7 @@ function update(current_time){
 
             current_graph_drawable_points = [];
             for(let i = 0; i < current_graph.length; i++){
-                let x = i * 1.3 / (current_graph_num_points-1);
+                let x = i * 1.3 / (graph_num_points-1);
                 current_graph_drawable_points.push([x, current_graph[i], 0]);
             }
             ctx.update_drawable_mesh(current_graph_drawable, create_line(current_graph_drawable_points, 0.03, false));

@@ -11,16 +11,11 @@
         onload="renderMathInElement(document.body);"></script>
 </head>
 <body>
-    <!-- <div class="wip-banner">
-      <div class="wip-container">
-        <div class="wip-text">Work in Progress</div>
-      </div>
-    </div> -->
     <canvas id="main-canvas"></canvas>
     <h1 id="main-title">Physically based rendering from first principles</h1>
     <h2 style="color: #888;font-weight: normal;font-size: 1.2em;margin-top: -2.2em;margin-bottom: 3em;">by <a style="color: inherit;text-decoration: none;" href="https://imadr.me">Imad</a></h2>
     <p class="intro">In this interactive book, we will explore the physical phenomena that create light and the fundamental laws governing its interaction with matter. We will learn how our human eyes capture light and how our brains interpret it as visual information. We will then model approximations of these physical interactions and learn how to create physically realistic renderings of various materials.<br><br>
-    If you like this book, consider supporting me on <a href="https://ko-fi.com/imadr">Ko-fi</a>!</p>
+    If you like this book, consider supporting me on <a href="https://ko-fi.com/imadr">Ko-fi</a>.</p>
     <h1>Chapter 1: What is light?</h1>
     <h2>The Electric force</h2>
     <p>One of the fundamental properties of matter is the electric charge, and it comes in two types: <strong class="red">positive</strong> and <strong class="blue">negative</strong>.<br>Charges determine how particles interact: charges of the same type repel each other, while opposite charges attract.</p>
@@ -34,7 +29,7 @@ $$
 
     <p>You can <strong>drag around</strong> these charges to see how the electric force affects them:</p>
     <div class="canvas" id="scene_charges"></div>
-    <p>Every charge generates an <strong>electric field</strong>, an invisible region where it exerts forces on other charges. We can visualize the electric field with a <strong>field line:</strong></p><br>
+    <p>Every charge contributes to the <strong>electric field</strong>, it represents the force exerted on other charges at each point in space. We can visualize the electric field with a <button class="button-inline active" id="display-field-line">field line</button> or a <button class="button-inline" id="display-vector-field">vector field</button> :</p><br>
     <div class="canvas" id="scene_electric_field"></div>
     <br>
     <p>Another way to visualize the electric field is by coloring each point in space with a <strong class="blue-red-gradient">color gradient</strong> representing the force experienced by a small charge at that point:
@@ -42,9 +37,9 @@ $$
 
     <h2>Special relativity and magnetism</h2>
     <p>Imagine an object carrying a <strong class="red">positive electric charge</strong> placed under a cable carrying an electrical current.<br>
-    In the <button data-reference="0" class="button-reference-inline button-inline active">observer's frame of reference</button>, the negative charges in the wire are moving, and since the <strong class="red">positive</strong> and <strong class="blue">negative</strong> charges in the cable compensate each other, the object doesn't experience any force.</p>
+    In the <button data-reference="0" class="button-reference-inline button-inline active">observer's frame of reference</button>, the object and the negative charges in the wire are moving, and since the <strong class="red">positive</strong> and <strong class="blue">negative</strong> charges in the cable compensate each other, the object doesn't experience any force.</p>
     <p>In the <button data-reference="1" class="button-reference-inline button-inline">object's frame of reference</button>, it appears to be static alongside the <strong class="blue">negative</strong> charges, while the <strong class="red">positive</strong> are charges moving to the left, and the object still doesn't get affected by a force.</p>
-    <p>Now if we consider <button data-reference="2" class="button-reference-inline button-inline">special relativity</button>, the moving charges in the wire appear "stretched" due to relativistic effects, causing a change in the distribution of charge. This stretching leads to a repulsive force between the object and the wire, which we interpret as <strong>magnetism.</strong></p>
+    <p>Now if we consider <button data-reference="2" class="button-reference-inline button-inline">special relativity</button>, the moving charges in the wire appear "stretched" due to relativistic effects, causing a change in the distribution of charges. This stretching leads to a repulsive force between the object and the wire, which we interpret as <strong>magnetism.</strong></p>
     <div class="canvas" id="scene_relativity"></div>
     <div class="button-group">
         <button data-reference="0" class="button-reference button active">Observer's frame of reference</button>
@@ -53,7 +48,8 @@ $$
     </div>
     <h2>Maxwell's equations</h2>
     <p>Maxwell's equations describe how electric and magnetic fields are created and interact with each others. We will focus on the third and fourth equations.</p>
-    <p>Maxwell's third equation, known as <strong>Faraday's law of induction</strong>, shows how changing magnetic fields can generate electric currents.<br>An example of this is moving a magnet inside a coil, which induces an electric current in the wire due to the changing magnetic flux. This is the principle behind electric generators, where mechanical energy is used to move magnets relative to coils, generating electricity through electromagnetic induction.</p>
+    <p>Maxwell's third equation, known as <strong>Faraday's law of induction</strong>, shows how changing magnetic fields can generate electric currents.<br>An example of this is moving a magnet inside a coil, which induces an electric current in the wire due to the changing magnetic flux.</p>
+    <p>This is the principle behind electric generators: Mechanical energy (like the flow of steam) is used to move magnets inside coils (a turbine)    , converting it to electrical energy through electromagnetic induction.</p>
     <p>By moving the magnet left and right, we can see the voltmeter picking up a current:</p>
     <div class="canvas" id="scene_induction"></div>
     <div style="display: flex;margin-top: 2em;">
@@ -91,9 +87,9 @@ $$
 
     <p>When the wavelength falls between approximately 400 nm and 700 nm, the human eye perceives it as <strong>visible light</strong>.</p>
     <p>While other wavelengths are invisible to the human eye, many are quite familiar in everyday life.
-For example, microwaves are used for Wi-Fi and cooking, X-rays help in medical imaging, and radio waves enable communication.<br>
-Some insects, like bees, can see ultraviolet light, which helps them locate flowers by revealing hidden patterns and markings created by specialized pigments, such as flavonoids, that reflect UV wavelengths.<br>
-On the other end of the spectrum, gamma rays are highly energetic and can be dangerous, often associated with radiation, nuclear bombs, and space phenomena like supernovas.</p>
+For example, microwaves are used for Wi-Fi and cooking, X-rays are used in medical imaging, and radio waves enable communication.</p>
+<p>Some insects, like bees, can see ultraviolet light, which helps them locate flowers by revealing hidden patterns and markings created by specialized pigments, such as flavonoids, that reflect UV wavelengths.</p>
+<p>On the other end of the spectrum, gamma rays are highly energetic and can be dangerous, often associated with radiation, nuclear bombs, and space phenomena like supernovas.</p>
     <div class="canvas" id="scene_spectrum"></div>
     <div class="slider-container" style="margin-top: 2em;width: 100%;">
         <label>Frequency</label><input id="frequency-input-spectrum" type="range" min="0" max="1" step="0.001" data-color="#888">
@@ -143,14 +139,34 @@ $$
 
 <h1>Chapter 2: Light Transport</h1>
 
-<p>We call <strong>light transport</strong> the entire process by which light is emitted by a <strong>source</strong> of illumination, interacts with a <strong>material</strong>, getting either absorbed or redistributed, and ultimately detected by a <strong>sensor</strong> such as a camera or the human eye.</p>
 <p>In the previous chapter, we examined the nature of light and the various methods by which it can be emitted, we will now focus on how it interacts with matter.</p>
+<p>We call <strong>light transport</strong> the entire process by which light is emitted by a <strong>source</strong> of illumination, interacts with a <strong>material</strong>, getting either absorbed or redistributed, and ultimately detected by a <strong>sensor</strong> such as a camera or the human eye.</p>
 <div class="canvas" id="scene_transport"></div>
 
 <p>When light interacts with an object, one of two things can happen: it can either be <strong>absorbed</strong> or <strong>redistributed</strong>.</p>
 <p>Absorption can be thought of as deleting certain wavelengths from the incoming light, while redistribution refers to light continuing to propagate after the interaction with the object, with possible changes to its properties such as direction, wavelength, or polarization.</p>
 <p>If we take the example of a <strong class="red">red apple</strong>. When we shine a white light (which contains all visible wavelengths) on it, the apple's pigments (anthocyanins) absorb most of the wavelengths such as <strong class="violet">violet</strong>, <strong class="blue">blue</strong> and <strong class="green">green</strong>, thus decreasing the intensity of those colors from the light. The remaining wavelengths, mostly <strong class="red">red</strong>, gets scattered off the apple's surface making us perceive the apple as red.</p>
 <div class="canvas" id="scene_apple"></div>
+
+<p>But <strong>why</strong> does light get absorbed or redistributed in the first place? Well it depends on the type of material the light interacts with.</p>
+
+<p>We distinguish two types of materials by the nature of their interaction with light: <strong>metals</strong> and <strong>non-metals</strong>.</p>
+
+<h2>Non-metals</h2>
+
+<p>Also called <strong>dielectrics</strong>, these are materials that do not conduct electricity (insulators). They include <strong>plastic, wood, glass, water, diamond, air...</strong></p>
+<p>When a photon encounters an <strong>non-metallic</strong> object, its oscillating electric field interacts with the electrons bound to the object's atoms or molecules. Electrons occupy <strong>atomic orbitals</strong> (or in the case of molecules, <a href="https://en.wikipedia.org/wiki/Conjugated_system">conjugated systems</a>) which are regions around the nucleus where an electron is most likely to be found. A higher orbital corresponds to a higher excitation or energy level of the electron.</p>
+<p>If the photon's energy <strong>matches</strong> the energy difference between two orbitals, the photon can be absorbed, and the electron is promoted to the higher energy state.</p>
+<p>The excited electron eventually returns to a lower energy level and must release the excess energy, either by transferring that energy to surrounding atoms and molecules as heat through vibrations, or by re-emitting light by fluorescence or phosphorescence.</p>
+
+<p>If 
+
+<h2>Metals</h2>
+
+<p></p>
+
+
+<p><strong>Metals</strong> on the other hand are different, they don't have electron orbitals but delocalized electrons in the form of an <strong>electron sea</strong>
 
 <h2>Spectral Power Distribution</h2>
 <p>We can characterize light by describing the amount of energy it carries at each wavelength using a function called the <strong>Spectral Power Distribution</strong> or <strong>SPD</strong> for short.</p>
@@ -185,8 +201,8 @@ $$
 </div>
 
 <br><br>
-<p>If we now add a banana and shine a <button data-color="white" class="white-light-button button-light-inline-m button-inline active">white light</button>, we can obviously tell the apple and the banana apart, one being red while the other is yellow.<br>But what happens when the light is <button data-color="red" class="red-light-button button-light-inline-m button-inline">red</button>? Both objects appear reddish to our eyes, because the banana doesn't have any green light to reflect, making it lose its yellow color.</p>
-<p>This phenomenon is called <strong>metamerism</strong>.</p>
+<p>If we now add a banana and shine a <button data-color="white" class="white-light-button button-light-inline-m button-inline active">white light</button>, we can obviously tell the apple and the banana apart, one being red while the other is yellow.<br>But what happens when the light is <button data-color="red" class="red-light-button button-light-inline-m button-inline">red</button>? Both objects appear reddish to our eyes, because the banana doesn't have any green light to reflect, making it lose its yellow color. This phenomenon is called <strong>metamerism</strong>.</p>
+<p>You can display the <button class="button-inline active" id="display-apple-curve">apple's curve</button> or the <button class="button-inline" id="display-banana-curve">banana's curve</button> :</p>
 
 <div class="canvas" id="scene_metamers"></div>
 <div class="slider-container-buttons">
@@ -205,13 +221,18 @@ $$
 <br>
 <p>There are different types of metamerism, depending on when it happens during the light transport process. The apple and banana example is called <strong>illuminant metamerism</strong>, where objects that reflect light differently appear the same under some specific illumination.</p>
 <p><strong>Observer metamerism</strong> is when objects appear different between observers, a good example of this is <strong>colorblindness</strong>.</p>
-<p></p>
+
 <br><br><br><br><br>
+<div class="canvas" id="scene_snells"></div>
+<div class="slider-container">
+    <label style="font-weight: bold;">Angle</label><br><input id="snells-angle-input" type="range" min="-90" max="90" step="0.01" data-color="#888">
+    <label style="font-weight: bold;">IOR 2</label><br><input id="snells-ior2-input" type="range" min="1" max="2.5" step="0.01" data-color="#888">
+    <label style="font-weight: bold;">IOR 1</label><br><input id="snells-ior1-input" type="range" min="1" max="2.5" step="0.01" data-color="#888">
+</div>
 <br><br><br><br><br>
 <br><br><br><br><br>
 <br><br><br><br><br>
 <div class="canvas" id="scene_reflection"></div>
-<p>We distinguish two types of materials by the nature of their interaction with light: <strong>conductors</strong> and <strong>nonconductors (or dielectrics)</strong></p>
 <br><br><br><br><br>
 <br><br><br><br><br>
 <br><br><br><br><br>

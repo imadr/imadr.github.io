@@ -24,7 +24,7 @@
 }
 body{
     color: #333333;
-    background: rgb(250, 250, 250);
+    background: white;
     font-family: "Inter", sans-serif;
     font-weight: normal;
     margin-right: auto;
@@ -260,40 +260,6 @@ h2{
 }
 .button-inline.red-light-button:hover {
     background-color: #f56c6c;
-}
-.wip-banner {
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 30px;
-    background: repeating-linear-gradient(
-        45deg,
-        #ffcc00,
-        #ffcc00 60px,
-        #2d2d2d 60px,
-        #2d2d2d 120px
-    );
-    display: flex;
-    align-items: center;
-    overflow: hidden;
-    z-index: 9999;
-    justify-content: center;
-    align-items: center;
-}
-.wip-text {
-    font-weight: 1000;
-    font-size: 18px;
-    letter-spacing: 2px;
-    color: #ffffff;
-    text-transform: uppercase;
-    text-shadow: 0px 0px 3px rgba(0, 0, 0, 1);
-    padding: 0 60px;
-    white-space: nowrap;
-}
-.wip-container {
-    display: flex;
-    gap: 48px;
 }
 .intro {
     font-size: 1.2em;
