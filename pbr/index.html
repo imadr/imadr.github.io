@@ -13,7 +13,6 @@
 <body>
     <canvas id="main-canvas"></canvas>
     <h1 id="main-title">Physically based rendering from first principles</h1>
-    <h2 style="color: #888;font-weight: normal;font-size: 1.2em;margin-top: -2.2em;margin-bottom: 3em;">by <a style="color: inherit;text-decoration: none;" href="https://imadr.me">Imad</a></h2>
     <p class="intro">In this interactive book, we will explore the physical phenomena that create light and the fundamental laws governing its interaction with matter. We will learn how our human eyes capture light and how our brains interpret it as visual information. We will then model approximations of these physical interactions and learn how to create physically realistic renderings of various materials.<br><br>
     If you like this book, consider supporting me on <a href="https://ko-fi.com/imadr">Ko-fi</a>.</p>
     <h1>Chapter 1: What is light?</h1>
@@ -37,9 +36,9 @@ $$
 
     <h2>Special relativity and magnetism</h2>
     <p>Imagine an object carrying a <strong class="red">positive electric charge</strong> placed under a cable carrying an electrical current.<br>
-    In the <button data-reference="0" class="button-reference-inline button-inline active">observer's frame of reference</button>, the object and the negative charges in the wire are moving, and since the <strong class="red">positive</strong> and <strong class="blue">negative</strong> charges in the cable compensate each other, the object doesn't experience any force.</p>
+    From <button data-reference="0" class="button-reference-inline button-inline active">our point of view</button>, the object and the negative charges in the wire are moving, and since the <strong class="red">positive</strong> and <strong class="blue">negative</strong> charges in the cable compensate each other, the object doesn't experience any force.</p>
     <p>In the <button data-reference="1" class="button-reference-inline button-inline">object's frame of reference</button>, it appears to be static alongside the <strong class="blue">negative</strong> charges, while the <strong class="red">positive</strong> are charges moving to the left, and the object still doesn't get affected by a force.</p>
-    <p>Now if we consider <button data-reference="2" class="button-reference-inline button-inline">special relativity</button>, the moving charges in the wire appear "stretched" due to relativistic effects, causing a change in the distribution of charges. This stretching leads to a repulsive force between the object and the wire, which we interpret as <strong>magnetism.</strong></p>
+    <p>Now if we take into account <button data-reference="2" class="button-reference-inline button-inline">special relativity</button>, the moving charges in the wire appear "stretched" due to relativistic effects, causing a change in the distribution of charges. This stretching leads to a repulsive force between the object and the wire, which we interpret as <strong>magnetism.</strong></p>
     <div class="canvas" id="scene_relativity"></div>
     <div class="button-group">
         <button data-reference="0" class="button-reference button active">Observer's frame of reference</button>
@@ -140,15 +139,15 @@ $$
 <h1>Chapter 2: Light Transport</h1>
 
 <p>In the previous chapter, we examined the nature of light and the various methods by which it can be emitted, we will now focus on how it interacts with matter.</p>
-<p>We call <strong>light transport</strong> the entire process by which light is emitted by a <strong>source</strong> of illumination, interacts with a <strong>material</strong>, getting either absorbed or redistributed, and ultimately detected by a <strong>sensor</strong> such as a camera or the human eye.</p>
+<p>We call <strong>light transport</strong> the entire process by which light is emitted by a <strong>source</strong> of illumination, interacts with a <strong>material</strong>, getting either absorbed or scattered, and ultimately detected by a <strong>sensor</strong> such as a camera or the human eye.</p>
 <div class="canvas" id="scene_transport"></div>
 
-<p>When light interacts with an object, one of two things can happen: it can either be <strong>absorbed</strong> or <strong>redistributed</strong>.</p>
-<p>Absorption can be thought of as deleting certain wavelengths from the incoming light, while redistribution refers to light continuing to propagate after the interaction with the object, with possible changes to its properties such as direction, wavelength, or polarization.</p>
+<p>When light interacts with an object, one of two things can happen: it can either be <strong>absorbed</strong> or <strong>scattered</strong>.</p>
+<p>Absorption can be thought of as deleting certain wavelengths from the incoming light, while scattering refers to light continuing to propagate after the interaction with the object, with possible changes to its properties such as direction, wavelength, or polarization.</p>
 <p>If we take the example of a <strong class="red">red apple</strong>. When we shine a white light (which contains all visible wavelengths) on it, the apple's pigments (anthocyanins) absorb most of the wavelengths such as <strong class="violet">violet</strong>, <strong class="blue">blue</strong> and <strong class="green">green</strong>, thus decreasing the intensity of those colors from the light. The remaining wavelengths, mostly <strong class="red">red</strong>, gets scattered off the apple's surface making us perceive the apple as red.</p>
 <div class="canvas" id="scene_apple"></div>
 
-<p>But <strong>why</strong> does light get absorbed or redistributed in the first place? Well it depends on the type of material the light interacts with.</p>
+<p>But <strong>why</strong> does light get absorbed or scattered in the first place? Well it depends on the type of material the light interacts with.</p>
 
 <p>We distinguish two types of materials by the nature of their interaction with light: <strong>metals</strong> and <strong>non-metals</strong>.</p>
 
