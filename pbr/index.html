@@ -5,10 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Physically based rendering from first principles</title>
     <link rel="stylesheet" href="style.css">
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.21/dist/katex.min.css" integrity="sha384-zh0CIslj+VczCZtlzBcjt5ppRcsAmDnRem7ESsYwWwg3m/OaJ2l4x7YBZl9Kxxib" crossorigin="anonymous">
-    <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.21/dist/katex.min.js" integrity="sha384-Rma6DA2IPUwhNxmrB/7S3Tno0YY7sFu9WSYMCuulLhIqYSGZ2gKCJWIqhBWqMQfh" crossorigin="anonymous"></script>
-    <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.21/dist/contrib/auto-render.min.js" integrity="sha384-hCXGrW6PitJEwbkoStFjeJxv+fSOOQKOPbJxSfM6G5sWZjAyWhXiTIIAmQqnlLlh" crossorigin="anonymous"
-        onload="renderMathInElement(document.body);"></script>
+    <link rel="stylesheet" href="mathdisp.css">
 </head>
 <body>
     <canvas id="main-canvas"></canvas>
@@ -16,15 +13,16 @@
     <p class="intro">In this interactive book, we will explore the physical phenomena that create light and the fundamental laws governing its interaction with matter. We will learn how our human eyes capture light and how our brains interpret it as visual information. We will then model approximations of these physical interactions and learn how to create physically realistic renderings of various materials.<br><br>
     If you like this book, consider supporting me on <a href="https://ko-fi.com/imadr">Ko-fi</a>.</p>
     <h1>Chapter 1: What is light?</h1>
+    <p>We all are familiar with light: it's the <i>thing</i> that help us see around, differentiate colors and textures of objects. But defining what is light precisly is a tricky question to answer.<p>
+    <p>Throuought history, many philosophers (and later physicits) studied light and tried to demistify its nature. Some ancient greeks thought of light as one of the four fundamental elements that composed the universe: Beams of fire emanating from our eyes or from the sun and stars. Later, Descartes postulated that light behaves like waves, while Newton stated that light was composed of tiny particles of matter called corpuscules.</p>
+
+    <p>All these different theories accounted for some behaviours of light, but couldn't explain them all in one unified theory</p>
     <h2>The Electric force</h2>
     <p>One of the fundamental properties of matter is the electric charge, and it comes in two types: <strong class="red">positive</strong> and <strong class="blue">negative</strong>.<br>Charges determine how particles interact: charges of the same type repel each other, while opposite charges attract.</p>
     <p>The amount of force affecting two charged particles is calculated using the <strong>Coulomb's law:</strong></p>
+    <div class="math math-centred" data="F = k_{e} \frac{q_{1} q_{2}}{r^{2}}"></div>
 
-$$
-F = k_e \frac{q_1 q_2}{r^2}
-$$
-
-<p>Where \( k_e \) is a constant, \( q_1 \) and \( q_2 \) are the magnitudes of the two charges, and \( r \) is the distance between them.</p>
+<p>Where <span class="math" data="k_{e}"></span> is a constant, <span class="math" data="q_{1}"></span>  and <span class="math" data="q_{2}"></span> are the magnitudes of the two charges, and <span class="math" data="r"></span>  is the distance between them.</p>
 
     <p>You can <strong>drag around</strong> these charges to see how the electric force affects them:</p>
     <div class="canvas" id="scene_charges"></div>
@@ -47,9 +45,9 @@ $$
     </div>
     <h2>Maxwell's equations</h2>
     <p>Maxwell's equations describe how electric and magnetic fields are created and interact with each others. We will focus on the third and fourth equations.</p>
-    <p>Maxwell's third equation, known as <strong>Faraday's law of induction</strong>, shows how changing magnetic fields can generate electric currents.<br>An example of this is moving a magnet inside a coil, which induces an electric current in the wire due to the changing magnetic flux.</p>
-    <p>This is the principle behind electric generators: Mechanical energy (like the flow of steam) is used to move magnets inside coils (a turbine)    , converting it to electrical energy through electromagnetic induction.</p>
-    <p>By moving the magnet left and right, we can see the voltmeter picking up a current:</p>
+    <p>Maxwell's third equation, known as <strong>Faraday's law of induction</strong>, shows how changing magnetic fields can generate electric currents.<br>An example of this is moving a magnet inside a coil, which induces an electric current in the wire due to the changing magnetic field.</p>
+    <p>This is the principle behind electric generators: Mechanical energy (like the flow of steam) is used to move magnets inside coils (a turbine), converting it to electrical energy through electromagnetic induction.</p>
+    <p>By moving the magnet left and right, we can see the voltmeter picking up a current and the electric charges in the coil moving back and forth:</p>
     <div class="canvas" id="scene_induction"></div>
     <div style="display: flex;margin-top: 2em;">
         <div class="checkbox-container">
@@ -100,20 +98,21 @@ For example, microwaves are used for Wi-Fi and cooking, X-rays are used in medic
     <p><strong>Incandescence</strong> is the process by which a material emits visible light due to high temperature. It is how incandescent lightbulbs and the <strong>sun</strong> generates light.</p>
     <p>An incandescent lightbulb produces light through the heating of a filament until it starts glowing. The filament is made of <strong>tungsten</strong>, an element with a high melting point, high durability, and a positive temperature coefficient of resistance, which means its resistance increases with temperature.</p>
     <p>The current flowing through the filament follows <strong>Ohm's Law</strong>:</p>
-$$
-V = IR
-$$
-<p>Where \( V \) is the voltage, \( I \) the current and \( R \) the resistance of the filament.</p>
+    <div class="math math-centred" data="V = I R"></div>
+
+<p>Where <span class="math" data="V"></span> is the voltage, <span class="math" data="I"></span> the current and <span class="math" data="R"></span> the resistance of the filament.</p>
+
 <p>The filament starts heating due to <strong>Joule heating</strong>:</p>
-$$
-P = I^{2}R
-$$
-<p>Where \( P \) is the dissipated power.</p>
+
+    <div class="math math-centred" data="P = I^{2} R"></div>
+
+<p>Where <span class="math" data="P"></span> is the dissipated power.</p>
+
 <p>As power is dissipated in the filament, it heats up to  about 2500°K, and starts behaving like a <strong>blackbody radiator</strong> emitting a spectrum of light given by <strong>Planck’s Law</strong>:</p>
-$$
-B_{\lambda}(T) = \frac{2hc^2}{\lambda^5} \frac{1}{e^{\frac{hc}{\lambda k_B T}} - 1}
-$$
-<p>Where \( B_{\lambda}(T) \) is the spectral radiance per unit wavelength, \( h \) is Planck's constant, \( c \) is the speed of light, \( \lambda \) is the wavelength, \( k_B \) is Boltzmann's constant, and \( T \) is the temperature of the body.</p>
+
+    <div class="math math-centred" data="B_{\lambda}(T) = \frac{2hc^{2}}{\lambda^{5}} \frac{1}{e^{\frac{hc}{\lambda k_B T}} - 1}"></div>
+
+<p>Where <span class="math" data="B_{\lambda}(T)"></span> is the spectral radiance per unit wavelength, <span class="math" data="h"></span> is Planck's constant, <span class="math" data="c"></span> is the speed of light, <span class="math" data="\lambda"></span> is the wavelength, <span class="math" data="k_B"></span> is Boltzmann's constant, and <span class="math" data="T"></span> is the temperature of the body.</p>
 
 <div class="canvas" id="scene_bulb"></div>
 <div class="canvas" id="scene_bulb_graphs"></div>
@@ -158,7 +157,7 @@ $$
 <p>If the photon's energy <strong>matches</strong> the energy difference between two orbitals, the photon can be absorbed, and the electron is promoted to the higher energy state.</p>
 <p>The excited electron eventually returns to a lower energy level and must release the excess energy, either by transferring that energy to surrounding atoms and molecules as heat through vibrations, or by re-emitting light by fluorescence or phosphorescence.</p>
 
-<p>If 
+<p>If
 
 <h2>Metals</h2>
 
@@ -239,5 +238,6 @@ $$
 <br><br><br><br><br>
 <script type="text/javascript" src="../js/math.js"></script>
 <script type="text/javascript" src="main.js"></script>
+<script type="text/javascript" src="mathdisp.js"></script>
 </body>
 </html>
