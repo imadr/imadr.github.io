@@ -13,16 +13,47 @@
     <p class="intro">In this interactive book, we will explore the physical phenomena that create light and the fundamental laws governing its interaction with matter. We will learn how our human eyes capture light and how our brains interpret it as visual information. We will then model approximations of these physical interactions and learn how to create physically realistic renderings of various materials.<br><br>
     If you like this book, consider supporting me on <a href="https://ko-fi.com/imadr">Ko-fi</a>.</p>
     <h1>Chapter 1: What is light?</h1>
-    <p>We all are familiar with light: it's the <i>thing</i> that help us see around, differentiate colors and textures of objects. But defining what is light precisly is a tricky question to answer.<p>
-    <p>Throuought history, many philosophers (and later physicits) studied light and tried to demistify its nature. Some ancient greeks thought of light as one of the four fundamental elements that composed the universe: Beams of fire emanating from our eyes or from the sun and stars. Later, Descartes postulated that light behaves like waves, while Newton stated that light was composed of tiny particles of matter called corpuscules.</p>
+    <p>We are all familiar with light: it’s the <em>thing</em> that allows us to see the world, distinguish colors and textures, and keeps the universe from being a dark, lifeless void. But precisely defining what light is has proven to be a tricky question.<p>
+    <p>Throughout history, many philosophers (and later, physicists) studied light in an effort to demystify its nature. Some ancient Greeks considered light to be one of the four fundamental elements that composed the universe: beams of fire emanating from our eyes.</p>
+    <p>Descartes proposed that light behaved like waves, while Newton thought that it consists of tiny particles of matter called corpuscles.</p>
 
-    <p>All these different theories accounted for some behaviours of light, but couldn't explain them all in one unified theory</p>
+    <p>Each of these theories explained some aspects of light's behavior, but none could account for all of them in a single, unified framework.</p>
+
+    <br>
+<div class="circle-thing">
+    <div class="circle" id="circle-quantum">
+        <div class="label">Quantum Optics</div>
+        <div class="circle" id="circle-electromagnetic">
+            <div class="label">Electromagnetic Optics</div>
+            <div class="circle" id="circle-wave">
+                <div class="label">Wave Optics</div>
+                <div class="circle selected-circle" id="circle-ray">
+                    <div class="label">Ray Optics</div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="circle-right">
+        <ul>
+            <li id="phenomenon-1" class="highlighted">Reflection / Refraction / Transmission</li>
+            <li id="phenomenon-2" class="grayed">Diffraction</li>
+            <li id="phenomenon-3" class="grayed">Interference</li>
+            <li id="phenomenon-4" class="grayed">Polarization</li>
+            <li id="phenomenon-5" class="grayed">Fluorescence</li>
+        </ul>
+    </div>
+</div>
+    <br>
+
+    <p>For the purpose of computer graphics, the ray optics model is accurate enough at simulating light interaction with matter. But for the sake of scientific curiosity, we will explore some aspects of the other models, starting with <strong>electromagnetism</strong></p>
+
     <h2>The Electric force</h2>
     <p>One of the fundamental properties of matter is the electric charge, and it comes in two types: <strong class="red">positive</strong> and <strong class="blue">negative</strong>.<br>Charges determine how particles interact: charges of the same type repel each other, while opposite charges attract.</p>
     <p>The amount of force affecting two charged particles is calculated using the <strong>Coulomb's law:</strong></p>
     <div class="math math-centred" data="F = k_{e} \frac{q_{1} q_{2}}{r^{2}}"></div>
 
-<p>Where <span class="math" data="k_{e}"></span> is a constant, <span class="math" data="q_{1}"></span>  and <span class="math" data="q_{2}"></span> are the magnitudes of the two charges, and <span class="math" data="r"></span>  is the distance between them.</p>
+
+    <p>Where <span class="math" data="k_{e}"></span> is a constant, <span class="math" data="q_{1}"></span>  and <span class="math" data="q_{2}"></span> are the magnitudes of the two charges, and <span class="math" data="r"></span>  is the distance between them.</p>
 
     <p>You can <strong>drag around</strong> these charges to see how the electric force affects them:</p>
     <div class="canvas" id="scene_charges"></div>

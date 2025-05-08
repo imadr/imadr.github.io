@@ -5388,3 +5388,42 @@ async function get_font(ctx, fnt_path, bitmap_path) {
 };
 
 get_font(ctx, "inter.fnt", "inter.png");
+
+(function() {
+    const thresholds_id = ["circle-ray", "circle-wave", "circle-electromagnetic", "circle-quantum"];
+    const thresholds = [1, 3, 4, 5];
+
+    const items = Array.from(
+        document.querySelectorAll(".circle-right li")
+    );
+
+    document.querySelectorAll(".circle").forEach(circle => {
+        circle.addEventListener("mouseover", (e) => {
+            if (e.target !== e.currentTarget) return;
+
+            const prev = document.querySelector(".selected-circle");
+            if (prev) prev.classList.remove("selected-circle");
+            circle.classList.add("selected-circle");
+
+            const threshold = thresholds[thresholds_id.indexOf(circle.id)];
+            const threshold_prev = thresholds[thresholds_id.indexOf(circle.id)-1] || 0;
+
+            items.forEach(li => {
+                const idx = parseInt(li.id.split("-")[1], 10);
+                const was_grayed = li.classList.contains("grayed");
+                if (idx <= threshold) {
+                    if(idx > threshold_prev){
+                        li.classList.add("highlighted");
+                    }
+                    else{
+                        li.classList.remove("highlighted");
+                    }
+                    li.classList.remove("grayed");
+                } else {
+                    li.classList.add("grayed");
+                    li.classList.remove("highlighted");
+                }
+            });
+        });
+    });
+})();

@@ -324,3 +324,67 @@ h2{
 .checkbox-container input[type="checkbox"]:focus {
     outline: none;
 }
+
+.circle {
+    cursor: pointer;
+    position: relative;
+    border-radius: 50%;
+    border: 0.12em solid black;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+#circle-quantum {
+    min-width: 320px;
+    min-height: 320px;
+    background-color: rgb(255, 255, 255);
+}
+#circle-electromagnetic {
+    width: 80%;
+    height: 80%;
+}
+#circle-wave {
+    width: 70%;
+    height: 70%;
+    margin-bottom: 0.2em;
+}
+.label{
+    padding-top: 0.5em;
+    margin-bottom: 0.5em;
+}
+#circle-ray .label{
+    margin-top: 0em;
+    margin-bottom: 0em;
+}
+#circle-ray {
+    margin-bottom: 0.2em;
+    width: 66%;
+    height: 66%;
+    justify-content: center;
+}
+.label {
+    margin-top: 1em;
+    font-size: 0.9em;
+    text-align: center;
+    width: 65%;
+    line-height: 1.2em;
+    word-break: break-word;
+    white-space: normal;
+    display: block;
+}
+.selected-circle {
+    background-color: rgb(245, 245, 245) !important;
+}
+.circle-thing{
+    display: flex;
+}
+.circle-right{
+    padding-left: 2em;
+}
+.grayed{
+    color: #bbb;
+}
+.highlighted {
+    font-weight: bold;
+    transition: background 0.3s ease;
+}
