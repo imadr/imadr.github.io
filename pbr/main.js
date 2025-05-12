@@ -3731,7 +3731,7 @@ mat4_mat4_mul(
 );
 let led_metal = ctx.create_drawable("shader_shaded", null, [0.5, 0.5, 0.5], led_transform);
 let led_epoxy_case = ctx.create_drawable("shader_glass", null, [1, 1, 1], led_transform);
-let led_reflective_case = ctx.create_drawable("shader_shaded", null, [0.5, 0.5, 0.5], led_transform);
+let led_reflective_case = ctx.create_drawable("shader_shaded", null, [1, 1, 1], led_transform);
 // scene_led
 // scene_reflection
 let hemisphere = ctx.create_drawable("shader_basic_alpha", create_uv_hemisphere(0.25, 32, 32), [0, 0, 0], mat4_identity(),
@@ -4459,7 +4459,7 @@ function update(current_time){
 
             gl.disable(gl.DEPTH_TEST);
             for(let i = 0; i < num_electrons_ampere; i++){
-                coil_electrons_ampere[i][1] += delta_time*0.01*ampere_voltage;
+                coil_electrons_ampere[i][1] += delta_time*0.005*ampere_voltage;
                 if(coil_electrons_ampere[i][1] > 1){
                     coil_electrons_ampere[i][1] = 0;
                 }
@@ -4833,9 +4833,9 @@ function update(current_time){
             ctx.draw(ctx.text_buffers["sun_photosphere"], {}, ui_camera_sun);
         }
         else if(scene_id == "scene_led"){
-            ctx.draw(led_metal);
-            ctx.draw(led_epoxy_case, {"alpha": 0.5});
-            ctx.draw(led_reflective_case);
+            ctx.draw(led_reflective_case, {"metallic": 1.0});
+            ctx.draw(led_metal, {"metallic": 0.0});
+            ctx.draw(led_epoxy_case, {"alpha": 0.5, "metallic": 0.0});
         }
         else if(scene_id == "scene_bulb"){
             ctx.draw(bulb_screw, {"metallic": 1});
@@ -5391,7 +5391,7 @@ get_font(ctx, "inter.fnt", "inter.png");
 
 (function() {
     const thresholds_id = ["circle-ray", "circle-wave", "circle-electromagnetic", "circle-quantum"];
-    const thresholds = [1, 3, 4, 5];
+    const thresholds = [1, 3, 5, 7];
 
     const items = Array.from(
         document.querySelectorAll(".circle-right li")

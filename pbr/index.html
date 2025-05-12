@@ -14,10 +14,10 @@
     If you like this book, consider supporting me on <a href="https://ko-fi.com/imadr">Ko-fi</a>.</p>
     <h1>Chapter 1: What is light?</h1>
     <p>We are all familiar with light: it’s the <em>thing</em> that allows us to see the world, distinguish colors and textures, and keeps the universe from being a dark, lifeless void. But precisely defining what light is has proven to be a tricky question.<p>
-    <p>Throughout history, many philosophers (and later, physicists) studied light in an effort to demystify its nature. Some ancient Greeks considered light to be one of the four fundamental elements that composed the universe: beams of fire emanating from our eyes.</p>
+    <p>Throughout history, many philosophers (and later, physicists) studied light in an effort to demystify its nature. Some ancient Greeks considered it to be one of the four fundamental elements that composed the universe: beams of fire emanating from our eyes.</p>
     <p>Descartes proposed that light behaved like waves, while Newton thought that it consists of tiny particles of matter called corpuscles.</p>
 
-    <p>Each of these theories explained some aspects of light's behavior, but none could account for all of them in a single, unified framework.</p>
+    <p>Each of these theories explained some aspects of light's behavior, but none could account for all of them in a single, unified framework. That was until the 1920s when physicists came up with <strong>quantum electrodynamics</strong>. This theory is, as of now, the most accurate way to describe every interactions of light and matter.</p>
 
     <br>
 <div class="circle-thing">
@@ -39,13 +39,15 @@
             <li id="phenomenon-2" class="grayed">Diffraction</li>
             <li id="phenomenon-3" class="grayed">Interference</li>
             <li id="phenomenon-4" class="grayed">Polarization</li>
-            <li id="phenomenon-5" class="grayed">Fluorescence</li>
+            <li id="phenomenon-5" class="grayed">Dispersion</li>
+            <li id="phenomenon-6" class="grayed">Fluorescence</li>
+            <li id="phenomenon-7" class="grayed">Phosphorescence</li>
         </ul>
     </div>
 </div>
     <br>
 
-    <p>For the purpose of computer graphics, the ray optics model is accurate enough at simulating light interaction with matter. But for the sake of scientific curiosity, we will explore some aspects of the other models, starting with <strong>electromagnetism</strong></p>
+    <p>For the purpose of computer graphics, the ray optics model is accurate enough at simulating light interactions. But for the sake of scientific curiosity, we will explore some aspects of the other models, starting with <strong>electromagnetism</strong>.</p>
 
     <h2>The Electric force</h2>
     <p>One of the fundamental properties of matter is the electric charge, and it comes in two types: <strong class="red">positive</strong> and <strong class="blue">negative</strong>.<br>Charges determine how particles interact: charges of the same type repel each other, while opposite charges attract.</p>
@@ -53,7 +55,7 @@
     <div class="math math-centred" data="F = k_{e} \frac{q_{1} q_{2}}{r^{2}}"></div>
 
 
-    <p>Where <span class="math" data="k_{e}"></span> is a constant, <span class="math" data="q_{1}"></span>  and <span class="math" data="q_{2}"></span> are the magnitudes of the two charges, and <span class="math" data="r"></span>  is the distance between them.</p>
+    <p>Where <span class="math" data="k_{e}"></span> is a constant, <span class="math" data="q_{1}"></span>  and <span class="math" data="q_{2}"></span> are the quantites of each charge, and <span class="math" data="r"></span>  is the distance between them.</p>
 
     <p>You can <strong>drag around</strong> these charges to see how the electric force affects them:</p>
     <div class="canvas" id="scene_charges"></div>
@@ -159,7 +161,11 @@ For example, microwaves are used for Wi-Fi and cooking, X-rays are used in medic
 
 <div class="canvas" id="scene_sun"></div>
 
-<p>Another way to generate light is by <strong>electroluminescence</strong>, this is the phenomenon that powers LEDs
+<br>
+
+<p>Another way to generate light is by <strong>electroluminescence</strong>, this is the phenomenon that powers LEDs</p>
+
+<p>The main component of a light emitting diode is a <strong>semiconductor chip</strong>. Semiconductors are materials with electrical conductivity that can be modified by mixing them with other materials, this process is called <strong>doping</strong>.
 
 <div class="canvas" id="scene_led"></div>
 <br>
