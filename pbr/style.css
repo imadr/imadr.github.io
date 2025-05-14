@@ -373,7 +373,7 @@ h2{
     display: block;
 }
 .selected-circle {
-    background-color: rgb(245, 245, 245) !important;
+    background-color: rgb(230, 230, 230) !important;
 }
 .circle-thing{
     display: flex;
