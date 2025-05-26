@@ -15,20 +15,23 @@
     <h1>Chapter 1: What is light?</h1>
     <p>We are all familiar with light: it’s the <em>thing</em> that allows us to see the world, distinguish colors and textures, and keeps the universe from being a dark, lifeless void. But precisely defining what light is has proven to be a tricky question.<p>
     <p>Throughout history, many philosophers (and later, physicists) studied light in an effort to demystify its nature. Some ancient Greeks considered it to be one of the four fundamental elements that composed the universe: beams of fire emanating from our eyes.</p>
-    <p>Descartes proposed that light behaved like waves, while Newton thought that it consists of tiny particles of matter called corpuscles.</p>
+    <p>Descartes proposed that light behaved like waves, while Newton thought that it consisted of tiny particles of matter called corpuscles.</p>
 
-    <p>Each of these theories explained some aspects of light's behavior, but none could account for all of them in a single, unified framework. That was until the 1920s when physicists came up with <strong>quantum electrodynamics</strong>. This theory is, as of now, the most accurate way to describe every interactions of light and matter.</p>
+    <p>Each of these more or less scientific theories explained some aspects of light's behavior, but none could account for all of them in a single, unified framework. That was until the 1920s when physicists came up with <strong>quantum electrodynamics</strong>. This theory is, as of now, the most accurate way to describe every interactions of light and matter.</p>
 
     <br>
+
 <div class="circle-thing">
-    <div class="circle" id="circle-quantum">
-        <div class="label">Quantum Optics</div>
-        <div class="circle" id="circle-electromagnetic">
-            <div class="label">Electromagnetic Optics</div>
-            <div class="circle" id="circle-wave">
-                <div class="label">Wave Optics</div>
-                <div class="circle selected-circle" id="circle-ray">
-                    <div class="label">Ray Optics</div>
+    <div class="circle-left">
+        <div class="circle" id="circle-quantum">
+            <div class="label">Quantum Optics</div>
+            <div class="circle" id="circle-electromagnetic">
+                <div class="label">Electromagnetic Optics</div>
+                <div class="circle" id="circle-wave">
+                    <div class="label">Wave Optics</div>
+                    <div class="circle selected-circle" id="circle-ray">
+                        <div class="label">Ray Optics</div>
+                    </div>
                 </div>
             </div>
         </div>
@@ -266,15 +269,28 @@ For example, microwaves are used for Wi-Fi and cooking, X-rays are used in medic
     <label style="font-weight: bold;">IOR 2</label><br><input id="snells-ior2-input" type="range" min="1" max="2.5" step="0.01" data-color="#888">
     <label style="font-weight: bold;">IOR 1</label><br><input id="snells-ior1-input" type="range" min="1" max="2.5" step="0.01" data-color="#888">
 </div>
-<br><br><br><br><br>
-<br><br><br><br><br>
-<br><br><br><br><br>
+<br>
+
+<div class="canvas" id="scene_fresnel"></div>
+<div class="slider-container">
+    <label style="font-weight: bold;">Angle</label><br><input id="fresnel-angle-input" type="range" min="-90" max="90" step="0.01" data-color="#888">
+    <label style="font-weight: bold;">IOR 2</label><br><input id="fresnel-ior2-input" type="range" min="1" max="2.5" step="0.01" data-color="#888">
+    <label style="font-weight: bold;">IOR 1</label><br><input id="fresnel-ior1-input" type="range" min="1" max="2.5" step="0.01" data-color="#888">
+</div>
+<br>
+
+<div class="canvas" id="scene_total_internal_reflection"></div>
+
+
+
 <div class="canvas" id="scene_reflection"></div>
-<br><br><br><br><br>
-<br><br><br><br><br>
-<br><br><br><br><br>
-<br><br><br><br><br>
-<br><br><br><br><br>
+
+
+<h1>Further reading</h1>
+<p>This article is mainly based on <a href="https://www.pbr-book.org/">Physically Based Rendering: From Theory To Implementation</a>, an excellent book which I recommend you read. <a href="https://www.youtube.com/watch?v=j-A0mwsJRmk">This SIGGRAPH talk</a> by Naty Hoffman was also very useful and well explained.</p>
+<p>My main inspiration for writing interactive articles is this <a href="https://ciechanow.ski/">fantastic blog</a> by Bartosz Ciechanowski. A lot of interactive demos in this book are smiliar to the ones in <a href="https://ciechanow.ski/cameras-and-lenses/">this post</a>.</p>
+<p>Other resources include <a href="https://learnopengl.com/PBR/Theory">LearnOpenGL</a>, the <a href="https://www.youtube.com/watch?v=XoVW7CRR5JY">ScienceClic</a> youtube channel, <a href="https://www.youtube.com/watch?v=aXRTczANuIs">3Blue1Brown</a>.</p>
+<p>I can't recommend enough the famous book <a href="https://en.wikipedia.org/wiki/QED:_The_Strange_Theory_of_Light_and_Matter">QED: The Strange Theory of Light and Matter</a> by Richard Feynman.</p>
 <script type="text/javascript" src="../js/math.js"></script>
 <script type="text/javascript" src="main.js"></script>
 <script type="text/javascript" src="mathdisp.js"></script>

@@ -138,6 +138,7 @@ h2{
     padding-left: 5em;
     padding-right: 5em;
     justify-content: center;
+    align-items: center;
 }
 .button-group {
     display: flex;
@@ -335,8 +336,8 @@ h2{
     align-items: center;
 }
 #circle-quantum {
-    min-width: 320px;
-    min-height: 320px;
+    width: 320px;
+    height: 320px;
     background-color: rgb(255, 255, 255);
 }
 #circle-electromagnetic {
@@ -363,6 +364,7 @@ h2{
     justify-content: center;
 }
 .label {
+    pointer-events: none;
     margin-top: 1em;
     font-size: 0.9em;
     text-align: center;
@@ -377,9 +379,19 @@ h2{
 }
 .circle-thing{
     display: flex;
+    column-gap: 50px;
+    flex-direction: row;
+    justify-content: center;
+    align-items: center;
 }
 .circle-right{
-    padding-left: 2em;
+    flex: 1;
+}
+.circle-right ul{
+    padding-left: 0;
+}
+.circle-right li{
+    list-style: none;
 }
 .grayed{
     color: #bbb;
@@ -387,4 +399,23 @@ h2{
 .highlighted {
     font-weight: bold;
     transition: background 0.3s ease;
+}
+@media only screen and (max-width: 600px){
+    .circle-thing{
+        flex-direction: column;
+    }
+    .slider-container-buttons{
+        flex-direction: column;
+        padding-right: 0;
+        padding-left: 0;
+    }
+    .slider-group-vertical, .button-group-vertical{
+        width: 90%;
+    }
+    .button-group-vertical{
+        margin-top: 1.5em;
+    }
+    .slider-group-vertical input{
+        width: 100%;
+    }
 }

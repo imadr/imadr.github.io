@@ -2026,6 +2026,30 @@ ctx.scenes = {
                 zoom: 2.0
             }
         }},
+    "scene_fresnel": {id: "scene_fresnel", el: null, ratio: 1.8, camera: null, dragging_rect: null, draggable_rects: {},
+        camera: {
+            fov: 50, z_near: 0.1, z_far: 1000,
+            position: [0, 0, 0], rotation: [0, 0, 0],
+            up_vector: [0, 1, 0],
+            view_matrix: mat4_identity(),
+            orbit: {
+                rotation: [0, 0, 0],
+                pivot: [0, 0, 0],
+                zoom: 2.0
+            }
+        }},
+    "scene_total_internal_reflection": {id: "scene_total_internal_reflection", el: null, ratio: 1.8, camera: null, dragging_rect: null, draggable_rects: {},
+        camera: {
+            fov: 50, z_near: 0.1, z_far: 1000,
+            position: [0, 0, 0], rotation: [0, 0, 0],
+            up_vector: [0, 1, 0],
+            view_matrix: mat4_identity(),
+            orbit: {
+                rotation: [0, 0, 0],
+                pivot: [0, 0, 0],
+                zoom: 2.0
+            }
+        }},
 };
 
 function get_event_coordinates(e, element) {
@@ -2471,8 +2495,234 @@ document.getElementById("snells-ior2-input").addEventListener("input", function(
     ior_2 = parseFloat(e.target.value);
     update_snells_scene();
 });
-
 // scene_snells
+
+// scene_fresnel
+let fresnel_medium_1 = ctx.create_drawable("shader_basic",
+    create_rect([0, 0, 0], [medium_width, medium_height]),
+    [0.8, 0.9, 1], translate_3d([-medium_width/2, -medium_height, 0]));
+let fresnel_medium_2 = ctx.create_drawable("shader_basic",
+    create_rect([0, 0, 0], [medium_width, medium_height]),
+    [0.960, 0.980, 1.000], translate_3d([-medium_width/2, 0, 0]));
+
+let fresnel_incidence_angle = -30;
+let fresnel_snells_len = 0.8;
+let fresnel_snells_len_curve = 0.7;
+let fresnel_ior_1 = 1.5;
+let fresnel_ior_2 = 1;
+
+let fresnel_incident_ray_1 = ctx.create_drawable("shader_basic", null, [1, 0, 0], translate_3d([0, 0, 0]));
+let fresnel_incident_ray_2 = ctx.create_drawable("shader_basic", null, [1, 0, 0], translate_3d([0, 0, 0]));
+let fresnel_refracted_ray_1 = ctx.create_drawable("shader_basic", null, [0, 0.6, 1], translate_3d([0, 0, 0]));
+let fresnel_refracted_ray_2 = ctx.create_drawable("shader_basic", null, [0, 0.6, 1], translate_3d([0, 0, 0]));
+let fresnel_reflected_ray_1 = ctx.create_drawable("shader_basic", null, [0.8, 0.8, 0], translate_3d([0, 0, 0]));
+let fresnel_reflected_ray_2 = ctx.create_drawable("shader_basic", null, [0.8, 0.8, 0], translate_3d([0, 0, 0]));
+
+let fresnel_angle_1_curve = ctx.create_drawable("shader_basic", null, [0, 0, 0], translate_3d([0, 0, 0]));
+let fresnel_angle_2_curve = ctx.create_drawable("shader_basic", null, [0, 0, 0], translate_3d([0, 0, 0]));
+
+function fresnel_coefficients(ior1, ior2, angle_rad) {
+    let cos_i = Math.cos(angle_rad);
+    let sin_t = (ior1 / ior2) * Math.sin(angle_rad);
+
+    if (Math.abs(sin_t) > 1) return { R: 1, T: 0 };
+
+    let cos_t = Math.sqrt(1 - sin_t * sin_t);
+
+    let rs = ((ior1 * cos_i - ior2 * cos_t) / (ior1 * cos_i + ior2 * cos_t)) ** 2;
+    let rp = ((ior1 * cos_t - ior2 * cos_i) / (ior1 * cos_t + ior2 * cos_i)) ** 2;
+
+    let R = 0.5 * (rs + rp);
+    let T = 1 - R;
+
+    return { R, T };
+}
+
+function update_fresnel_scene() {
+    let inc_angle_rad = rad(fresnel_incidence_angle);
+    let { R, T } = fresnel_coefficients(fresnel_ior_2, fresnel_ior_1, Math.abs(inc_angle_rad));
+
+    let medium1_color = vec3_lerp([1, 1, 1], [0.8, 0.9, 1], remap_value(fresnel_ior_1, 1, 2.5, 0, 1));
+    let medium2_color = vec3_lerp([1, 1, 1], [0.8, 0.9, 1], remap_value(fresnel_ior_2, 1, 2.5, 0, 1));
+
+    let red = [1, 0, 0];
+    let red_reflected = vec3_lerp(medium2_color, red, R);
+    let red_refracted = vec3_lerp(medium1_color, red, T);
+
+    let inc_dir = vec3_normalize([Math.sin(inc_angle_rad), Math.cos(inc_angle_rad), 0]);
+    let inc_start = vec3_scale(inc_dir, fresnel_snells_len);
+    let inc_mid_1 = vec3_scale(inc_dir, fresnel_snells_len / 2 - 0.01);
+    let inc_mid = vec3_scale(inc_dir, fresnel_snells_len / 2);
+    ctx.update_drawable_mesh(fresnel_incident_ray_1, create_arrow(inc_start, inc_mid_1, [0.017, 0.05]));
+    ctx.update_drawable_mesh(fresnel_incident_ray_2, create_line([inc_mid, [0, 0, 0]], 0.017));
+    fresnel_incident_ray_1.color = red;
+    fresnel_incident_ray_2.color = red;
+
+    let refraction_angle = Math.asin((fresnel_ior_2 / fresnel_ior_1) * Math.sin(inc_angle_rad)) + Math.PI;
+    let refr_dir = vec3_normalize([Math.sin(refraction_angle), Math.cos(refraction_angle), 0]);
+    let refr_mid_1 = vec3_scale(refr_dir, fresnel_snells_len / 2 + 0.01);
+    let refr_mid = vec3_scale(refr_dir, fresnel_snells_len / 2);
+    let refr_end = vec3_scale(refr_dir, fresnel_snells_len);
+    ctx.update_drawable_mesh(fresnel_refracted_ray_1, create_arrow([0, 0, 0], refr_mid_1, [0.017, 0.05]));
+    ctx.update_drawable_mesh(fresnel_refracted_ray_2, create_line([refr_mid, refr_end], 0.017));
+    fresnel_refracted_ray_1.color = red_refracted;
+    fresnel_refracted_ray_2.color = red_refracted;
+
+    let reflection_angle = -inc_angle_rad;
+    let refl_dir = vec3_normalize([Math.sin(reflection_angle), Math.cos(reflection_angle), 0]);
+    let refl_mid_1 = vec3_scale(refl_dir, fresnel_snells_len / 2 + 0.01);
+    let refl_mid = vec3_scale(refl_dir, fresnel_snells_len / 2);
+    let refl_end = vec3_scale(refl_dir, fresnel_snells_len);
+    ctx.update_drawable_mesh(fresnel_reflected_ray_1, create_arrow([0, 0, 0], refl_mid_1, [0.017, 0.05]));
+    ctx.update_drawable_mesh(fresnel_reflected_ray_2, create_line([refl_mid, refl_end], 0.017));
+    fresnel_reflected_ray_1.color = red_reflected;
+    fresnel_reflected_ray_2.color = red_reflected;
+
+    fresnel_medium_1.color = medium1_color;
+    fresnel_medium_2.color = medium2_color;
+
+    let curve_n = 10;
+    let points_angle_1_curve = [];
+    let angle_1 = fresnel_incidence_angle / curve_n;
+    for (let i = 0; i <= curve_n; i++) {
+        points_angle_1_curve.push(vec3_scale([Math.sin(rad(angle_1 * i)), Math.cos(rad(angle_1 * i)), 0], fresnel_snells_len_curve));
+    }
+    ctx.update_drawable_mesh(fresnel_angle_1_curve, create_line(points_angle_1_curve, 0.01));
+
+    let points_angle_2_curve = [];
+    let angle_2 = (refraction_angle - Math.PI) / curve_n;
+    for (let i = 0; i <= curve_n; i++) {
+        let angle = refraction_angle - angle_2 * i;
+        points_angle_2_curve.push(vec3_scale([Math.sin(angle), Math.cos(angle), 0], fresnel_snells_len_curve));
+    }
+    ctx.update_drawable_mesh(fresnel_angle_2_curve, create_line(points_angle_2_curve, 0.01));
+}
+
+update_fresnel_scene();
+
+document.getElementById("fresnel-angle-input").value = fresnel_incidence_angle;
+document.getElementById("fresnel-angle-input").addEventListener("input", function(e){
+    fresnel_incidence_angle = parseFloat(e.target.value);
+    update_fresnel_scene();
+});
+document.getElementById("fresnel-ior1-input").value = fresnel_ior_1;
+document.getElementById("fresnel-ior1-input").addEventListener("input", function(e){
+    fresnel_ior_1 = parseFloat(e.target.value);
+    update_fresnel_scene();
+});
+document.getElementById("fresnel-ior2-input").value = fresnel_ior_2;
+document.getElementById("fresnel-ior2-input").addEventListener("input", function(e){
+    fresnel_ior_2 = parseFloat(e.target.value);
+    update_fresnel_scene();
+});
+// scene_fresnel
+
+// scene_total_internal_reflection
+let tir_ior_1 = 1.33;
+let tir_ior_2 = 1;
+
+let tir_offset_y = -0.3;
+let medium_width_tir = 2.5;
+let medium_height_tir = 1;
+let tir_medium_water = ctx.create_drawable("shader_basic",
+    create_rect([0, 0, 0], [medium_width_tir, medium_height_tir]),
+    [0.8, 0.9, 1],
+    translate_3d([-medium_width_tir/2, -medium_height_tir + tir_offset_y, 0]));
+let tir_medium_air = ctx.create_drawable("shader_basic",
+    create_rect([0, 0, 0], [medium_width_tir, medium_height_tir]),
+    [0.960, 0.980, 1.000],
+    translate_3d([-medium_width/2, tir_offset_y, 0]));
+let tir_medium_boundary = ctx.create_drawable("shader_basic", create_line([[-medium_width_tir/2, 0, 0], [medium_width_tir/2, 0, 0]], 0.02), [0.787, 0.860, 0.932], translate_3d([0, tir_offset_y, 0]));
+
+let tir_rays = [];
+let tir_rays_reflected = [];
+let tir_num_rays = 20;
+
+for(let i = 0; i < tir_num_rays; i++){
+    let tir_ray = ctx.create_drawable("shader_basic", null, [1, 0, 0], translate_3d([0, tir_offset_y, 0]));
+    tir_rays.push(tir_ray);
+    let tir_ray_reflected = ctx.create_drawable("shader_basic", null, [1, 0, 0], translate_3d([0, tir_offset_y, 0]));
+    tir_rays_reflected.push(tir_ray_reflected);
+}
+
+function line_intersection(p1, p2, p3, p4) {
+    const [x1, y1] = p1, [x2, y2] = p2, [x3, y3] = p3, [x4, y4] = p4;
+    const den = (x1 - x2) * (y3 - y4) - (y1 - y2) * (x3 - x4);
+    if (den === 0) return null;
+    const px = ((x1 * y2 - y1 * x2) * (x3 - x4) - (x1 - x2) * (x3 * y4 - y3 * x4)) / den;
+    const py = ((x1 * y2 - y1 * x2) * (y3 - y4) - (y1 - y2) * (x3 * y4 - y3 * x4)) / den;
+    return [px, py];
+}
+
+function update_tir_scene() {
+    let medium1_color = vec3_lerp([1, 1, 1], [0.8, 0.9, 1], remap_value(tir_ior_1, 1, 2.5, 0, 1));
+    let medium2_color = vec3_lerp([1, 1, 1], [0.8, 0.9, 1], remap_value(tir_ior_2, 1, 2.5, 0, 1));
+    tir_medium_water.color = vec3_lerp([1, 1, 1], [0.8, 0.9, 1], remap_value(tir_ior_1, 1, 2.5, 0, 1));
+    tir_medium_air.color = vec3_lerp([1, 1, 1], [0.8, 0.9, 1], remap_value(tir_ior_2, 1, 2.5, 0, 1));
+
+    for(let i = 0; i < tir_num_rays; i++){
+        let angle = remap_value(i, 0, tir_num_rays-1, rad(-48.6), rad(48.6));
+        let start_point = [0, -medium_height_tir/2];
+        let direction = [Math.sin(angle), Math.cos(angle)];
+
+        let end_point = [start_point[0] + direction[0], start_point[1] + direction[1]];
+let intersection = line_intersection(start_point, end_point, [0, 0], [1, 0]);
+
+        let red = [1, 0, 0];
+        ctx.update_drawable_mesh(tir_rays[i], create_line([
+            [...start_point, 0],
+            [...intersection, 0]],
+            0.01));
+        tir_rays[i].color = red;
+
+        let refraction_angle = Math.asin((tir_ior_1/tir_ior_2)*Math.sin(angle))+Math.PI;
+
+        let refracted_ray_start = [...intersection, 0];
+        let refracted_ray_vector = vec3_normalize([Math.sin(refraction_angle), Math.cos(refraction_angle), 0]);
+        let refracted_ray_end = vec3_scale([Math.sin(refraction_angle), Math.cos(refraction_angle), 0], -1);
+
+        ctx.update_drawable_mesh(tir_rays_reflected[i], create_line([
+            refracted_ray_start,
+            refracted_ray_end],
+            0.01));
+        tir_rays_reflected[i].color = red;
+    }
+}
+
+update_tir_scene();
+
+
+
+// let tir_ior_water = 1.33;
+// let tir_ior_air = 1.0;
+
+// // Angles above the critical angle
+// let tir_angles_deg = [0]; // degrees, from normal
+// let tir_ray_len = 0.8;
+
+// tir_angles_deg.forEach((angle_deg, idx) => {
+//     let angle_rad = rad(angle_deg);
+//     let inc_dir = vec3_normalize([Math.sin(angle_rad), Math.cos(angle_rad), 0]);
+//     let inc_mid = vec3_scale(inc_dir, tir_ray_len / 2);
+//     let inc_end = vec3_scale(inc_dir, tir_ray_len);
+
+//     let incident_arrow = ctx.create_drawable("shader_basic", create_arrow(inc_end, inc_mid, [0.017, 0.05]), [1, 0, 0], translate_3d([0, 0, 0]));
+//     let incident_line = ctx.create_drawable("shader_basic", create_line([inc_mid, [0, 0, 0]], 0.017), [1, 0, 0], translate_3d([0, 0, 0]));
+
+//     let refl_angle = -angle_rad;
+//     let refl_dir = vec3_normalize([Math.sin(refl_angle), Math.cos(refl_angle), 0]);
+//     let refl_mid = vec3_scale(refl_dir, tir_ray_len / 2);
+//     let refl_end = vec3_scale(refl_dir, tir_ray_len);
+//     let reflected_arrow = ctx.create_drawable("shader_basic", create_arrow([0, 0, 0], refl_mid, [0.017, 0.05]), [0.8, 0.8, 0], translate_3d([0, 0, 0]));
+//     let reflected_line = ctx.create_drawable("shader_basic", create_line([refl_mid, refl_end], 0.017), [0.8, 0.8, 0], translate_3d([0, 0, 0]));
+//     console.log(refl_angle)
+//     console.log(refl_mid)
+//     console.log(refl_end)
+//     console.log(refl_angle)
+//     tir_rays.push(incident_arrow, incident_line, reflected_arrow, reflected_line);
+// });
+
+// scene_total_internal_reflection
 
 // scene_electric_field setup
 add_charge(ctx.scenes["scene_electric_field"], "negative", [1.0, 0.8, 0], 0.25, 0.21, 0.16, 0.04, 0, true);
@@ -4293,6 +4543,29 @@ function update(current_time){
             ctx.draw(medium_1);
             ctx.draw(medium_2);
         }
+        else if(scene_id == "scene_fresnel"){
+            ctx.draw(fresnel_incident_ray_1);
+            ctx.draw(fresnel_incident_ray_2);
+            ctx.draw(fresnel_refracted_ray_1);
+            ctx.draw(fresnel_refracted_ray_2);
+            ctx.draw(fresnel_reflected_ray_1);
+            ctx.draw(fresnel_reflected_ray_2);
+            ctx.draw(fresnel_angle_1_curve);
+            ctx.draw(fresnel_angle_2_curve);
+            ctx.draw(normal_line);
+            ctx.draw(medium_boundary);
+            ctx.draw(fresnel_medium_1);
+            ctx.draw(fresnel_medium_2);
+        }
+        else if(scene_id === "scene_total_internal_reflection") {
+            for(let i = 0; i < tir_rays.length; i++){
+                ctx.draw(tir_rays[i]);
+                ctx.draw(tir_rays_reflected[i]);
+            }
+            ctx.draw(tir_medium_boundary);
+            ctx.draw(tir_medium_water);
+            ctx.draw(tir_medium_air);
+        }
         else if(scene_id == "scene_spectrum"){
             ctx.draw(spectrum);
             ctx.draw(arrow_spectrum_1);
@@ -5394,7 +5667,7 @@ get_font(ctx, "inter.fnt", "inter.png");
     );
 
     document.querySelectorAll(".circle").forEach(circle => {
-        circle.addEventListener("mouseover", (e) => {
+        function thingy(e){
             if (e.target !== e.currentTarget) return;
 
             const prev = document.querySelector(".selected-circle");
@@ -5420,6 +5693,13 @@ get_font(ctx, "inter.fnt", "inter.png");
                     li.classList.remove("highlighted");
                 }
             });
+        }
+
+        circle.addEventListener("mouseover", (e) => {
+            thingy(e);
+        });
+        circle.addEventListener("touchstart", (e) => {
+            thingy(e);
         });
     });
 })();
