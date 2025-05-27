@@ -2272,8 +2272,8 @@ ctx.update_wave_3d = function(drawable, wave_param, lines_segments_3d) {
 }
 
 function resize_event(ctx){
-    ctx.gl.canvas.width = window.innerWidth;
-    ctx.gl.canvas.height = window.innerHeight;
+    ctx.gl.canvas.width = document.documentElement.clientWidth;
+    ctx.gl.canvas.height = document.documentElement.clientHeight;
 
     ctx.gl.bindFramebuffer(ctx.gl.FRAMEBUFFER, postprocess_framebuffer);
     ctx.gl.bindTexture(ctx.gl.TEXTURE_2D, postprocess_texture);
@@ -4475,8 +4475,7 @@ function update(current_time){
     gl.enable(gl.SCISSOR_TEST);
     gl.enable(gl.DEPTH_TEST);
     gl.enable(gl.CULL_FACE);
-    gl.clearColor(0, 0, 0, 0);
-    gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
+
     gl.depthFunc(gl.LESS);
     gl.enable(gl.BLEND);
     gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
