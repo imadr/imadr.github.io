@@ -2038,7 +2038,7 @@ ctx.scenes = {
                 zoom: 2.0
             }
         }},
-    "scene_total_internal_reflection": {id: "scene_total_internal_reflection", el: null, ratio: 1.8, camera: null, dragging_rect: null, draggable_rects: {},
+    "scene_total_internal_reflection": {id: "scene_total_internal_reflection", el: null, ratio: 1.4, camera: null, dragging_rect: null, draggable_rects: {},
         camera: {
             fov: 50, z_near: 0.1, z_far: 1000,
             position: [0, 0, 0], rotation: [0, 0, 0],
@@ -2047,7 +2047,7 @@ ctx.scenes = {
             orbit: {
                 rotation: [0, 0, 0],
                 pivot: [0, 0, 0],
-                zoom: 2.0
+                zoom: 3.0
             }
         }},
 };
@@ -2622,7 +2622,7 @@ let tir_ior_1 = 1.33;
 let tir_ior_2 = 1;
 
 let tir_offset_y = -0.3;
-let medium_width_tir = 2.5;
+let medium_width_tir = 4;
 let medium_height_tir = 1;
 let tir_medium_water = ctx.create_drawable("shader_basic",
     create_rect([0, 0, 0], [medium_width_tir, medium_height_tir]),
