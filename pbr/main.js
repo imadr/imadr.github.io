@@ -5485,10 +5485,9 @@ function get_float_buffer(data_view, offset, size, little_endian = true) {
     return floats;
 }
 
-async function get_mesh_from_file(path) {
+async function get_mesh_from_file(zip_data, path) {
     try {
-        let res = await fetch(path);
-        let data = await res.arrayBuffer();
+        let data = zip_data[path];
         let view = new DataView(data);
         let ptr = 0;
         const name_size = get_uint64(view, ptr);
@@ -5568,11 +5567,37 @@ const meshes = [
     { path: "pool_white_back.mesh", drawable: pool_white_front },
 ];
 
-meshes.forEach(mesh => {
-    get_mesh_from_file(mesh.path).then(function(data) {
-        mesh.drawable.vertex_buffer = ctx.create_vertex_buffer(data.vertices, data.attribs, data.indices);
+let zip_data = {};
+
+async function load_meshes_from_zip(zip_path) {
+    const res = await fetch(zip_path);
+    const blob = await res.blob();
+    const zip = await JSZip.loadAsync(blob);
+
+    const load_promises = [];
+
+    zip.forEach((relative_path, file) => {
+        if (relative_path.endsWith(".mesh")) {
+            const promise = file.async("arraybuffer").then(buffer => {
+                zip_data[relative_path] = buffer;
+            });
+            load_promises.push(promise);
+        }
     });
-});
+
+    await Promise.all(load_promises);
+}
+
+(async () => {
+    await load_meshes_from_zip("meshes.zip");
+
+     for (let mesh of meshes) {
+        const data = await get_mesh_from_file(zip_data, mesh.path);
+        if (data) {
+            mesh.drawable.vertex_buffer = ctx.create_vertex_buffer(data.vertices, data.attribs, data.indices);
+        }
+    }
+})();
 
 async function get_texture(ctx, url){
     const gl = ctx.gl;
