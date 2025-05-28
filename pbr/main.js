@@ -2050,6 +2050,18 @@ ctx.scenes = {
                 zoom: 3.0
             }
         }},
+    "scene_snells_window": {id: "scene_snells_window", el: null, ratio: 1.4, camera: null, dragging_rect: null, draggable_rects: {"scene": []},
+        camera: {
+            fov: 70, z_near: 0.1, z_far: 1000,
+            position: [0, 0, 0], rotation: [0, 0, 0],
+            up_vector: [0, 1, 0],
+            view_matrix: mat4_identity(),
+            orbit: {
+                rotation: [0, 0, 0],
+                pivot: [0, 0, 0],
+                zoom: 30.0
+            }
+        }},
 };
 
 function get_event_coordinates(e, element) {
@@ -2635,14 +2647,14 @@ let tir_medium_air = ctx.create_drawable("shader_basic",
 let tir_medium_boundary = ctx.create_drawable("shader_basic", create_line([[-medium_width_tir/2, 0, 0], [medium_width_tir/2, 0, 0]], 0.02), [0.787, 0.860, 0.932], translate_3d([0, tir_offset_y, 0]));
 
 let tir_rays = [];
-let tir_rays_reflected = [];
-let tir_num_rays = 20;
+let tir_secondary_rays = [];
+let tir_num_rays = 30;
 
 for(let i = 0; i < tir_num_rays; i++){
     let tir_ray = ctx.create_drawable("shader_basic", null, [1, 0, 0], translate_3d([0, tir_offset_y, 0]));
     tir_rays.push(tir_ray);
     let tir_ray_reflected = ctx.create_drawable("shader_basic", null, [1, 0, 0], translate_3d([0, tir_offset_y, 0]));
-    tir_rays_reflected.push(tir_ray_reflected);
+    tir_secondary_rays.push(tir_ray_reflected);
 }
 
 function line_intersection(p1, p2, p3, p4) {
@@ -2654,19 +2666,26 @@ function line_intersection(p1, p2, p3, p4) {
     return [px, py];
 }
 
+let tir_angle_offset = 0;
+
 function update_tir_scene() {
-    let medium1_color = vec3_lerp([1, 1, 1], [0.8, 0.9, 1], remap_value(tir_ior_1, 1, 2.5, 0, 1));
-    let medium2_color = vec3_lerp([1, 1, 1], [0.8, 0.9, 1], remap_value(tir_ior_2, 1, 2.5, 0, 1));
-    tir_medium_water.color = vec3_lerp([1, 1, 1], [0.8, 0.9, 1], remap_value(tir_ior_1, 1, 2.5, 0, 1));
-    tir_medium_air.color = vec3_lerp([1, 1, 1], [0.8, 0.9, 1], remap_value(tir_ior_2, 1, 2.5, 0, 1));
+    tir_medium_water.color = vec3_lerp([1, 1, 1], [0.8, 0.9, 1], 0.8);
+    tir_medium_air.color = [1, 1, 1];
 
     for(let i = 0; i < tir_num_rays; i++){
-        let angle = remap_value(i, 0, tir_num_rays-1, rad(-48.6), rad(48.6));
+        let angle = remap_value(i, 0, tir_num_rays-1, rad(-60), rad(60)) + rad(tir_angle_offset);
+
+        if(angle > Math.PI/2 || angle < -Math.PI/2){
+            ctx.update_drawable_mesh(tir_rays[i], {vertices: [], indices: []});
+            ctx.update_drawable_mesh(tir_secondary_rays[i], {vertices: [], indices: []});
+            continue;
+        }
+
         let start_point = [0, -medium_height_tir/2];
         let direction = [Math.sin(angle), Math.cos(angle)];
 
         let end_point = [start_point[0] + direction[0], start_point[1] + direction[1]];
-let intersection = line_intersection(start_point, end_point, [0, 0], [1, 0]);
+        let intersection = line_intersection(start_point, end_point, [0, 0], [1, 0]);
 
         let red = [1, 0, 0];
         ctx.update_drawable_mesh(tir_rays[i], create_line([
@@ -2681,48 +2700,68 @@ let intersection = line_intersection(start_point, end_point, [0, 0], [1, 0]);
         let refracted_ray_vector = vec3_normalize([Math.sin(refraction_angle), Math.cos(refraction_angle), 0]);
         let refracted_ray_end = vec3_scale([Math.sin(refraction_angle), Math.cos(refraction_angle), 0], -1);
 
-        ctx.update_drawable_mesh(tir_rays_reflected[i], create_line([
-            refracted_ray_start,
-            refracted_ray_end],
-            0.01));
-        tir_rays_reflected[i].color = red;
+
+        let { R, T } = fresnel_coefficients(tir_ior_1, tir_ior_2, angle);
+
+        let reflected_ray_start = refracted_ray_start;
+        let incident_2d = direction;
+        let normal_2d = [0, 1];
+
+        let dot_incident_normal = incident_2d[0]*normal_2d[0] + incident_2d[1]*normal_2d[1];
+        let reflected_2d = [
+            incident_2d[0] - 2 * dot_incident_normal * normal_2d[0],
+            incident_2d[1] - 2 * dot_incident_normal * normal_2d[1]
+        ];
+        let reflected_ray_vector = vec3_normalize([reflected_2d[0], reflected_2d[1], 0]);
+        let reflected_ray_end = vec3_add(reflected_ray_start, vec3_scale(reflected_ray_vector, 1));
+
+        if(R == 1 && T == 0){
+            ctx.update_drawable_mesh(tir_secondary_rays[i], create_line([
+                reflected_ray_start,
+                reflected_ray_end],
+                0.01));
+            tir_secondary_rays[i].color = red;
+        }
+        else{
+            ctx.update_drawable_mesh(tir_secondary_rays[i], create_line([
+                refracted_ray_start,
+                refracted_ray_end],
+                0.01));
+            tir_secondary_rays[i].color = red;
+        }
     }
 }
 
 update_tir_scene();
 
-
-
-// let tir_ior_water = 1.33;
-// let tir_ior_air = 1.0;
-
-// // Angles above the critical angle
-// let tir_angles_deg = [0]; // degrees, from normal
-// let tir_ray_len = 0.8;
-
-// tir_angles_deg.forEach((angle_deg, idx) => {
-//     let angle_rad = rad(angle_deg);
-//     let inc_dir = vec3_normalize([Math.sin(angle_rad), Math.cos(angle_rad), 0]);
-//     let inc_mid = vec3_scale(inc_dir, tir_ray_len / 2);
-//     let inc_end = vec3_scale(inc_dir, tir_ray_len);
-
-//     let incident_arrow = ctx.create_drawable("shader_basic", create_arrow(inc_end, inc_mid, [0.017, 0.05]), [1, 0, 0], translate_3d([0, 0, 0]));
-//     let incident_line = ctx.create_drawable("shader_basic", create_line([inc_mid, [0, 0, 0]], 0.017), [1, 0, 0], translate_3d([0, 0, 0]));
-
-//     let refl_angle = -angle_rad;
-//     let refl_dir = vec3_normalize([Math.sin(refl_angle), Math.cos(refl_angle), 0]);
-//     let refl_mid = vec3_scale(refl_dir, tir_ray_len / 2);
-//     let refl_end = vec3_scale(refl_dir, tir_ray_len);
-//     let reflected_arrow = ctx.create_drawable("shader_basic", create_arrow([0, 0, 0], refl_mid, [0.017, 0.05]), [0.8, 0.8, 0], translate_3d([0, 0, 0]));
-//     let reflected_line = ctx.create_drawable("shader_basic", create_line([refl_mid, refl_end], 0.017), [0.8, 0.8, 0], translate_3d([0, 0, 0]));
-//     console.log(refl_angle)
-//     console.log(refl_mid)
-//     console.log(refl_end)
-//     console.log(refl_angle)
-//     tir_rays.push(incident_arrow, incident_line, reflected_arrow, reflected_line);
-// });
-
+document.getElementById("tir-angle-input").value = tir_angle_offset;
+document.getElementById("tir-angle-input").addEventListener("input", function(e){
+    tir_angle_offset = parseFloat(e.target.value);
+    update_tir_scene();
+});
 // scene_total_internal_reflection
+
+// scene_snells_window
+let pool_border = ctx.create_drawable("shader_basic", null, [1, 0, 1], mat4_identity());
+let pool_color_bottom = ctx.create_drawable("shader_basic", null, [1, 0, 1], mat4_identity());
+let pool_white_bottom = ctx.create_drawable("shader_basic", null, [1, 0, 0], mat4_identity());
+let pool_color_left = ctx.create_drawable("shader_basic", null, [1, 0, 1], mat4_identity());
+let pool_white_left = ctx.create_drawable("shader_basic", null, [1, 0, 0], mat4_identity());
+let pool_color_right = ctx.create_drawable("shader_basic", null, [1, 0, 1],
+    rotate_3d(axis_angle_to_quat(vec3_normalize([0, 1, 0]), rad(180))),
+);
+let pool_white_right = ctx.create_drawable("shader_basic", null, [1, 0, 0],
+    rotate_3d(axis_angle_to_quat(vec3_normalize([0, 1, 0]), rad(180))),
+);
+let pool_color_back = ctx.create_drawable("shader_basic", null, [1, 0, 1], mat4_identity());
+let pool_white_back = ctx.create_drawable("shader_basic", null, [1, 0, 0], mat4_identity());
+let pool_color_front = ctx.create_drawable("shader_basic", null, [1, 0, 1],
+    rotate_3d(axis_angle_to_quat(vec3_normalize([0, 1, 0]), rad(180))),
+);
+let pool_white_front = ctx.create_drawable("shader_basic", null, [1, 0, 0],
+    rotate_3d(axis_angle_to_quat(vec3_normalize([0, 1, 0]), rad(180))),
+);
+// scene_snells_window
 
 // scene_electric_field setup
 add_charge(ctx.scenes["scene_electric_field"], "negative", [1.0, 0.8, 0], 0.25, 0.21, 0.16, 0.04, 0, true);
@@ -4557,10 +4596,23 @@ function update(current_time){
             ctx.draw(fresnel_medium_1);
             ctx.draw(fresnel_medium_2);
         }
+        else if(scene_id === "scene_snells_window") {
+            ctx.draw(pool_border);
+            ctx.draw(pool_color_bottom);
+            ctx.draw(pool_white_bottom);
+            ctx.draw(pool_color_left);
+            ctx.draw(pool_white_left);
+            ctx.draw(pool_color_right);
+            ctx.draw(pool_white_right);
+            ctx.draw(pool_color_back);
+            ctx.draw(pool_white_back);
+            ctx.draw(pool_color_front);
+            ctx.draw(pool_white_front);
+        }
         else if(scene_id === "scene_total_internal_reflection") {
             for(let i = 0; i < tir_rays.length; i++){
                 ctx.draw(tir_rays[i]);
-                ctx.draw(tir_rays_reflected[i]);
+                ctx.draw(tir_secondary_rays[i]);
             }
             ctx.draw(tir_medium_boundary);
             ctx.draw(tir_medium_water);
@@ -5503,6 +5555,17 @@ const meshes = [
     { path: "flashlight_light.mesh", drawable: flashlight_light_m },
     { path: "banana.mesh", drawable: banana },
     { path: "banana_head.mesh", drawable: banana_head },
+    { path: "pool_border.mesh", drawable: pool_border },
+    { path: "pool_color_bottom.mesh", drawable: pool_color_bottom },
+    { path: "pool_white_bottom.mesh", drawable: pool_white_bottom },
+    { path: "pool_color_left.mesh", drawable: pool_color_left },
+    { path: "pool_white_left.mesh", drawable: pool_white_left },
+    { path: "pool_color_left.mesh", drawable: pool_color_right },
+    { path: "pool_white_left.mesh", drawable: pool_white_right },
+    { path: "pool_color_back.mesh", drawable: pool_color_back },
+    { path: "pool_white_back.mesh", drawable: pool_white_back },
+    { path: "pool_color_back.mesh", drawable: pool_color_front },
+    { path: "pool_white_back.mesh", drawable: pool_white_front },
 ];
 
 meshes.forEach(mesh => {
