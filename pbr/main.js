@@ -2633,9 +2633,9 @@ document.getElementById("fresnel-ior2-input").addEventListener("input", function
 let tir_ior_1 = 1.33;
 let tir_ior_2 = 1;
 
-let tir_offset_y = -0.3;
+let tir_offset_y = -0.2;
 let medium_width_tir = 4;
-let medium_height_tir = 1;
+let medium_height_tir = 1.5;
 let tir_medium_water = ctx.create_drawable("shader_basic",
     create_rect([0, 0, 0], [medium_width_tir, medium_height_tir]),
     [0.8, 0.9, 1],
@@ -2648,7 +2648,7 @@ let tir_medium_boundary = ctx.create_drawable("shader_basic", create_line([[-med
 
 let tir_rays = [];
 let tir_secondary_rays = [];
-let tir_num_rays = 30;
+let tir_num_rays = 25;
 
 for(let i = 0; i < tir_num_rays; i++){
     let tir_ray = ctx.create_drawable("shader_basic", null, [1, 0, 0], translate_3d([0, tir_offset_y, 0]));
@@ -2700,7 +2700,6 @@ function update_tir_scene() {
         let refracted_ray_vector = vec3_normalize([Math.sin(refraction_angle), Math.cos(refraction_angle), 0]);
         let refracted_ray_end = vec3_scale([Math.sin(refraction_angle), Math.cos(refraction_angle), 0], -1);
 
-
         let { R, T } = fresnel_coefficients(tir_ior_1, tir_ior_2, angle);
 
         let reflected_ray_start = refracted_ray_start;
@@ -2713,7 +2712,7 @@ function update_tir_scene() {
             incident_2d[1] - 2 * dot_incident_normal * normal_2d[1]
         ];
         let reflected_ray_vector = vec3_normalize([reflected_2d[0], reflected_2d[1], 0]);
-        let reflected_ray_end = vec3_add(reflected_ray_start, vec3_scale(reflected_ray_vector, 1));
+        let reflected_ray_end = vec3_add(reflected_ray_start, vec3_scale(reflected_ray_vector, 2));
 
         if(R == 1 && T == 0){
             ctx.update_drawable_mesh(tir_secondary_rays[i], create_line([
