@@ -1100,6 +1100,83 @@ in vec3 normal;
 void main(){
     frag_color = vec4(color, 1);
 }`);
+ctx.shaders["shader_raymarching_water"] = ctx.create_shader(`#version 300 es
+layout(location = 0) in vec3 position_attrib;
+layout(location = 1) in vec3 normal_attrib;
+
+uniform mat4 m;
+uniform mat4 v;
+uniform mat4 p;
+
+out vec3 position;
+out vec3 normal;
+out vec3 camera_pos;
+
+void main(){
+    gl_Position = p*v*m*vec4(position_attrib, 1);
+    position = position_attrib;
+    normal = normal_attrib;
+    camera_pos = -transpose(mat3(v)) * v[3].xyz;
+}`,
+`#version 300 es
+precision highp float;
+
+uniform vec3 color;
+uniform sampler2D texture_uniform;
+uniform vec2 resolution;
+uniform vec2 scene_offset;
+
+out vec4 frag_color;
+
+in vec3 camera_pos;
+in vec3 position;
+in vec3 normal;
+
+mat3 lookat_matrix(vec3 origin, vec3 target, float roll) {
+    vec3 rr = vec3(sin(roll), cos(roll), 0.0);
+    vec3 ww = normalize(target - origin);
+    vec3 uu = normalize(cross(ww, rr));
+    vec3 vv = normalize(cross(uu, ww));
+    return mat3(uu, vv, ww);
+}
+
+float box_sdf(vec3 point, vec3 size) {
+    vec3 q = abs(point) - size;
+    return length(max(q, 0.0)) + min(max(q.x, max(q.y, q.z)), 0.0);
+}
+
+void main(){
+    vec2 frag_coord_scene = gl_FragCoord.xy - scene_offset;
+    vec2 uv = frag_coord_scene / resolution;  // (0,0) to (1,1)
+
+    uv = uv - 0.5;
+    uv.x *= resolution.x / resolution.y;
+
+    vec3 camera_orbit = vec3(0, 0, 0);
+    mat3 matrix = lookat_matrix(camera_pos, camera_orbit, 0.0);
+    vec3 view = matrix * normalize(vec3(uv, 1.0));
+
+    vec3 ray_origin = camera_pos;
+    vec3 ray_direction = view;
+
+
+    vec3 current_point = ray_origin;
+    float dist_total = 0.;
+    for (int i = 0; i < 3000; i++) {
+        current_point = ray_origin + ray_direction * dist_total;
+        float dist = box_sdf(current_point, vec3(1, 1, 1));
+        dist_total += dist;
+        if (dist < 0.00001) {
+            break;
+        }
+        if (dist_total > 1000.) {
+            break;
+        }
+    }
+
+    frag_color = vec4(vec3(dist_total), 1);
+
+}`);
 ctx.shaders["shader_basic_alpha"] = ctx.create_shader(`#version 300 es
 layout(location = 0) in vec3 position_attrib;
 layout(location = 1) in vec3 normal_attrib;
@@ -2059,7 +2136,7 @@ ctx.scenes = {
             orbit: {
                 rotation: [0, 0, 0],
                 pivot: [0, 0, 0],
-                zoom: 30.0
+                zoom: 2.0
             }
         }},
 };
@@ -2760,6 +2837,8 @@ let pool_color_front = ctx.create_drawable("shader_basic", null, [1, 0, 1],
 let pool_white_front = ctx.create_drawable("shader_basic", null, [1, 0, 0],
     rotate_3d(axis_angle_to_quat(vec3_normalize([0, 1, 0]), rad(180))),
 );
+
+let water_raymarching_cube = ctx.create_drawable("shader_raymarching_water", create_box(1, 1, 1), [0, 0, 0], mat4_identity());
 // scene_snells_window
 
 // scene_electric_field setup
@@ -4596,17 +4675,19 @@ function update(current_time){
             ctx.draw(fresnel_medium_2);
         }
         else if(scene_id === "scene_snells_window") {
-            ctx.draw(pool_border);
-            ctx.draw(pool_color_bottom);
-            ctx.draw(pool_white_bottom);
-            ctx.draw(pool_color_left);
-            ctx.draw(pool_white_left);
-            ctx.draw(pool_color_right);
-            ctx.draw(pool_white_right);
-            ctx.draw(pool_color_back);
-            ctx.draw(pool_white_back);
-            ctx.draw(pool_color_front);
-            ctx.draw(pool_white_front);
+            // ctx.draw(pool_border);
+            // ctx.draw(pool_color_bottom);
+            // ctx.draw(pool_white_bottom);
+            // ctx.draw(pool_color_left);
+            // ctx.draw(pool_white_left);
+            // ctx.draw(pool_color_right);
+            // ctx.draw(pool_white_right);
+            // ctx.draw(pool_color_back);
+            // ctx.draw(pool_white_back);
+            // ctx.draw(pool_color_front);
+            // ctx.draw(pool_white_front);
+
+            ctx.draw(water_raymarching_cube, {"scene_offset": [left, bottom], "resolution": [width, height]});
         }
         else if(scene_id === "scene_total_internal_reflection") {
             for(let i = 0; i < tir_rays.length; i++){
