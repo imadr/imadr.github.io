@@ -932,9 +932,13 @@ function screen_to_world_space(scene, screen_pos, z_distance, camera) {
 
 ctx.canvas = document.getElementById("main-canvas");
 ctx.gl = ctx.canvas.getContext("webgl2", {stencil: true});
+ctx.gl.getExtension("OES_texture_float");
+ctx.gl.getExtension("EXT_color_buffer_half_float");
 ctx.font_texture = ctx.gl.createTexture();
 ctx.font = {chars:{}, data: {}};
 ctx.text_buffers = {};
+
+ctx.skybox_texture = ctx.gl.createTexture();
 
 const postprocess_framebuffer = ctx.gl.createFramebuffer();
 ctx.gl.bindFramebuffer(ctx.gl.FRAMEBUFFER, postprocess_framebuffer);
@@ -1100,6 +1104,42 @@ in vec3 normal;
 void main(){
     frag_color = vec4(color, 1);
 }`);
+ctx.shaders["shader_skybox"] = ctx.create_shader(`#version 300 es
+layout(location = 0) in vec3 position_attrib;
+layout(location = 1) in vec3 normal_attrib;
+
+uniform mat4 m;
+uniform mat4 v;
+uniform mat4 p;
+
+out vec3 world_position;
+
+void main(){
+    vec3 world_pos = vec3(m * vec4(position_attrib, 1.0));
+    world_position = world_pos;
+    gl_Position = p * mat4(mat3(v)) * vec4(world_pos, 1.0);
+}`,
+`#version 300 es
+precision highp float;
+
+uniform sampler2D skybox_texture;
+
+out vec4 frag_color;
+
+in vec3 world_position;
+
+void main(){
+    vec3 world_pos = normalize(world_position);
+    vec2 uv = vec2(atan(world_pos.z, world_pos.x), asin(world_pos.y));
+    uv *= vec2(0.1591, 0.3183);
+    uv += 0.5;
+
+    uv.y *= -1.0;
+
+    vec3 envmap = texture(skybox_texture, uv).rgb;
+    envmap = pow(envmap, vec3(1.0 / 2.2));
+    frag_color = vec4(envmap, 1);
+}`);
 ctx.shaders["shader_raymarching_water"] = ctx.create_shader(`#version 300 es
 layout(location = 0) in vec3 position_attrib;
 layout(location = 1) in vec3 normal_attrib;
@@ -1108,14 +1148,12 @@ uniform mat4 m;
 uniform mat4 v;
 uniform mat4 p;
 
-out vec3 position;
-out vec3 normal;
+out vec3 world_position;
 out vec3 camera_pos;
 
 void main(){
     gl_Position = p*v*m*vec4(position_attrib, 1);
-    position = position_attrib;
-    normal = normal_attrib;
+    world_position = (m*vec4(position_attrib, 1)).xyz;
     camera_pos = -transpose(mat3(v)) * v[3].xyz;
 }`,
 `#version 300 es
@@ -1125,57 +1163,67 @@ uniform vec3 color;
 uniform sampler2D texture_uniform;
 uniform vec2 resolution;
 uniform vec2 scene_offset;
+uniform sampler2D skybox_texture;
 
 out vec4 frag_color;
 
+in vec3 world_position;
 in vec3 camera_pos;
-in vec3 position;
-in vec3 normal;
-
-mat3 lookat_matrix(vec3 origin, vec3 target, float roll) {
-    vec3 rr = vec3(sin(roll), cos(roll), 0.0);
-    vec3 ww = normalize(target - origin);
-    vec3 uu = normalize(cross(ww, rr));
-    vec3 vv = normalize(cross(uu, ww));
-    return mat3(uu, vv, ww);
-}
 
 float box_sdf(vec3 point, vec3 size) {
     vec3 q = abs(point) - size;
     return length(max(q, 0.0)) + min(max(q.x, max(q.y, q.z)), 0.0);
 }
 
+vec3 estimate_normal(vec3 p) {
+    float eps = 0.001;
+    vec2 h = vec2(eps, 0);
+    return normalize(vec3(
+        box_sdf(p + h.xyy, vec3(1)) - box_sdf(p - h.xyy, vec3(1)),
+        box_sdf(p + h.yxy, vec3(1)) - box_sdf(p - h.yxy, vec3(1)),
+        box_sdf(p + h.yyx, vec3(1)) - box_sdf(p - h.yyx, vec3(1))
+    ));
+}
+
 void main(){
-    vec2 frag_coord_scene = gl_FragCoord.xy - scene_offset;
-    vec2 uv = frag_coord_scene / resolution;  // (0,0) to (1,1)
-
-    uv = uv - 0.5;
-    uv.x *= resolution.x / resolution.y;
-
-    vec3 camera_orbit = vec3(0, 0, 0);
-    mat3 matrix = lookat_matrix(camera_pos, camera_orbit, 0.0);
-    vec3 view = matrix * normalize(vec3(uv, 1.0));
-
     vec3 ray_origin = camera_pos;
-    vec3 ray_direction = view;
-
+    vec3 ray_direction = normalize(world_position-camera_pos);
 
     vec3 current_point = ray_origin;
     float dist_total = 0.;
-    for (int i = 0; i < 3000; i++) {
+    bool hit = false;
+    for (int i = 0; i < 100; i++) {
         current_point = ray_origin + ray_direction * dist_total;
-        float dist = box_sdf(current_point, vec3(1, 1, 1));
+        float dist = box_sdf(current_point, vec3(1.0));
+        if (dist < 0.001) {
+            hit = true;
+            break;
+        }
         dist_total += dist;
-        if (dist < 0.00001) {
-            break;
-        }
-        if (dist_total > 1000.) {
-            break;
-        }
+        if (dist_total > 100.0) break;
     }
 
-    frag_color = vec4(vec3(dist_total), 1);
+    if(hit){
+        vec3 n = estimate_normal(current_point);
 
+        vec3 view_dir = normalize(current_point-ray_origin);
+        float ior = 1.0/1.33;
+        vec3 refracted_dir = refract(view_dir, n, ior);
+
+        vec3 dir = normalize(refracted_dir);
+        vec2 uv = vec2(atan(dir.z, dir.x), asin(dir.y));
+        uv *= vec2(0.1591, 0.3183);
+        uv += 0.5;
+        uv.y *= -1.0;
+
+        vec3 env_color = texture(skybox_texture, uv).rgb;
+        env_color = pow(env_color, vec3(1.0 / 2.2));
+
+        frag_color = vec4(env_color, 1.0);
+    }
+    else{
+        frag_color = vec4(1, 0, 1, 1);
+    }
 }`);
 ctx.shaders["shader_basic_alpha"] = ctx.create_shader(`#version 300 es
 layout(location = 0) in vec3 position_attrib;
@@ -2839,6 +2887,7 @@ let pool_white_front = ctx.create_drawable("shader_basic", null, [1, 0, 0],
 );
 
 let water_raymarching_cube = ctx.create_drawable("shader_raymarching_water", create_box(1, 1, 1), [0, 0, 0], mat4_identity());
+let skybox = ctx.create_drawable("shader_skybox", create_box(1, 1, 1), [0, 0, 0], mat4_identity());
 // scene_snells_window
 
 // scene_electric_field setup
@@ -4687,6 +4736,12 @@ function update(current_time){
             // ctx.draw(pool_color_front);
             // ctx.draw(pool_white_front);
 
+            gl.activeTexture(gl.TEXTURE0);
+            gl.bindTexture(gl.TEXTURE_2D, ctx.skybox_texture);
+            gl.cullFace(gl.FRONT);
+            ctx.draw(skybox);
+            gl.cullFace(gl.BACK);
+            gl.clear(gl.DEPTH_BUFFER_BIT);
             ctx.draw(water_raymarching_cube, {"scene_offset": [left, bottom], "resolution": [width, height]});
         }
         else if(scene_id === "scene_total_internal_reflection") {
@@ -5771,6 +5826,13 @@ function parse_fnt(fnt_text) {
 
     return font_data;
 }
+
+load_hdr("sky.hdr").then(res => {
+    ctx.gl.bindTexture(ctx.gl.TEXTURE_2D, ctx.skybox_texture);
+    ctx.gl.texImage2D(ctx.gl.TEXTURE_2D, 0, ctx.gl.RGB32F, res.width, res.height, 0, ctx.gl.RGB, ctx.gl.FLOAT, res.rgbFloat);
+    ctx.gl.texParameteri(ctx.gl.TEXTURE_2D, ctx.gl.TEXTURE_MIN_FILTER, ctx.gl.NEAREST);
+    ctx.gl.texParameteri(ctx.gl.TEXTURE_2D, ctx.gl.TEXTURE_MAG_FILTER, ctx.gl.NEAREST);
+});
 
 async function get_font(ctx, fnt_path, bitmap_path) {
     const gl = ctx.gl;
