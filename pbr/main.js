@@ -1104,75 +1104,47 @@ in vec3 normal;
 void main(){
     frag_color = vec4(color, 1);
 }`);
-ctx.shaders["shader_skybox"] = ctx.create_shader(`#version 300 es
-layout(location = 0) in vec3 position_attrib;
-layout(location = 1) in vec3 normal_attrib;
-
-uniform mat4 m;
-uniform mat4 v;
-uniform mat4 p;
-
-out vec3 world_position;
-
-void main(){
-    vec3 world_pos = vec3(m * vec4(position_attrib, 1.0));
-    world_position = world_pos;
-    gl_Position = p * mat4(mat3(v)) * vec4(world_pos, 1.0);
-}`,
-`#version 300 es
-precision highp float;
-
-uniform sampler2D skybox_texture;
-
-out vec4 frag_color;
-
-in vec3 world_position;
-
-void main(){
-    vec3 world_pos = normalize(world_position);
-    vec2 uv = vec2(atan(world_pos.z, world_pos.x), asin(world_pos.y));
-    uv *= vec2(0.1591, 0.3183);
-    uv += 0.5;
-
-    uv.y *= -1.0;
-
-    vec3 envmap = texture(skybox_texture, uv).rgb;
-    envmap = pow(envmap, vec3(1.0 / 2.2));
-    frag_color = vec4(envmap, 1);
-}`);
 ctx.shaders["shader_raymarching_water"] = ctx.create_shader(`#version 300 es
 layout(location = 0) in vec3 position_attrib;
-layout(location = 1) in vec3 normal_attrib;
+layout(location = 1) in vec2 texcoord_attrib;
 
 uniform mat4 m;
 uniform mat4 v;
 uniform mat4 p;
 
-out vec3 world_position;
+out vec3 position;
+out vec2 texcoord;
 out vec3 camera_pos;
 
 void main(){
-    gl_Position = p*v*m*vec4(position_attrib, 1);
-    world_position = (m*vec4(position_attrib, 1)).xyz;
+    gl_Position = vec4(position_attrib, 1.0);
+    position = position_attrib;
+    texcoord = texcoord_attrib;
     camera_pos = -transpose(mat3(v)) * v[3].xyz;
 }`,
 `#version 300 es
 precision highp float;
 
-uniform vec3 color;
-uniform sampler2D texture_uniform;
-uniform vec2 resolution;
-uniform vec2 scene_offset;
-uniform sampler2D skybox_texture;
-
 out vec4 frag_color;
 
-in vec3 world_position;
+uniform vec2 resolution;
+uniform vec2 scene_offset;
+
+in vec3 position;
+in vec2 texcoord;
 in vec3 camera_pos;
 
 float box_sdf(vec3 point, vec3 size) {
     vec3 q = abs(point) - size;
     return length(max(q, 0.0)) + min(max(q.x, max(q.y, q.z)), 0.0);
+}
+
+mat3 lookat_matrix(vec3 origin, vec3 target, float roll) {
+    vec3 rr = vec3(sin(roll), cos(roll), 0.0);
+    vec3 ww = normalize(target - origin);
+    vec3 uu = normalize(cross(ww, rr));
+    vec3 vv = normalize(cross(uu, ww));
+    return mat3(uu, vv, ww);
 }
 
 vec3 estimate_normal(vec3 p) {
@@ -1186,8 +1158,17 @@ vec3 estimate_normal(vec3 p) {
 }
 
 void main(){
+    vec2 frag_coord_scene = gl_FragCoord.xy - scene_offset;
+    vec2 uv = frag_coord_scene / resolution;  // (0,0) to (1,1)
+
+    uv = uv - 0.5;
+    uv.x *= resolution.x / resolution.y;
+
+    mat3 matrix = lookat_matrix(camera_pos, vec3(0, 0, 0), 0.0);
+    vec3 view = matrix * normalize(vec3(uv, 1.0));
+
     vec3 ray_origin = camera_pos;
-    vec3 ray_direction = normalize(world_position-camera_pos);
+    vec3 ray_direction = view;
 
     vec3 current_point = ray_origin;
     float dist_total = 0.;
@@ -1205,21 +1186,7 @@ void main(){
 
     if(hit){
         vec3 n = estimate_normal(current_point);
-
-        vec3 view_dir = normalize(current_point-ray_origin);
-        float ior = 1.0/1.33;
-        vec3 refracted_dir = refract(view_dir, n, ior);
-
-        vec3 dir = normalize(refracted_dir);
-        vec2 uv = vec2(atan(dir.z, dir.x), asin(dir.y));
-        uv *= vec2(0.1591, 0.3183);
-        uv += 0.5;
-        uv.y *= -1.0;
-
-        vec3 env_color = texture(skybox_texture, uv).rgb;
-        env_color = pow(env_color, vec3(1.0 / 2.2));
-
-        frag_color = vec4(env_color, 1.0);
+        frag_color = vec4(n, 1);
     }
     else{
         frag_color = vec4(1, 0, 1, 1);
@@ -2184,7 +2151,7 @@ ctx.scenes = {
             orbit: {
                 rotation: [0, 0, 0],
                 pivot: [0, 0, 0],
-                zoom: 2.0
+                zoom: 7.0
             }
         }},
 };
@@ -2886,8 +2853,22 @@ let pool_white_front = ctx.create_drawable("shader_basic", null, [1, 0, 0],
     rotate_3d(axis_angle_to_quat(vec3_normalize([0, 1, 0]), rad(180))),
 );
 
-let water_raymarching_cube = ctx.create_drawable("shader_raymarching_water", create_box(1, 1, 1), [0, 0, 0], mat4_identity());
-let skybox = ctx.create_drawable("shader_skybox", create_box(1, 1, 1), [0, 0, 0], mat4_identity());
+let raymarching_fullscreen_quad = ctx.create_drawable("shader_raymarching_water", {
+    vertices: [
+        -1, -1, 0, 0, 0,
+         1, -1, 0, 1, 0,
+         1,  1, 0, 1, 1,
+        -1,  1, 0, 0, 1
+    ],
+    indices: [
+        0, 1, 2,
+        0, 2, 3
+    ]
+}, [1, 0, 1], mat4_identity(), [
+    { name: "position_attrib", size: 3 },
+    { name: "texcoord_attrib", size: 2 }
+]);
+
 // scene_snells_window
 
 // scene_electric_field setup
@@ -4738,11 +4719,8 @@ function update(current_time){
 
             gl.activeTexture(gl.TEXTURE0);
             gl.bindTexture(gl.TEXTURE_2D, ctx.skybox_texture);
-            gl.cullFace(gl.FRONT);
-            ctx.draw(skybox);
-            gl.cullFace(gl.BACK);
-            gl.clear(gl.DEPTH_BUFFER_BIT);
-            ctx.draw(water_raymarching_cube, {"scene_offset": [left, bottom], "resolution": [width, height]});
+
+            ctx.draw(raymarching_fullscreen_quad, {"scene_offset": [left, bottom], "resolution": [width, height]});
         }
         else if(scene_id === "scene_total_internal_reflection") {
             for(let i = 0; i < tir_rays.length; i++){

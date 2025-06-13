@@ -1,0 +1,224 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>How Apple's Liquid Glass (probably) works</title>
+    <link rel="icon" type="image/x-icon" href="/favicon.ico">
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:site" content="@imadr_">
+    <meta name="twitter:title" content="How Apple's Liquid Glass (probably) works">
+    <meta name="twitter:description" content="How Apple's Liquid Glass (probably) works">
+    <meta name="twitter:image" content="https://imadr.me/liquid_glass.png">
+    <meta name="twitter:image:alt" content="How Apple's Liquid Glass (probably) works">
+
+    <link rel="stylesheet" href="/css/style.css">
+    <style>
+        li{
+            margin-bottom: 0.5em;
+        }
+        .red{
+            background-color: #ea3333;
+        }
+        .green{
+            background-color: #29c643;
+        }
+        .blue{
+            background-color: #2c66c9;
+        }
+        .orange{
+            background-color: #ff8f00;
+        }
+        .rounded-bg{
+            border-radius: 3px;
+            padding: 1px 5px 1px 5px;
+            color: white;
+            font-family: "mono";
+            font-weight: bold;
+        }
+        .super{
+            vertical-align: super;
+            font-size: 13px;
+            margin-right: 3px;
+        }
+        .equation{
+            font-family: "mono";
+            font-weight: bold;
+            border: none;
+            margin-right: auto;
+            margin-left: auto;
+        }
+        .equation td{
+            padding-bottom: 12px;
+        }
+        .equation td, .equation tr{
+            border: none;
+        }
+        .sqrt-before-before{
+            content: "";
+            width: 5px;
+            height: 30%;
+            position: absolute;
+            border-right: 2px solid;
+            border-top: none;
+            left: 0px;
+            bottom: 10px;
+            transform: skew(20deg);
+        }
+        .sqrt-before{
+            content: "";
+            width: 5px;
+            height: 80%;
+            position: absolute;
+            border-right: 2px solid;
+            border-top: none;
+            left: 4px;
+            top: -3px;
+            transform: skew(-8deg);
+        }
+        .sqrt{
+            padding-left: 10px;
+            position: relative;
+        }
+        .sqrt-overline{
+            border-top: 2px solid var(--color-fg-1);
+            padding-top: 5px;
+            padding-left: 5px;
+        }
+        .norm{
+            letter-spacing: -5px;
+            padding-right: 5px;
+        }
+        #raymarching-play{
+            border: 2px solid black;
+            color: black;
+            background-color: #e6e6e6;
+            border-radius: 3px;
+            padding: 1px 5px 1px 5px;
+            font-family: "mono";
+            font-weight: bold;
+            font-size: 1em;
+            cursor: pointer;
+        }
+        pre{
+            border-radius: inherit !important;
+            padding: inherit !important;
+            margin-bottom: inherit !important;
+            background-color: inherit !important;
+            color: inherit !important;
+            word-wrap: inherit !important;
+            white-space: inherit !important;
+        }
+        .shader-editor{
+            display: flex;
+            width: 100%;
+            height: 400px;
+        }
+        .editor{
+            flex: 1;
+            position: relative;
+        }
+        canvas{
+            padding-left: 0;
+            padding-right: 0;
+            display: block;
+            margin-right: auto;
+            margin-left: auto;
+        }
+        .ace_scrollbar{
+            scrollbar-width: thin;
+        }
+        .compile-button{
+            z-index: 1000;
+            position: absolute;
+            bottom: 0;
+            right: 0;
+            background-color: rgb(22, 119, 255);
+            color: white;
+            border: none;
+            border-radius: 0;
+            border-top-left-radius: 5px;
+            padding: 5px;
+            padding-left: 8px;
+            font-size: 1.5em;
+            cursor: pointer;
+        }
+        .marker{
+            position:absolute;
+            background:rgba(100,200,100,0.5);
+            z-index:20;
+        }
+        #main-canvas{
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100vh;
+            z-index: -1;
+            display: block;
+        }
+    </style>
+</head>
+<body>
+    <canvas id="main-canvas"></canvas>
+    <nav>
+        <a href="/" style="text-transform: uppercase;">Imadr.me</a>
+        <span id="navbar-right" style="float: right;">
+        </span>
+    </nav>
+
+    <h1>How Apple's Liquid Glass (probably) works</h1>
+
+    <br>
+    <img src="apple.jpg" style="max-width: 100%;">
+    <br>
+
+    <p>In WWDC25, Apple introduced a new GUI design called <strong>Liquid Glass</strong>. Regardless of the users reception to Apple's new style, we will try to recreate this effect using shaders, and see how it compares to similar design languages like Windows Aero</p>
+    <p>Since I don't have access to an Apple device, I can't reverse engineer the rendering behind Liquid Glass and know for a fact how it works, but the effect is simple enough that it can be reproduced.</p>
+    <h2>The Shape</h2>
+
+    <p>First we need to define the <strong>Shape</strong> of our UI element, I can be a button or a panel or a even text.</p>
+    <p>We will use a mathematical function called a <strong>Signed Distance Functions</strong>, that, given any point in 2D space, returns the distance from that point to our shape.</p>
+    <p>Here we visualize the SDF of a rounded rectangle using grayscale, the darker the color is the closer the current pixel is to our shape.</p>
+
+    <p><strong>You can move aroud the shape by dragging it with the mouse</strong></p>
+    <div id="scene_shape"></div>
+
+    <h2>The Normal</h2>
+    <p>Now we need to compute the normal of your rounded rectangle so that we can make it interact with light in interesting ways.</p>
+    <div id="scene_normal"></div>
+
+    <h2>Refraction</h2>
+    <p>We are trying to simulate how light would get refracted by our shape as if it was made of glass. To do that we use <strong>Snell's law</strong></p>
+
+    <p>Here we can visualize the refracted vector that goes from the camera towards the negative Z axis (towards the screen)</p>
+    <div id="scene_refraction"></div>
+
+    <p>If we use this vector to sample a texture behind it, we can start seeing the "glassy" effect:</p>
+    <div id="scene_refraction_tex"></div>
+
+    <h2>Reflection</h2>
+    <p>Some part of the light is reflected off the glass instead of being refracted, this gives use some specular highlight. Instead of computing realistic physical propreties of the material (using Fresnel equations for example), we will simply mix the refracted and reflected light arbitrarly</p>
+    <div id="scene_reflection"></div>
+
+    <p>Adding the reflection to the background gives us:</p>
+    <div id="scene_reflection_tex"></div>
+
+    <p>And combining both refraction and reflection:</p>
+    <div id="scene_refraction_reflection_tex"></div>
+
+    <h2>Smoothly combining shapes</h2>
+
+    <p>Another cool thing about SDFs is that we can smoothly "blend" two shapes by using a special function, you can read more about it here <a href="https://iquilezles.org/articles/smin/">Smooth Minimum - Inigo Quilez</a></p>
+    <div id="scene_sdf_mix"></div>
+
+    <h2>Further Reading</h2>
+
+    <p>If you want to read more about signed distance functions, I have an article about <a href="../raymarching-explained-interactively/">the Raymarching algorithm</a> which is based on 3D SDFs.</p>
+    <p>You can also find more about 2D (and 3D) SDFs on <a href="https://iquilezles.org/articles/distfunctions2d/">Inigo Quilez's website</a></p>
+<script src="/js/webgl_helper.js"></script>
+<script src="/js/math.js"></script>
+<script src="/js/light.js"></script>
+<script src="main.js"></script>
+</body>
+</html>
