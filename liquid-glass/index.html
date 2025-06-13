@@ -87,6 +87,10 @@
 
     <div id="sliders">
         <div class="slider-container">
+            <label style="font-weight: bold;">SDF strength <span id="sdf-multiplier-value"></span></label><br><input id="sdf-multiplier-input" type="range" min="0" max="500" step="0.01" data-color="#888">
+        </div>
+        <br>
+        <div class="slider-container">
             <label style="font-weight: bold;">Border radius <span id="radius-value"></span></label><br><input id="radius-input" type="range" min="0" max="0.2" step="0.001" data-color="#888">
         </div>
         <br>
@@ -126,7 +130,7 @@
 
     <h2>The Normal</h2>
     <p>Now we need to compute the normal of your rounded rectangle so that we can make it interact with light in interesting ways.</p>
-    <p>To do that we will "fake" the normal of a 3D rounded shape</p>
+    <p>To do that we will "fake" the normal of a 3D rounded shape by using the screen space gradient of the SDF on the X and Y axis, and combine it with a normal on the Z axis based on how close it is to the edge of the shape:</p>
 
     <div id="scene_normal"></div>
 
@@ -153,7 +157,9 @@
     <div id="scene_refraction_tex"></div>
 
     <h2>Reflection</h2>
-    <p>Some part of the light is reflected off the glass instead of being refracted, this gives use some specular highlight. Instead of computing realistic physical propreties of the material (using Fresnel equations for example), we will simply mix the refracted and reflected light arbitrarly</p>
+    <p>Some part of the light is reflected off the glass instead of being refracted, this gives use some specular highlight. Instead of computing realistic physical propreties of the material (using Fresnel equations for example), we will simply mix the refracted and reflected light arbitrarly.</p>
+
+    <p>We compute the reflected vector using the incident vector and the normal:</p>
     <div id="scene_reflection"></div>
 
     <p>Adding the reflection to the background gives us:</p>

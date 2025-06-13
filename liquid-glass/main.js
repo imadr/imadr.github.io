@@ -271,6 +271,7 @@ void main(){
 precision highp float;
 
 uniform vec2 resolution;
+uniform float u_sdf_multiplier;
 uniform vec2 scene_offset;
 uniform vec2 cursor_pos;
 uniform float u_radius;
@@ -295,7 +296,7 @@ void main(){
 
     vec2 pos = (cursor_pos*vec2(1, -1)) + vec2(-0.5, 0.5);
 
-    float sdf = sdf_rounded_rect(pos, vec2(0.1, 0.1), uv, u_radius)*5.0;
+    float sdf = sdf_rounded_rect(pos, vec2(0.1, 0.1), uv, u_radius)*u_sdf_multiplier;
     frag_color = vec4(vec3(sdf), 1);
 }`);
 ctx.shaders["shader_normal"] = ctx.create_shader(`#version 300 es
@@ -318,6 +319,7 @@ void main(){
 precision highp float;
 
 uniform vec2 resolution;
+uniform float u_sdf_multiplier;
 uniform vec2 scene_offset;
 uniform vec2 cursor_pos;
 uniform float u_thickness;
@@ -337,13 +339,10 @@ float sdf_rounded_rect(vec2 center, vec2 size, vec2 p, float r)
 
 vec3 get_normal(float sdf, float thickness)
 {
-    float dx = dFdx(sdf);
-    float dy = dFdy(sdf);
+    float normal_cos = max(thickness + sdf, 0.0) / thickness;
+    float normal_sin = sqrt(1.0 - normal_cos * normal_cos);
 
-    float n_cos = max(thickness + sdf, 0.0) / thickness;
-    float n_sin = sqrt(1.0 - n_cos * n_cos);
-
-    return normalize(vec3(dx * n_cos, dy * n_cos, n_sin));
+    return normalize(vec3(dFdx(sdf) * normal_cos, dFdy(sdf) * normal_cos, normal_sin));
 }
 
 void main(){
@@ -354,7 +353,7 @@ void main(){
 
     vec2 pos = (cursor_pos*vec2(1, -1)) + vec2(-0.5, 0.5);
 
-    float sdf = sdf_rounded_rect(pos, vec2(0.1, 0.1), uv, u_radius)*200.0;
+    float sdf = sdf_rounded_rect(pos, vec2(0.1, 0.1), uv, u_radius)*u_sdf_multiplier;
     frag_color = vec4(get_normal(sdf, u_thickness), 1);
 }`);
 ctx.shaders["shader_refraction"] = ctx.create_shader(`#version 300 es
@@ -377,6 +376,7 @@ void main(){
 precision highp float;
 
 uniform vec2 resolution;
+uniform float u_sdf_multiplier;
 uniform vec2 scene_offset;
 uniform vec2 cursor_pos;
 uniform float u_ior;
@@ -397,13 +397,10 @@ float sdf_rounded_rect(vec2 center, vec2 size, vec2 p, float r)
 
 vec3 get_normal(float sdf, float thickness)
 {
-    float dx = dFdx(sdf);
-    float dy = dFdy(sdf);
+    float normal_cos = max(thickness + sdf, 0.0) / thickness;
+    float normal_sin = sqrt(1.0 - normal_cos * normal_cos);
 
-    float n_cos = max(thickness + sdf, 0.0) / thickness;
-    float n_sin = sqrt(1.0 - n_cos * n_cos);
-
-    return normalize(vec3(dx * n_cos, dy * n_cos, n_sin));
+    return normalize(vec3(dFdx(sdf) * normal_cos, dFdy(sdf) * normal_cos, normal_sin));
 }
 
 void main(){
@@ -414,11 +411,11 @@ void main(){
 
     vec2 pos = (cursor_pos*vec2(1, -1)) + vec2(-0.5, 0.5);
 
-    float sdf = sdf_rounded_rect(pos, vec2(0.1, 0.1), uv, u_radius)*200.0;
+    float sdf = sdf_rounded_rect(pos, vec2(0.1, 0.1), uv, u_radius)*u_sdf_multiplier;
 
     vec3 normal = get_normal(sdf, u_thickness);
 
-    float ior = u_ior;
+    float ior = 1.0/u_ior;
     vec3 incident_vector = vec3(0.0, 0.0, -1.0);
 
     vec3 refracted_vector = refract(incident_vector, normal, ior);
@@ -445,6 +442,7 @@ void main(){
 precision highp float;
 
 uniform vec2 resolution;
+uniform float u_sdf_multiplier;
 uniform vec2 scene_offset;
 uniform vec2 cursor_pos;
 uniform float u_thickness;
@@ -464,13 +462,10 @@ float sdf_rounded_rect(vec2 center, vec2 size, vec2 p, float r)
 
 vec3 get_normal(float sdf, float thickness)
 {
-    float dx = dFdx(sdf);
-    float dy = dFdy(sdf);
+    float normal_cos = max(thickness + sdf, 0.0) / thickness;
+    float normal_sin = sqrt(1.0 - normal_cos * normal_cos);
 
-    float n_cos = max(thickness + sdf, 0.0) / thickness;
-    float n_sin = sqrt(1.0 - n_cos * n_cos);
-
-    return normalize(vec3(dx * n_cos, dy * n_cos, n_sin));
+    return normalize(vec3(dFdx(sdf) * normal_cos, dFdy(sdf) * normal_cos, normal_sin));
 }
 
 void main(){
@@ -481,7 +476,7 @@ void main(){
 
     vec2 pos = (cursor_pos*vec2(1, -1)) + vec2(-0.5, 0.5);
 
-    float sdf = sdf_rounded_rect(pos, vec2(0.1, 0.1), uv, u_radius)*200.0;
+    float sdf = sdf_rounded_rect(pos, vec2(0.1, 0.1), uv, u_radius)*u_sdf_multiplier;
 
     vec3 normal = get_normal(sdf, u_thickness);
 
@@ -511,6 +506,7 @@ void main(){
 precision highp float;
 
 uniform vec2 resolution;
+uniform float u_sdf_multiplier;
 uniform vec2 scene_offset;
 uniform sampler2D bg;
 uniform vec2 cursor_pos;
@@ -532,13 +528,10 @@ float sdf_rounded_rect(vec2 center, vec2 size, vec2 p, float r)
 
 vec3 get_normal(float sdf, float thickness)
 {
-    float dx = dFdx(sdf);
-    float dy = dFdy(sdf);
+    float normal_cos = max(thickness + sdf, 0.0) / thickness;
+    float normal_sin = sqrt(1.0 - normal_cos * normal_cos);
 
-    float n_cos = max(thickness + sdf, 0.0) / thickness;
-    float n_sin = sqrt(1.0 - n_cos * n_cos);
-
-    return normalize(vec3(dx * n_cos, dy * n_cos, n_sin));
+    return normalize(vec3(dFdx(sdf) * normal_cos, dFdy(sdf) * normal_cos, normal_sin));
 }
 
 void main(){
@@ -553,11 +546,11 @@ void main(){
 
     vec2 pos = (cursor_pos*vec2(1, -1)) + vec2(-0.5, 0.5);
 
-    float sdf = sdf_rounded_rect(pos, vec2(0.1, 0.1), uv, u_radius)*200.0;
+    float sdf = sdf_rounded_rect(pos, vec2(0.1, 0.1), uv, u_radius)*u_sdf_multiplier;
 
     vec3 normal = get_normal(sdf, u_thickness);
 
-    float ior = u_ior;
+    float ior = 1.0/u_ior;
     vec3 incident_vector = vec3(0.0, 0.0, -1.0);
 
     vec3 reflected_vector = reflect(incident_vector, normal);
@@ -586,6 +579,7 @@ void main(){
 precision highp float;
 
 uniform vec2 resolution;
+uniform float u_sdf_multiplier;
 uniform vec2 scene_offset;
 uniform sampler2D bg;
 uniform vec2 cursor_pos;
@@ -607,13 +601,10 @@ float sdf_rounded_rect(vec2 center, vec2 size, vec2 p, float r)
 
 vec3 get_normal(float sdf, float thickness)
 {
-    float dx = dFdx(sdf);
-    float dy = dFdy(sdf);
+    float normal_cos = max(thickness + sdf, 0.0) / thickness;
+    float normal_sin = sqrt(1.0 - normal_cos * normal_cos);
 
-    float n_cos = max(thickness + sdf, 0.0) / thickness;
-    float n_sin = sqrt(1.0 - n_cos * n_cos);
-
-    return normalize(vec3(dx * n_cos, dy * n_cos, n_sin));
+    return normalize(vec3(dFdx(sdf) * normal_cos, dFdy(sdf) * normal_cos, normal_sin));
 }
 
 void main(){
@@ -628,11 +619,11 @@ void main(){
 
     vec2 pos = (cursor_pos*vec2(1, -1)) + vec2(-0.5, 0.5);
 
-    float sdf = sdf_rounded_rect(pos, vec2(0.1, 0.1), uv, u_radius)*200.0;
+    float sdf = sdf_rounded_rect(pos, vec2(0.1, 0.1), uv, u_radius)*u_sdf_multiplier;
 
     vec3 normal = get_normal(sdf, u_thickness);
 
-    float ior = u_ior;
+    float ior = 1.0/u_ior;
     vec3 incident_vector = vec3(0.0, 0.0, -1.0);
 
     vec3 refracted_vector = refract(incident_vector, normal, ior);
@@ -665,6 +656,7 @@ void main(){
 precision highp float;
 
 uniform vec2 resolution;
+uniform float u_sdf_multiplier;
 uniform vec2 scene_offset;
 uniform sampler2D bg;
 uniform vec2 cursor_pos;
@@ -688,13 +680,10 @@ float sdf_rounded_rect(vec2 center, vec2 size, vec2 p, float r)
 
 vec3 get_normal(float sdf, float thickness)
 {
-    float dx = dFdx(sdf);
-    float dy = dFdy(sdf);
+    float normal_cos = max(thickness + sdf, 0.0) / thickness;
+    float normal_sin = sqrt(1.0 - normal_cos * normal_cos);
 
-    float n_cos = max(thickness + sdf, 0.0) / thickness;
-    float n_sin = sqrt(1.0 - n_cos * n_cos);
-
-    return normalize(vec3(dx * n_cos, dy * n_cos, n_sin));
+    return normalize(vec3(dFdx(sdf) * normal_cos, dFdy(sdf) * normal_cos, normal_sin));
 }
 
 void main(){
@@ -709,11 +698,11 @@ void main(){
 
     vec2 pos = (cursor_pos*vec2(1, -1)) + vec2(-0.5, 0.5);
 
-    float sdf = sdf_rounded_rect(pos, vec2(0.1, 0.1), uv, u_radius)*200.0;
+    float sdf = sdf_rounded_rect(pos, vec2(0.1, 0.1), uv, u_radius)*u_sdf_multiplier;
 
     vec3 normal = get_normal(sdf, u_thickness);
 
-    float ior = u_ior;
+    float ior = 1.0/u_ior;
     vec3 incident_vector = vec3(0.0, 0.0, -1.0);
 
     vec3 refracted_vector = refract(incident_vector, normal, ior);
@@ -750,6 +739,7 @@ void main(){
 precision highp float;
 
 uniform vec2 resolution;
+uniform float u_sdf_multiplier;
 uniform vec2 scene_offset;
 uniform sampler2D bg;
 uniform vec2 cursor_pos;
@@ -771,19 +761,21 @@ float sdf_rounded_rect(vec2 center, vec2 size, vec2 p, float r)
 
 vec3 get_normal(float sdf, float thickness)
 {
-    float dx = dFdx(sdf);
-    float dy = dFdy(sdf);
+    float normal_cos = max(thickness + sdf, 0.0) / thickness;
+    float normal_sin = sqrt(1.0 - normal_cos * normal_cos);
 
-    float n_cos = max(thickness + sdf, 0.0) / thickness;
-    float n_sin = sqrt(1.0 - n_cos * n_cos);
-
-    return normalize(vec3(dx * n_cos, dy * n_cos, n_sin));
+    return normalize(vec3(dFdx(sdf) * normal_cos, dFdy(sdf) * normal_cos, normal_sin));
 }
 
+// https://iquilezles.org/articles/smin/
 float smooth_union( float d1, float d2, float k )
 {
     float h = clamp( 0.5 + 0.5*(d2-d1)/k, 0.0, 1.0 );
     return mix( d2, d1, h ) - k*h*(1.0-h);
+}
+
+float sdf_circle(vec2 p, vec2 center, float radius){
+    return length(p - center) - radius;
 }
 
 void main(){
@@ -798,13 +790,13 @@ void main(){
 
     vec2 pos = (cursor_pos*vec2(1, -1)) + vec2(-0.5, 0.5);
 
-    float sdf = sdf_rounded_rect(pos, vec2(0.1, 0.1), uv, u_radius)*200.0;
+    float sdf = sdf_rounded_rect(pos, vec2(0.1, 0.1), uv, u_radius)*u_sdf_multiplier;
 
-    sdf = smooth_union(sdf, sdf_rounded_rect(vec2(-0.3, 0.2), vec2(0.1, 0.1), uv, 0.1)*200.0, 20.0);
+    sdf = smooth_union(sdf, sdf_circle(uv, vec2(-0.3, 0.2), 0.2)*u_sdf_multiplier, 20.0);
 
     vec3 normal = get_normal(sdf, u_thickness);
 
-    float ior = u_ior;
+    float ior = 1.0/u_ior;
     vec3 incident_vector = vec3(0.0, 0.0, -1.0);
 
     vec3 refracted_vector = refract(incident_vector, normal, ior);
@@ -837,6 +829,7 @@ void main(){
 precision highp float;
 
 uniform vec2 resolution;
+uniform float u_sdf_multiplier;
 uniform vec2 scene_offset;
 uniform sampler2D bg;
 uniform vec2 cursor_pos;
@@ -858,13 +851,10 @@ float sdf_rounded_rect(vec2 center, vec2 size, vec2 p, float r)
 
 vec3 get_normal(float sdf, float thickness)
 {
-    float dx = dFdx(sdf);
-    float dy = dFdy(sdf);
+    float normal_cos = max(thickness + sdf, 0.0) / thickness;
+    float normal_sin = sqrt(1.0 - normal_cos * normal_cos);
 
-    float n_cos = max(thickness + sdf, 0.0) / thickness;
-    float n_sin = sqrt(1.0 - n_cos * n_cos);
-
-    return normalize(vec3(dx * n_cos, dy * n_cos, n_sin));
+    return normalize(vec3(dFdx(sdf) * normal_cos, dFdy(sdf) * normal_cos, normal_sin));
 }
 
 void main(){
@@ -879,11 +869,11 @@ void main(){
 
     vec2 pos = (cursor_pos*vec2(1, -1)) + vec2(-0.5, 0.5);
 
-    float sdf = sdf_rounded_rect(pos, vec2(0.1, 0.1), uv, u_radius)*200.0;
+    float sdf = sdf_rounded_rect(pos, vec2(0.1, 0.1), uv, u_radius)*u_sdf_multiplier;
 
     vec3 normal = get_normal(sdf, u_thickness);
 
-    float ior = u_ior;
+    float ior = 1.0/u_ior;
     vec3 incident_vector = vec3(0.0, 0.0, -1.0);
 
     vec3 refracted_vector = refract(incident_vector, normal, ior);
@@ -1452,10 +1442,11 @@ function update_camera_orbit(camera){
 // scene_snells
 
 let ior = 1.5;
-let thickness = 20.0;
-let radius = 0.1;
+let thickness = 13.0;
+let radius = 0.13;
 let offset_r = 1.2;
 let offset_b = 0.9;
+let sdf_multiplier = 200;
 
 function update(current_time){
     let delta_time = (current_time - ctx.last_time) / 1000;
@@ -1499,6 +1490,7 @@ function update(current_time){
             ctx.draw(fullscreen_quad, {"cursor_pos": [scene.cursor_pos[0], scene.cursor_pos[1]], "scene_offset": [left, bottom], "resolution": [width, height],
                 "u_thickness": thickness,
                 "u_radius": radius,
+                "u_sdf_multiplier": sdf_multiplier,
             });
         }
         else if(scene_id == "scene_normal"){
@@ -1506,6 +1498,7 @@ function update(current_time){
             ctx.draw(fullscreen_quad, {"cursor_pos": [scene.cursor_pos[0], scene.cursor_pos[1]], "scene_offset": [left, bottom], "resolution": [width, height],
                 "u_thickness": thickness,
                 "u_radius": radius,
+                "u_sdf_multiplier": sdf_multiplier,
             });
         }
         else if(scene_id == "scene_refraction"){
@@ -1514,6 +1507,7 @@ function update(current_time){
                 "u_ior": ior,
                 "u_thickness": thickness,
                 "u_radius": radius,
+                "u_sdf_multiplier": sdf_multiplier,
             });
         }
         else if(scene_id == "scene_refraction_tex"){
@@ -1524,6 +1518,7 @@ function update(current_time){
                 "u_ior": ior,
                 "u_thickness": thickness,
                 "u_radius": radius,
+                "u_sdf_multiplier": sdf_multiplier,
             });
         }
         else if(scene_id == "scene_reflection"){
@@ -1532,6 +1527,7 @@ function update(current_time){
                 "u_ior": ior,
                 "u_thickness": thickness,
                 "u_radius": radius,
+                "u_sdf_multiplier": sdf_multiplier,
             });
         }
         else if(scene_id == "scene_reflection_tex"){
@@ -1540,6 +1536,7 @@ function update(current_time){
                 "u_ior": ior,
                 "u_thickness": thickness,
                 "u_radius": radius,
+                "u_sdf_multiplier": sdf_multiplier,
             });
         }
         else if(scene_id == "scene_refraction_reflection_tex"){
@@ -1548,6 +1545,7 @@ function update(current_time){
                 "u_ior": ior,
                 "u_thickness": thickness,
                 "u_radius": radius,
+                "u_sdf_multiplier": sdf_multiplier,
             });
         }
         else if(scene_id == "scene_chromatic_aberration"){
@@ -1558,6 +1556,7 @@ function update(current_time){
                 "u_radius": radius,
                 "u_offset_r": offset_r,
                 "u_offset_b": offset_b,
+                "u_sdf_multiplier": sdf_multiplier,
             });
         }
         else if(scene_id == "scene_snells"){
@@ -1581,6 +1580,7 @@ function update(current_time){
                 "u_ior": ior,
                 "u_thickness": thickness,
                 "u_radius": radius,
+                "u_sdf_multiplier": sdf_multiplier,
             });
         }
     }
@@ -1641,6 +1641,14 @@ document.getElementById("offset-b-value").innerHTML = offset_b;
 document.getElementById("offset-b-input").addEventListener("input", (e) => {
     offset_b = parseFloat(e.target.value);
     document.getElementById("offset-b-value").innerHTML = offset_b;
+});
+
+
+document.getElementById("sdf-multiplier-input").value = sdf_multiplier;
+document.getElementById("sdf-multiplier-value").innerHTML = sdf_multiplier;
+document.getElementById("sdf-multiplier-input").addEventListener("input", (e) => {
+    sdf_multiplier = parseFloat(e.target.value);
+    document.getElementById("sdf-multiplier-value").innerHTML = sdf_multiplier;
 });
 
 
