@@ -14,140 +14,6 @@
 
     <link rel="stylesheet" href="/css/style.css">
     <style>
-        li{
-            margin-bottom: 0.5em;
-        }
-        .red{
-            background-color: #ea3333;
-        }
-        .green{
-            background-color: #29c643;
-        }
-        .blue{
-            background-color: #2c66c9;
-        }
-        .orange{
-            background-color: #ff8f00;
-        }
-        .rounded-bg{
-            border-radius: 3px;
-            padding: 1px 5px 1px 5px;
-            color: white;
-            font-family: "mono";
-            font-weight: bold;
-        }
-        .super{
-            vertical-align: super;
-            font-size: 13px;
-            margin-right: 3px;
-        }
-        .equation{
-            font-family: "mono";
-            font-weight: bold;
-            border: none;
-            margin-right: auto;
-            margin-left: auto;
-        }
-        .equation td{
-            padding-bottom: 12px;
-        }
-        .equation td, .equation tr{
-            border: none;
-        }
-        .sqrt-before-before{
-            content: "";
-            width: 5px;
-            height: 30%;
-            position: absolute;
-            border-right: 2px solid;
-            border-top: none;
-            left: 0px;
-            bottom: 10px;
-            transform: skew(20deg);
-        }
-        .sqrt-before{
-            content: "";
-            width: 5px;
-            height: 80%;
-            position: absolute;
-            border-right: 2px solid;
-            border-top: none;
-            left: 4px;
-            top: -3px;
-            transform: skew(-8deg);
-        }
-        .sqrt{
-            padding-left: 10px;
-            position: relative;
-        }
-        .sqrt-overline{
-            border-top: 2px solid var(--color-fg-1);
-            padding-top: 5px;
-            padding-left: 5px;
-        }
-        .norm{
-            letter-spacing: -5px;
-            padding-right: 5px;
-        }
-        #raymarching-play{
-            border: 2px solid black;
-            color: black;
-            background-color: #e6e6e6;
-            border-radius: 3px;
-            padding: 1px 5px 1px 5px;
-            font-family: "mono";
-            font-weight: bold;
-            font-size: 1em;
-            cursor: pointer;
-        }
-        pre{
-            border-radius: inherit !important;
-            padding: inherit !important;
-            margin-bottom: inherit !important;
-            background-color: inherit !important;
-            color: inherit !important;
-            word-wrap: inherit !important;
-            white-space: inherit !important;
-        }
-        .shader-editor{
-            display: flex;
-            width: 100%;
-            height: 400px;
-        }
-        .editor{
-            flex: 1;
-            position: relative;
-        }
-        canvas{
-            padding-left: 0;
-            padding-right: 0;
-            display: block;
-            margin-right: auto;
-            margin-left: auto;
-        }
-        .ace_scrollbar{
-            scrollbar-width: thin;
-        }
-        .compile-button{
-            z-index: 1000;
-            position: absolute;
-            bottom: 0;
-            right: 0;
-            background-color: rgb(22, 119, 255);
-            color: white;
-            border: none;
-            border-radius: 0;
-            border-top-left-radius: 5px;
-            padding: 5px;
-            padding-left: 8px;
-            font-size: 1.5em;
-            cursor: pointer;
-        }
-        .marker{
-            position:absolute;
-            background:rgba(100,200,100,0.5);
-            z-index:20;
-        }
         #main-canvas{
             position: absolute;
             top: 0;
@@ -156,6 +22,58 @@
             height: 100vh;
             z-index: -1;
             display: block;
+        }
+        input[type="range"] {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 300px;
+            height: 10px;
+            background: linear-gradient(to right, #555 50%, #ddd 50%);
+            outline: none;
+        }
+        input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: var(--thumb-color, #555);
+            cursor: pointer;
+            border: none;
+        }
+
+        input[type="range"]::-moz-range-thumb {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: var(--thumb-color, #555);
+            cursor: pointer;
+            border: none;
+        }
+        .slider-container{
+            width: 60%;
+            margin-left: auto;
+            margin-right: auto;
+        }
+        .slider-container input{
+            width: 100%;
+            margin-top: 1.5em;
+        }
+
+        #sliders {
+            position: absolute;
+            width: 400px;
+            top: 1200px;
+            right: calc(55rem - 400px);
+            transition: transform 0.5s ease, opacity 0.5s ease;
+            transform: translateY(0);
+        }
+
+        #sliders.fixed {
+            position: fixed;
+            top: 300px;
+            right: calc(55rem - 400px);
+            transform: translateY(100px);
         }
     </style>
 </head>
@@ -167,13 +85,35 @@
         </span>
     </nav>
 
+    <div id="sliders">
+        <div class="slider-container">
+            <label style="font-weight: bold;">Border radius <span id="radius-value"></span></label><br><input id="radius-input" type="range" min="0" max="0.2" step="0.001" data-color="#888">
+        </div>
+        <br>
+        <div class="slider-container">
+            <label style="font-weight: bold;">Index of refraction <span id="ior-value"></span></label><br><input id="ior-input" type="range" min="0" max="5" step="0.001" data-color="#888">
+        </div>
+        <br>
+        <div class="slider-container">
+            <label style="font-weight: bold;">Glass thickness <span id="thickness-value"></span></label><br><input id="thickness-input" type="range" min="0" max="50" step="0.01" data-color="#888">
+        </div>
+        <br>
+        <div class="slider-container">
+            <label style="font-weight: bold;">Offset Red <span id="offset-r-value"></span></label><br><input id="offset-r-input" type="range" min="-2" max="2" step="0.01" data-color="#888">
+        </div>
+        <br>
+        <div class="slider-container">
+            <label style="font-weight: bold;">Offset Blue <span id="offset-b-value"></span></label><br><input id="offset-b-input" type="range" min="-2" max="2" step="0.01" data-color="#888">
+        </div>
+    </div>
+
     <h1>How Apple's Liquid Glass (probably) works</h1>
 
     <br>
     <img src="apple.jpg" style="max-width: 100%;">
     <br>
 
-    <p>In WWDC25, Apple introduced a new GUI design called <strong>Liquid Glass</strong>. Regardless of the users reception to Apple's new style, we will try to recreate this effect using shaders, and see how it compares to similar design languages like Windows Aero</p>
+    <p>In WWDC25, Apple introduced a new GUI design called <strong>Liquid Glass</strong>. Regardless of the users reception to Apple's new style, we will try to recreate this effect using shaders.</p>
     <p>Since I don't have access to an Apple device, I can't reverse engineer the rendering behind Liquid Glass and know for a fact how it works, but the effect is simple enough that it can be reproduced.</p>
     <h2>The Shape</h2>
 
@@ -186,10 +126,25 @@
 
     <h2>The Normal</h2>
     <p>Now we need to compute the normal of your rounded rectangle so that we can make it interact with light in interesting ways.</p>
+    <p>To do that we will "fake" the normal of a 3D rounded shape</p>
+
     <div id="scene_normal"></div>
 
     <h2>Refraction</h2>
     <p>We are trying to simulate how light would get refracted by our shape as if it was made of glass. To do that we use <strong>Snell's law</strong></p>
+
+    <div id="scene_snells"></div>
+    <div class="slider-container">
+        <label style="font-weight: bold;">Angle</label><br><input id="fresnel-angle-input" type="range" min="-90" max="90" step="0.01" data-color="#888">
+        <label style="font-weight: bold;">IOR 2</label><br><input id="fresnel-ior2-input" type="range" min="1" max="2.5" step="0.01" data-color="#888">
+        <label style="font-weight: bold;">IOR 1</label><br><input id="fresnel-ior1-input" type="range" min="1" max="2.5" step="0.01" data-color="#888">
+    </div>
+    <br>
+
+    <p>Snell's law gives us the angle of refraction of a ray of light passing through a medium, the angle changes depending on the materials <strong>Index of Refraction</strong>.</p>
+    <p>Using <strong>Fresnel equations</strong> we can also compute the amount of light refracted vs reflected by the medium.</p>
+
+    <p>The index of refraction of <strong>glass</strong> is 1.52, for comparison water has an IOR of 1.33.</p>
 
     <p>Here we can visualize the refracted vector that goes from the camera towards the negative Z axis (towards the screen)</p>
     <div id="scene_refraction"></div>
@@ -212,8 +167,14 @@
     <p>Another cool thing about SDFs is that we can smoothly "blend" two shapes by using a special function, you can read more about it here <a href="https://iquilezles.org/articles/smin/">Smooth Minimum - Inigo Quilez</a></p>
     <div id="scene_sdf_mix"></div>
 
+    <h2>Chromatic Aberration</h2>
+
+    <p>By offsetting the sample coordinates of the red and blue channel of the texture, we can add a chromatic aberration effect</p>
+
+    <div id="scene_chromatic_aberration"></div>
     <h2>Further Reading</h2>
 
+    <p>This was a quick and dirty article I wrote in an evening, to get the crisp glassy look Apple showcased would need more work.</p>
     <p>If you want to read more about signed distance functions, I have an article about <a href="../raymarching-explained-interactively/">the Raymarching algorithm</a> which is based on 3D SDFs.</p>
     <p>You can also find more about 2D (and 3D) SDFs on <a href="https://iquilezles.org/articles/distfunctions2d/">Inigo Quilez's website</a></p>
 <script src="/js/webgl_helper.js"></script>
