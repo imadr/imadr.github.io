@@ -1159,7 +1159,7 @@ vec3 estimate_normal(vec3 p) {
 
 void main(){
     vec2 frag_coord_scene = gl_FragCoord.xy - scene_offset;
-    vec2 uv = frag_coord_scene / resolution;  // (0,0) to (1,1)
+    vec2 uv = frag_coord_scene / resolution;
 
     uv = uv - 0.5;
     uv.x *= resolution.x / resolution.y;
@@ -1173,23 +1173,37 @@ void main(){
     vec3 current_point = ray_origin;
     float dist_total = 0.;
     bool hit = false;
-    for (int i = 0; i < 100; i++) {
+    float density = 0.0;
+    const float density_per_point = 0.01;
+
+    bool inside = false;
+    for (int i = 0; i < 500; i++) {
         current_point = ray_origin + ray_direction * dist_total;
         float dist = box_sdf(current_point, vec3(1.0));
-        if (dist < 0.001) {
-            hit = true;
-            break;
+        if (dist > 0.000001 && !inside) {
+            dist_total += dist;
         }
-        dist_total += dist;
+        else{
+            inside = true;
+            hit = true;
+            density += density_per_point;
+            dist_total += 0.01;
+        }
+
         if (dist_total > 100.0) break;
+        if (inside && dist > 0.1) break;
     }
 
     if(hit){
-        vec3 n = estimate_normal(current_point);
-        frag_color = vec4(n, 1);
+        frag_color = vec4(
+            mix(
+                vec3(1, 1, 1),
+                vec3(0.2, 0.2, 1),
+                density/2.0
+            ), 1);
     }
     else{
-        frag_color = vec4(1, 0, 1, 1);
+        frag_color = vec4(1, 1, 1, 1);
     }
 }`);
 ctx.shaders["shader_basic_alpha"] = ctx.create_shader(`#version 300 es
@@ -2833,26 +2847,6 @@ document.getElementById("tir-angle-input").addEventListener("input", function(e)
 // scene_total_internal_reflection
 
 // scene_snells_window
-let pool_border = ctx.create_drawable("shader_basic", null, [1, 0, 1], mat4_identity());
-let pool_color_bottom = ctx.create_drawable("shader_basic", null, [1, 0, 1], mat4_identity());
-let pool_white_bottom = ctx.create_drawable("shader_basic", null, [1, 0, 0], mat4_identity());
-let pool_color_left = ctx.create_drawable("shader_basic", null, [1, 0, 1], mat4_identity());
-let pool_white_left = ctx.create_drawable("shader_basic", null, [1, 0, 0], mat4_identity());
-let pool_color_right = ctx.create_drawable("shader_basic", null, [1, 0, 1],
-    rotate_3d(axis_angle_to_quat(vec3_normalize([0, 1, 0]), rad(180))),
-);
-let pool_white_right = ctx.create_drawable("shader_basic", null, [1, 0, 0],
-    rotate_3d(axis_angle_to_quat(vec3_normalize([0, 1, 0]), rad(180))),
-);
-let pool_color_back = ctx.create_drawable("shader_basic", null, [1, 0, 1], mat4_identity());
-let pool_white_back = ctx.create_drawable("shader_basic", null, [1, 0, 0], mat4_identity());
-let pool_color_front = ctx.create_drawable("shader_basic", null, [1, 0, 1],
-    rotate_3d(axis_angle_to_quat(vec3_normalize([0, 1, 0]), rad(180))),
-);
-let pool_white_front = ctx.create_drawable("shader_basic", null, [1, 0, 0],
-    rotate_3d(axis_angle_to_quat(vec3_normalize([0, 1, 0]), rad(180))),
-);
-
 let raymarching_fullscreen_quad = ctx.create_drawable("shader_raymarching_water", {
     vertices: [
         -1, -1, 0, 0, 0,
@@ -4623,6 +4617,9 @@ function update(current_time){
     gl.enable(gl.DEPTH_TEST);
     gl.enable(gl.CULL_FACE);
 
+    gl.clearColor(0, 0, 0, 0);
+    gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
+
     gl.depthFunc(gl.LESS);
     gl.enable(gl.BLEND);
     gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
@@ -4705,22 +4702,20 @@ function update(current_time){
             ctx.draw(fresnel_medium_2);
         }
         else if(scene_id === "scene_snells_window") {
-            // ctx.draw(pool_border);
-            // ctx.draw(pool_color_bottom);
-            // ctx.draw(pool_white_bottom);
-            // ctx.draw(pool_color_left);
-            // ctx.draw(pool_white_left);
-            // ctx.draw(pool_color_right);
-            // ctx.draw(pool_white_right);
-            // ctx.draw(pool_color_back);
-            // ctx.draw(pool_white_back);
-            // ctx.draw(pool_color_front);
-            // ctx.draw(pool_white_front);
-
+            let shader = ctx.shaders[raymarching_fullscreen_quad.shader];
+            gl.useProgram(shader.program);
             gl.activeTexture(gl.TEXTURE0);
             gl.bindTexture(gl.TEXTURE_2D, ctx.skybox_texture);
-
-            ctx.draw(raymarching_fullscreen_quad, {"scene_offset": [left, bottom], "resolution": [width, height]});
+            update_camera_projection_matrix(scene.camera, scene.width/scene.height);
+            update_camera_orbit(scene.camera);
+            ctx.set_shader_uniform(shader, "p", scene.camera.projection_matrix);
+            ctx.set_shader_uniform(shader, "v", scene.camera.view_matrix);
+            ctx.set_shader_uniform(shader, "m", raymarching_fullscreen_quad.transform);
+            ctx.set_shader_uniform(shader, "time", ctx.time);
+            ctx.set_shader_uniform(shader, "scene_offset", [left, bottom]);
+            ctx.set_shader_uniform(shader, "resolution", [width, height]);
+            gl.bindVertexArray(raymarching_fullscreen_quad.vertex_buffer.vao);
+            gl.drawElements(gl.TRIANGLES, raymarching_fullscreen_quad.vertex_buffer.draw_count, gl.UNSIGNED_SHORT, 0);
         }
         else if(scene_id === "scene_total_internal_reflection") {
             for(let i = 0; i < tir_rays.length; i++){
@@ -5667,17 +5662,6 @@ const meshes = [
     { path: "flashlight_light.mesh", drawable: flashlight_light_m },
     { path: "banana.mesh", drawable: banana },
     { path: "banana_head.mesh", drawable: banana_head },
-    { path: "pool_border.mesh", drawable: pool_border },
-    { path: "pool_color_bottom.mesh", drawable: pool_color_bottom },
-    { path: "pool_white_bottom.mesh", drawable: pool_white_bottom },
-    { path: "pool_color_left.mesh", drawable: pool_color_left },
-    { path: "pool_white_left.mesh", drawable: pool_white_left },
-    { path: "pool_color_left.mesh", drawable: pool_color_right },
-    { path: "pool_white_left.mesh", drawable: pool_white_right },
-    { path: "pool_color_back.mesh", drawable: pool_color_back },
-    { path: "pool_white_back.mesh", drawable: pool_white_back },
-    { path: "pool_color_back.mesh", drawable: pool_color_front },
-    { path: "pool_white_back.mesh", drawable: pool_white_front },
 ];
 
 let zip_data = {};

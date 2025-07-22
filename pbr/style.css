@@ -30,9 +30,9 @@ body{
     margin-right: auto;
     margin-left: auto;
     margin-top: 1rem;
-    max-width: 55rem;
+    max-width: 48rem;
     padding: 1rem;
-    font-size: 1.2em;
+    font-size: 1.1em;
     line-height: 1.6em;
 }
 #main-canvas{
