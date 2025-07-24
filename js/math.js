@@ -242,6 +242,10 @@ function vec2_dot(a, b){
     return a[0]*b[0] + a[1]*b[1];
 }
 
+function vec2_cross(a, b) {
+    return a[0] * b[1] - a[1] * b[0];
+}
+
 function lerp(a, b, t){
     t = t < 0 ? 0 : t;
     t = t > 1 ? 1 : t;

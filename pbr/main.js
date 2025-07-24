@@ -813,7 +813,7 @@ function create_box(width, height, depth) {
 function create_arrow(from, to, size) {
     let [x1, y1, z1] = from;
     let [x2, y2, z2] = to;
-    let [body_width, head_size] = size;
+    let [body_width, head_size_width, head_size_height] = size;
     let dx = x2 - x1;
     let dy = y2 - y1;
     let length = Math.sqrt(dx * dx + dy * dy);
@@ -822,16 +822,16 @@ function create_arrow(from, to, size) {
     let perp_x = -dir_y;
     let perp_y = dir_x;
     let body_half_width = body_width / 2;
-    let body_end_x = x2 - dir_x * head_size;
-    let body_end_y = y2 - dir_y * head_size;
+    let body_end_x = x2 - dir_x * head_size_height;
+    let body_end_y = y2 - dir_y * head_size_height;
     let vertices = [
         x1 + perp_x * body_half_width, y1 + perp_y * body_half_width, z1, 0, 0, 0,
         x1 - perp_x * body_half_width, y1 - perp_y * body_half_width, z1, 0, 1, 0,
         body_end_x - perp_x * body_half_width, body_end_y - perp_y * body_half_width, z1, 0, 1, 1,
         body_end_x + perp_x * body_half_width, body_end_y + perp_y * body_half_width, z1, 0, 0, 1,
         x2, y2, z1, 0.5, 0.5, 0,
-        body_end_x + perp_x * head_size, body_end_y + perp_y * head_size, z1, 0, 0, 0,
-        body_end_x - perp_x * head_size, body_end_y - perp_y * head_size, z1, 0, 1, 0,
+        body_end_x + perp_x * head_size_width, body_end_y + perp_y * head_size_width, z1, 0, 0, 0,
+        body_end_x - perp_x * head_size_width, body_end_y - perp_y * head_size_width, z1, 0, 1, 0,
     ];
     let indices = [
         0, 1, 2,
@@ -2168,6 +2168,18 @@ ctx.scenes = {
                 zoom: 7.0
             }
         }},
+    "scene_roughness": {id: "scene_roughness", el: null, ratio: 1.4, camera: null, dragging_rect: null, draggable_rects: {},
+        camera: {
+            fov: 70, z_near: 0.1, z_far: 1000,
+            position: [0, 0, 0], rotation: [0, 0, 0],
+            up_vector: [0, 1, 0],
+            view_matrix: mat4_identity(),
+            orbit: {
+                rotation: [0, 0, 0],
+                pivot: [0, 0, 0],
+                zoom: 1.0
+            }
+        }},
 };
 
 function get_event_coordinates(e, element) {
@@ -2444,6 +2456,133 @@ const red = [0.922, 0.204, 0.204];
 const blue = [0.204, 0.443, 0.922];
 const green = [0.143, 0.867, 0.095];
 
+// scene_roughness
+function smooth_noise(x) {
+    function fade(t) {
+        return t * t * t * (t * (t * 6 - 15) + 10);
+    }
+
+    function hash(n) {
+        return Math.sin(n * 43758.5453123) * 0.5;
+    }
+
+    const x0 = Math.floor(x);
+    const x1 = x0 + 1;
+    const t = x - x0;
+    const ft = fade(t);
+    const v0 = hash(x0);
+    const v1 = hash(x1);
+
+    return v0 * (1 - ft) + v1 * ft;
+}
+
+function fbm(x, octaves = 5, persistence = 0.5, lacunarity = 2.0) {
+    let total = 0;
+    let amplitude = 1;
+    let frequency = 1;
+    let max_amplitude = 0;
+
+    for (let i = 0; i < octaves; i++) {
+        total += smooth_noise(x * frequency) * amplitude;
+        max_amplitude += amplitude;
+        amplitude *= persistence;
+        frequency *= lacunarity;
+    }
+
+    return total / max_amplitude;
+}
+
+function ray_segment_intersect(ray_origin, ray_dir, seg_a, seg_b) {
+    let v1 = vec2_sub(ray_origin, seg_a);
+    let v2 = vec2_sub(seg_b, seg_a);
+    let v3 = [-ray_dir[1], ray_dir[0]];
+
+    let dot = vec2_dot(v2, v3);
+    if (Math.abs(dot) < 1e-6) return null;
+
+    let t1 = vec2_cross(v2, v1) / dot;
+    let t2 = vec2_dot(v1, v3) / dot;
+
+    if (t1 >= 0 && t2 >= 0 && t2 <= 1) {
+        return vec2_add(ray_origin, vec2_scale(ray_dir, t1));
+    }
+    return null;
+}
+
+function reflect_ray(incident, normal) {
+    let dot = vec2_dot(incident, normal);
+    return vec2_sub(incident, vec2_scale(normal, 2 * dot));
+}
+
+let roughness_line = ctx.create_drawable("shader_basic", null, [0.000, 0.363, 0.561], mat4_identity());
+let roughness = 0.5;
+let seed = 0;
+
+let incoming_light_arrows = [];
+let reflected_light_arrows = [];
+for(let i = 0; i < 6; i++){
+    incoming_light_arrows.push(ctx.create_drawable("shader_basic", null, [1, 0.937, 0], mat4_identity()));
+    reflected_light_arrows.push(ctx.create_drawable("shader_basic", null, [0.000, 0.646, 1.00], mat4_identity()));
+}
+
+function update_roughness_scene(){
+    seed++;
+    let roughness_line_n = 20;
+    let roughness_line_points = [];
+    let roughness_line_start_x = -1;
+    let roughness_line_end_x = 1;
+    let roughness_line_length = Math.abs(roughness_line_start_x)+Math.abs(roughness_line_end_x);
+    let roughness_line_segment_length = roughness_line_length/roughness_line_n;
+    for(let i = 0; i < roughness_line_n; i++){
+        let start_x = roughness_line_start_x + i*roughness_line_segment_length;
+        let end_x = start_x + roughness_line_segment_length;
+        roughness_line_points.push([start_x, fbm(start_x*5+seed)/remap_value(roughness, 0, 1, 4, 30)-0.2, 0]);
+    }
+    ctx.update_drawable_mesh(roughness_line, create_line(roughness_line_points, 0.015), [0, 0, 0], mat4_identity());
+
+    for(let i = 0; i < 6; i++){
+        let from = [i / 10 + 0.3, 0.4];
+        let dir = vec2_normalize([-0.25, -0.3]);
+
+        let closest_hit = null;
+        let min_dist = Infinity;
+        for (let j = 0; j < roughness_line_points.length - 1; j++) {
+            let p0 = roughness_line_points[j];
+            let p1 = roughness_line_points[j + 1];
+
+            let hit = ray_segment_intersect(from, dir, p0, p1);
+            if (hit) {
+                let d = vec2_magnitude(vec2_sub(hit, from));
+                if (d < min_dist) {
+                    min_dist = d;
+                    closest_hit = { point: hit, segment: [p0, p1] };
+                }
+            }
+        }
+
+        let to = vec2_add(from, dir);
+        ctx.update_drawable_mesh(incoming_light_arrows[i],
+            create_arrow([...from, 0], [...closest_hit.point, 0], [0.01, 0.02, 0.06]));
+
+        let [p0, p1] = closest_hit.segment;
+        let tangent = vec2_normalize(vec2_sub(p1, p0));
+        let normal = [-tangent[1], tangent[0]];
+        let reflected = reflect_ray(dir, normal);
+        let reflect_to = vec2_add(closest_hit.point, vec2_scale(reflected, 0.5));
+
+        ctx.update_drawable_mesh(reflected_light_arrows[i],
+            create_arrow([...closest_hit.point, 0], [...reflect_to, 0], [0.01, 0.02, 0.06]));
+    }
+}
+
+update_roughness_scene();
+document.getElementById("roughness-input").value = roughness;
+document.getElementById("roughness-input").addEventListener("input", (e) => {
+    roughness = parseFloat(e.target.value);
+    update_roughness_scene();
+});
+
+// scene_roughness
 // scene_charges setup
 function add_charge(scene, type, pos, charge_size = 0.25, border_size = 0.21, sign_size = 0.16, sign_thickness = 0.04, start_pos = 0, draggable = false, show_arrow = false){
     let charge_background = ctx.create_drawable("shader_basic", create_circle([0, 0, 0], charge_size, 32), [0.1, 0.1, 0.1], mat4_identity());
@@ -2458,7 +2597,7 @@ function add_charge(scene, type, pos, charge_size = 0.25, border_size = 0.21, si
     }
 
     let arrow = ctx.create_drawable("shader_basic",
-        create_arrow([0, 0, 0], [0, 0, 0], [0, 0]), [0.3, 0.3, 0.3], translate_3d([0, 0, 0]));
+        create_arrow([0, 0, 0], [0, 0, 0], [0, 0, 0]), [0.3, 0.3, 0.3], translate_3d([0, 0, 0]));
 
     let id = type+""+scene.charges.length;
     scene.charges.push({id: id, draggable: draggable, show_arrow: show_arrow, type: type, charge: charge, charge_background: charge_background, sign: sign, arrow: arrow, pos: pos, start_pos: start_pos, size: charge_size});
@@ -2515,7 +2654,7 @@ function update_drag_charges(scene){
         let arrow_length = 0.5;
         let arrow_thickness = magnitude;
         if(scene.id != "scene_electric_field" && charge.show_arrow){
-            let new_mesh = create_arrow([0, 0, 0], vec3_scale(direction, arrow_length*arrow_thickness), vec2_scale([0.1, 0.15], arrow_thickness));
+            let new_mesh = create_arrow([0, 0, 0], vec3_scale(direction, arrow_length*arrow_thickness), vec2_scale([0.1, 0.15, 0.15], arrow_thickness));
             ctx.update_drawable_mesh(charge.arrow, new_mesh);
         }
     }
@@ -2562,7 +2701,7 @@ function update_snells_scene(){
     let incident_ray_end = [0, 0, 0];
     let incident_ray_mid_1 = vec3_scale(incident_ray_vector, snells_len/2 - 0.01);
     let incident_ray_mid = vec3_scale(incident_ray_vector, snells_len/2);
-    ctx.update_drawable_mesh(incident_ray_1, create_arrow(incident_ray_start, incident_ray_mid_1, [0.017, 0.05]));
+    ctx.update_drawable_mesh(incident_ray_1, create_arrow(incident_ray_start, incident_ray_mid_1, [0.017, 0.05, 0.05]));
     ctx.update_drawable_mesh(incident_ray_2, create_line([incident_ray_mid, incident_ray_end], 0.017));
 
     let refraction_angle = Math.asin((ior_2/ior_1)*Math.sin(rad(incidence_angle)))+Math.PI;
@@ -2572,7 +2711,7 @@ function update_snells_scene(){
     let refracted_ray_end = vec3_scale([Math.sin(refraction_angle), Math.cos(refraction_angle), 0], snells_len);
     let refracted_ray_mid_1 = vec3_scale(refracted_ray_vector, snells_len/2 + 0.01);
     let refracted_ray_mid = vec3_scale(refracted_ray_vector, snells_len/2);
-    ctx.update_drawable_mesh(refracted_ray_1, create_arrow(refracted_ray_start, refracted_ray_mid_1, [0.017, 0.05]));
+    ctx.update_drawable_mesh(refracted_ray_1, create_arrow(refracted_ray_start, refracted_ray_mid_1, [0.017, 0.05, 0.05]));
     ctx.update_drawable_mesh(refracted_ray_2, create_line([refracted_ray_mid, refracted_ray_end], 0.017));
 
     medium_1.color = vec3_lerp([1, 1, 1], [0.8, 0.9, 1], remap_value(ior_1, 1, 2.5, 0, 1));
@@ -2671,7 +2810,7 @@ function update_fresnel_scene() {
     let inc_start = vec3_scale(inc_dir, fresnel_snells_len);
     let inc_mid_1 = vec3_scale(inc_dir, fresnel_snells_len / 2 - 0.01);
     let inc_mid = vec3_scale(inc_dir, fresnel_snells_len / 2);
-    ctx.update_drawable_mesh(fresnel_incident_ray_1, create_arrow(inc_start, inc_mid_1, [0.017, 0.05]));
+    ctx.update_drawable_mesh(fresnel_incident_ray_1, create_arrow(inc_start, inc_mid_1, [0.017, 0.05, 0.05]));
     ctx.update_drawable_mesh(fresnel_incident_ray_2, create_line([inc_mid, [0, 0, 0]], 0.017));
     fresnel_incident_ray_1.color = red;
     fresnel_incident_ray_2.color = red;
@@ -2681,7 +2820,7 @@ function update_fresnel_scene() {
     let refr_mid_1 = vec3_scale(refr_dir, fresnel_snells_len / 2 + 0.01);
     let refr_mid = vec3_scale(refr_dir, fresnel_snells_len / 2);
     let refr_end = vec3_scale(refr_dir, fresnel_snells_len);
-    ctx.update_drawable_mesh(fresnel_refracted_ray_1, create_arrow([0, 0, 0], refr_mid_1, [0.017, 0.05]));
+    ctx.update_drawable_mesh(fresnel_refracted_ray_1, create_arrow([0, 0, 0], refr_mid_1, [0.017, 0.05, 0.05]));
     ctx.update_drawable_mesh(fresnel_refracted_ray_2, create_line([refr_mid, refr_end], 0.017));
     fresnel_refracted_ray_1.color = red_refracted;
     fresnel_refracted_ray_2.color = red_refracted;
@@ -2691,7 +2830,7 @@ function update_fresnel_scene() {
     let refl_mid_1 = vec3_scale(refl_dir, fresnel_snells_len / 2 + 0.01);
     let refl_mid = vec3_scale(refl_dir, fresnel_snells_len / 2);
     let refl_end = vec3_scale(refl_dir, fresnel_snells_len);
-    ctx.update_drawable_mesh(fresnel_reflected_ray_1, create_arrow([0, 0, 0], refl_mid_1, [0.017, 0.05]));
+    ctx.update_drawable_mesh(fresnel_reflected_ray_1, create_arrow([0, 0, 0], refl_mid_1, [0.017, 0.05, 0.05]));
     ctx.update_drawable_mesh(fresnel_reflected_ray_2, create_line([refl_mid, refl_end], 0.017));
     fresnel_reflected_ray_1.color = red_reflected;
     fresnel_reflected_ray_2.color = red_reflected;
@@ -2994,7 +3133,7 @@ function update_vector_field(scene) {
             const scaled_length = Math.min(0.4, Math.max(0.1, current_vector_scale * Math.pow(magnitude, 0.3)));
             const end_point = vec3_add(point, vec3_scale(normalized_field, scaled_length));
 
-            const arrow = create_arrow(point, end_point, [current_arrow_thickness, current_arrow_head_size]);
+            const arrow = create_arrow(point, end_point, [current_arrow_thickness, current_arrow_head_size, current_arrow_head_size]);
             arrows.push(arrow);
         }
     }
@@ -3080,7 +3219,7 @@ function update_drag_charges_relativity(scene){
     let arrow_length = magnitude/2;
     let arrow_thickness = magnitude;
 
-    let new_mesh = create_arrow([0, 0, 0], vec3_scale(direction, arrow_length), vec2_scale([0.1, 0.15], arrow_thickness));
+    let new_mesh = create_arrow([0, 0, 0], vec3_scale(direction, arrow_length), vec2_scale([0.1, 0.15], arrow_thickness, arrow_thickness));
     ctx.update_drawable_mesh(charge.arrow, new_mesh);
 }
 
@@ -3139,13 +3278,13 @@ let spectrum = ctx.create_drawable("shader_spectrum",
     create_rect([0, 0, 0], [0.8, 0.4]),
     [0, 0, 0], translate_3d([-0.4, -0.5, -1]));
 let arrow_spectrum_1 = ctx.create_drawable("shader_basic",
-   create_arrow([0, 0, 0], [1.2, 0, 0], [0.015, 0.04]), [0, 0, 0], translate_3d([0, -0.07, 0]));
+   create_arrow([0, 0, 0], [1.2, 0, 0], [0.015, 0.04, 0.04]), [0, 0, 0], translate_3d([0, -0.07, 0]));
 let arrow_spectrum_2 = ctx.create_drawable("shader_basic",
-   create_arrow([0, 0, 0], [-1.2, 0, 0], [0.015, 0.04]), [0, 0, 0], translate_3d([0, -0.07, 0]));
+   create_arrow([0, 0, 0], [-1.2, 0, 0], [0.015, 0.04, 0.04]), [0, 0, 0], translate_3d([0, -0.07, 0]));
 let arrow_spectrum_3 = ctx.create_drawable("shader_basic",
-   create_arrow([0, 0, 0], [1.2, 0, 0], [0.015, 0.04]), [0, 0, 0], translate_3d([0, -0.37, 0]));
+   create_arrow([0, 0, 0], [1.2, 0, 0], [0.015, 0.04, 0.04]), [0, 0, 0], translate_3d([0, -0.37, 0]));
 let arrow_spectrum_4 = ctx.create_drawable("shader_basic",
-   create_arrow([0, 0, 0], [-1.2, 0, 0], [0.015, 0.04]), [0, 0, 0], translate_3d([0, -0.37, 0]));
+   create_arrow([0, 0, 0], [-1.2, 0, 0], [0.015, 0.04, 0.04]), [0, 0, 0], translate_3d([0, -0.37, 0]));
 let arrow = ctx.create_drawable("shader_basic",
     create_triangle([0, 0, 0], [0.15, 0.15]),
     [0, 0, 0], translate_3d([-0.075, -0.64, -0.9]));
@@ -3616,8 +3755,8 @@ flashlight_light.alpha = 1.0;
 
 function create_small_graph(graph_position, data){
     let axis_color = [0.4, 0.4, 0.4];
-    let graph_x_axis = ctx.create_drawable("shader_basic", create_arrow([0, 0, 0], [0.7, 0, 0], [0.02, 0.04]), axis_color, translate_3d(graph_position));
-    let graph_y_axis = ctx.create_drawable("shader_basic", create_arrow([0.01, 0, 0], [0.01, 0.5, 0], [0.02, 0.04]), axis_color, translate_3d(graph_position));
+    let graph_x_axis = ctx.create_drawable("shader_basic", create_arrow([0, 0, 0], [0.7, 0, 0], [0.02, 0.04, 0.04]), axis_color, translate_3d(graph_position));
+    let graph_y_axis = ctx.create_drawable("shader_basic", create_arrow([0.01, 0, 0], [0.01, 0.5, 0], [0.02, 0.04, 0.04]), axis_color, translate_3d(graph_position));
 
     let graph_drawable_line = ctx.create_drawable("shader_spd", null, [1, 1, 1], translate_3d(graph_position));
 
@@ -3991,8 +4130,8 @@ mat4_mat4_mul(
 // scene_apple
 // scene_bulb_graphs
 let voltage_graph_position = [-2.4, -0.5, 0];
-let scene_bulb_graph_x_axis = ctx.create_drawable("shader_basic", create_arrow([0, 0, 0], [1.4, 0, 0], [0.02, 0.04]), [0.4, 0.4, 0.4], translate_3d(voltage_graph_position));
-let scene_bulb_graph_y_axis = ctx.create_drawable("shader_basic", create_arrow([0, 0, 0], [0, 1, 0], [0.02, 0.04]), [0.4, 0.4, 0.4], translate_3d(voltage_graph_position));
+let scene_bulb_graph_x_axis = ctx.create_drawable("shader_basic", create_arrow([0, 0, 0], [1.4, 0, 0], [0.02, 0.04, 0.04]), [0.4, 0.4, 0.4], translate_3d(voltage_graph_position));
+let scene_bulb_graph_y_axis = ctx.create_drawable("shader_basic", create_arrow([0, 0, 0], [0, 1, 0], [0.02, 0.04, 0.04]), [0.4, 0.4, 0.4], translate_3d(voltage_graph_position));
 let graph_num_points = 200;
 let voltage_graph = [];
 for(let i = 0; i < graph_num_points; i++){
@@ -4025,8 +4164,8 @@ ctx.text_buffers["graph_voltage_y_min"] = {text: "0 V", color: [0, 0, 0], transf
                     translate_3d(vec3_add(voltage_graph_position, [-0.21, 0.1, 0])))};
 
 let temperature_graph_position = [-0.5, -0.5, 0];
-let scene_bulb_graph_x_axis_temperature = ctx.create_drawable("shader_basic", create_arrow([0, 0, 0], [1.4, 0, 0], [0.02, 0.04]), [0.4, 0.4, 0.4], translate_3d(temperature_graph_position));
-let scene_bulb_graph_y_axis_temperature = ctx.create_drawable("shader_basic", create_arrow([0, 0, 0], [0, 1, 0], [0.02, 0.04]), [0.4, 0.4, 0.4], translate_3d(temperature_graph_position));
+let scene_bulb_graph_x_axis_temperature = ctx.create_drawable("shader_basic", create_arrow([0, 0, 0], [1.4, 0, 0], [0.02, 0.04, 0.04]), [0.4, 0.4, 0.4], translate_3d(temperature_graph_position));
+let scene_bulb_graph_y_axis_temperature = ctx.create_drawable("shader_basic", create_arrow([0, 0, 0], [0, 1, 0], [0.02, 0.04, 0.04]), [0.4, 0.4, 0.4], translate_3d(temperature_graph_position));
 let temperature_graph = [];
 for(let i = 0; i < graph_num_points; i++){
     temperature_graph.push(0.1);
@@ -4049,8 +4188,8 @@ ctx.text_buffers["graph_temperature_y_min"] = {text: "20°C", color: [0, 0, 0], 
                     scale_3d([0.0025, 0.0025, 0.0025]),
                     translate_3d(vec3_add(temperature_graph_position, [-0.32, 0.1, 0])))};
 let current_graph_position = [1.4, -0.5, 0];
-let scene_bulb_graph_x_axis_current = ctx.create_drawable("shader_basic", create_arrow([0, 0, 0], [1.4, 0, 0], [0.02, 0.04]), [0.4, 0.4, 0.4], translate_3d(current_graph_position));
-let scene_bulb_graph_y_axis_current = ctx.create_drawable("shader_basic", create_arrow([0, 0, 0], [0, 1, 0], [0.02, 0.04]), [0.4, 0.4, 0.4], translate_3d(current_graph_position));
+let scene_bulb_graph_x_axis_current = ctx.create_drawable("shader_basic", create_arrow([0, 0, 0], [1.4, 0, 0], [0.02, 0.04, 0.04]), [0.4, 0.4, 0.4], translate_3d(current_graph_position));
+let scene_bulb_graph_y_axis_current = ctx.create_drawable("shader_basic", create_arrow([0, 0, 0], [0, 1, 0], [0.02, 0.04, 0.04]), [0.4, 0.4, 0.4], translate_3d(current_graph_position));
 let current_graph = [];
 for(let i = 0; i < graph_num_points; i++){
     current_graph.push(0.1);
@@ -4493,8 +4632,8 @@ function create_spd_graph(scene, data, stuff, spd){
 
     let spd_graph_y_pos = -0.5;
     let spd_graph_position = [-1, 0, 0];
-    let spd_graph_x_axis = ctx.create_drawable("shader_basic", create_arrow([0, spd_graph_y_pos, 0], [2.1, spd_graph_y_pos, 0], [0.02, 0.04]), [0.4, 0.4, 0.4], translate_3d(spd_graph_position));
-    let spd_graph_y_axis = ctx.create_drawable("shader_basic", create_arrow([0.01, spd_graph_y_pos, 0], [0.01, 0.7, 0], [0.02, 0.04]), [0.4, 0.4, 0.4], translate_3d(spd_graph_position));
+    let spd_graph_x_axis = ctx.create_drawable("shader_basic", create_arrow([0, spd_graph_y_pos, 0], [2.1, spd_graph_y_pos, 0], [0.02, 0.04, 0.04]), [0.4, 0.4, 0.4], translate_3d(spd_graph_position));
+    let spd_graph_y_axis = ctx.create_drawable("shader_basic", create_arrow([0.01, spd_graph_y_pos, 0], [0.01, 0.7, 0], [0.02, 0.04, 0.04]), [0.4, 0.4, 0.4], translate_3d(spd_graph_position));
     let spd_graph_num_points = data.length;
     let spd_graph = [];
     for(let i = 0; i < spd_graph_num_points; i++){
@@ -4655,8 +4794,16 @@ function update(current_time){
                 ctx.draw(charge.arrow);
             }
         }
-
-        if(scene_id == "scene_electric_field"){
+        else if(scene_id == "scene_roughness"){
+            ctx.draw(roughness_line);
+            for(let i = 0; i < 6; i++){
+                ctx.draw(reflected_light_arrows[i]);
+            }
+            for(let i = 0; i < 6; i++){
+                ctx.draw(incoming_light_arrows[i]);
+            }
+        }
+        else if(scene_id == "scene_electric_field"){
             for(const charge of scene.charges){
                 ctx.draw(charge.sign);
                 ctx.draw(charge.charge);
