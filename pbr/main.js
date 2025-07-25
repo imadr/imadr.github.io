@@ -2943,6 +2943,8 @@ function update_fresnel_scene() {
         points_angle_2_curve.push(vec3_scale([Math.sin(angle), Math.cos(angle), 0], fresnel_snells_len_curve));
     }
     ctx.update_drawable_mesh(fresnel_angle_2_curve, create_line(points_angle_2_curve, 0.01));
+
+    fresnel_angle_2_curve.color = vec3_lerp([0, 0, 0], medium1_color, R);
 }
 
 update_fresnel_scene();
