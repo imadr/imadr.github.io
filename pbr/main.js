@@ -1060,7 +1060,7 @@ void main(){
     vec4 sample_texture = texture(framebuffer_texture, texcoord_adjusted);
     vec4 color_total = vec4(0.0);
     float weight_total = 0.0;
-    float blur_radius = 10.0;
+    float blur_radius = 2.0;
     float blur_sigma = 4.0;
     for (float x = -blur_radius; x <= blur_radius; x++) {
         for (float y = -blur_radius; y <= blur_radius; y++) {
@@ -5636,23 +5636,23 @@ function update(current_time){
             ctx.draw(bulb, {"color": [1.000, 0.577, 0.000], "m": bulb_transform}, null, "shader_basic");
             ctx.gl.bindFramebuffer(ctx.gl.FRAMEBUFFER, null);
 
-            // gl.useProgram(ctx.shaders["shader_postprocess"].program);
-            // gl.activeTexture(gl.TEXTURE1);
-            // gl.bindTexture(gl.TEXTURE_2D, postprocess_texture);
-            // gl.generateMipmap(gl.TEXTURE_2D);
-            // gl.uniform1i(ctx.shaders["shader_postprocess"].uniforms["framebuffer_texture"].location, 1);
-            // const u_min = left / gl.canvas.width;
-            // const v_min = bottom / gl.canvas.height;
-            // const u_max = (left + width) / gl.canvas.width;
-            // const v_max = (bottom + height) / gl.canvas.height;
-            // gl.uniform4f(ctx.shaders["shader_postprocess"].uniforms["scissor_texcoords"].location, u_min, v_min, u_max, v_max);
+            gl.useProgram(ctx.shaders["shader_postprocess"].program);
+            gl.activeTexture(gl.TEXTURE1);
+            gl.bindTexture(gl.TEXTURE_2D, postprocess_texture);
+            gl.generateMipmap(gl.TEXTURE_2D);
+            gl.uniform1i(ctx.shaders["shader_postprocess"].uniforms["framebuffer_texture"].location, 1);
+            const u_min = left / gl.canvas.width;
+            const v_min = bottom / gl.canvas.height;
+            const u_max = (left + width) / gl.canvas.width;
+            const v_max = (bottom + height) / gl.canvas.height;
+            gl.uniform4f(ctx.shaders["shader_postprocess"].uniforms["scissor_texcoords"].location, u_min, v_min, u_max, v_max);
 
-            // gl.bindVertexArray(fullscreen_quad.vertex_buffer.vao);
-            // ctx.set_shader_uniform(ctx.shaders["shader_postprocess"], "p", mat4_identity());
-            // ctx.set_shader_uniform(ctx.shaders["shader_postprocess"], "v", mat4_identity());
-            // current_brightness = remap_value(current_voltage, 0, 220, 0, 0.2);
-            // ctx.set_shader_uniform(ctx.shaders["shader_postprocess"], "brightness", current_brightness);
-            // gl.drawElements(gl.TRIANGLES, fullscreen_quad.vertex_buffer.draw_count, gl.UNSIGNED_SHORT, 0);
+            gl.bindVertexArray(fullscreen_quad.vertex_buffer.vao);
+            ctx.set_shader_uniform(ctx.shaders["shader_postprocess"], "p", mat4_identity());
+            ctx.set_shader_uniform(ctx.shaders["shader_postprocess"], "v", mat4_identity());
+            current_brightness = remap_value(current_voltage, 0, 220, 0, 0.2);
+            ctx.set_shader_uniform(ctx.shaders["shader_postprocess"], "brightness", current_brightness);
+            gl.drawElements(gl.TRIANGLES, fullscreen_quad.vertex_buffer.draw_count, gl.UNSIGNED_SHORT, 0);
         }
         else if(scene_id == "scene_relativity"){
             if(scene.set_charges_spacing >= 0){
