@@ -177,18 +177,72 @@ For example, microwaves are used for Wi-Fi and cooking, X-rays are used in medic
 <br>
 <p>Aside from incandescence and electroluminescence, which are the two most common sources of light we encounter in everyday life, light can come from other places. Some <a href="https://en.wikipedia.org/wiki/Fluorescence">materials</a> glow when exposed to ultraviolet radiation, <a href="https://en.wikipedia.org/wiki/Phosphorescence">others</a> absorb that radiation and re-emit it after some time. Some animals like fireflies use special <a href="https://en.wikipedia.org/wiki/Luciferase">enzymes</a> to produce light. You can read <a href="https://en.wikipedia.org/wiki/Luminescence">this page</a> to learn more about other sources of luminescence.</p>
 
-<h1>Chapter 2: Light Transport</h1>
+<h1>Chapter 2: Abstracting Away</h1>
 
 <p>In the previous chapter, we examined the nature of light and the various methods by which it can be emitted, we will now focus on how it interacts with matter.</p>
-<p>We call <strong>light transport</strong> the entire process by which light is emitted by a <strong>source</strong> of illumination, interacts with a <strong>material</strong>, getting either absorbed or scattered, and ultimately detected by a <strong>sensor</strong> such as a camera or the human eye.</p>
-<div class="canvas" id="scene_transport"></div>
 
-<p>When light interacts with an object, one of two things can happen: it can either be <strong>absorbed</strong> or <strong>scattered</strong>.</p>
-<p>Absorption can be thought of as deleting certain wavelengths from the incoming light, while scattering refers to light continuing to propagate after the interaction with the object, with possible changes to its properties such as direction, wavelength, or polarization.</p>
+<p>When a photon hits a material, it interacts with the electrons in the atoms and molecules of that material, then two things can happen, it can either be <strong>absorbed</strong> or <strong>scattered</strong>.</p>
+
+<p>The electrons occupy <strong>atomic orbitals</strong>: regions around the nucleus of the atom where an electron is most likely to be found. A higher orbital corresponds to a higher energy level of the electron. <small>(Or in the case of molecules, <a href="https://en.wikipedia.org/wiki/Conjugated_system">conjugated systems</a>)</small></p>
+
+<p>If the photon has the energy needed to excite the electron to a higher energy level, the photon can be absorbed. Eventually the electron returns to a lower level and releases the energy as heat. <small>(Or by re-emitting light by fluorescence or phosphorescence.</small>)</p>
+
+<p>If the photon does not get absorbed, it's electric field will make the electrons oscillate in return and generate <strong>secondary waves</strong> that interfere constructively and destructively with the photon waves in complicated ways.</p>
+
+<p>If we make these few assumptions about the material:</p>
+<ul>
+    <li>The material is <strong>homogeneous</strong>, as in the material has the same propreties everywhere</li>
+    <li>The material is a <strong>perfectly smooth</strong> surface</li>
+</ul>
+<p>We can use Maxwell's equation to show that such a perfect flat material splits the incoming light waves into two parts: <strong>reflected</strong> and <strong>refracted</strong>.</p>
+<div id="fresnel-parent">
+    <div class="canvas" id="scene_fresnel"></div>
+    <div class="slider-container">
+        <label style="font-weight: bold;">Angle</label><input id="fresnel-angle-input" type="range" min="-90" max="90" step="0.01" data-color="#888">
+        <label style="font-weight: bold;">IOR 2</label><input id="fresnel-ior2-input" type="range" min="1" max="2.5" step="0.01" data-color="#888">
+        <label style="font-weight: bold;">IOR 1</label><input id="fresnel-ior1-input" type="range" min="1" max="2.5" step="0.01" data-color="#888">
+    </div>
+</div>
+
+
+
+<div class="canvas" id="scene_roughness_micro"></div>
+<div class="slider-container" style="margin-bottom: 3em;">
+    <label>Roughness</label><input id="roughness-input-micro" type="range" min="0" max="1" step="0.01" data-color="#888">
+</div>
+
+<div class="canvas" id="scene_roughness_macro"></div>
+<div class="slider-container" style="margin-bottom: 3em;">
+    <label>Roughness</label><input id="roughness-input-macro" type="range" min="0" max="1" step="0.01" data-color="#888">
+</div>
+<!--
+size              model                 phenomenon
+nanogeometry      wave optics           light diffraction
+microgeometry     ray optics            reflection/refraction, change in local normal
+macrogeometry     brdf?                 statistical average over a pixel, wider cone -> more roughness
+ -->
+<br>
+<br>
+<br>
+<br>
+<br>
+<br>
+<br>
+<br>
+<br>
+<br>
+<br>
+<br>
+<br>
+<br>
+<br>
+<br>
+<br>
+
+<!-- <div class="canvas" id="scene_transport"></div> -->
+
 <p>If we take the example of a <strong class="red">red apple</strong>. When we shine a white light (which contains all visible wavelengths) on it, the apple's pigments (anthocyanins) absorb most of the wavelengths such as <strong class="violet">violet</strong>, <strong class="blue">blue</strong> and <strong class="green">green</strong>, thus decreasing the intensity of those colors from the light. The remaining wavelengths, mostly <strong class="red">red</strong>, gets scattered off the apple's surface making us perceive the apple as red.</p>
 <div class="canvas" id="scene_apple"></div>
-
-<p>But <strong>why</strong> does light get absorbed or scattered in the first place? Well it depends on the type of material the light interacts with.</p>
 
 <p>We distinguish two types of materials by the nature of their interaction with light: <strong>metals</strong> and <strong>non-metals</strong>.</p>
 
@@ -201,10 +255,6 @@ For example, microwaves are used for Wi-Fi and cooking, X-rays are used in medic
 
 <p>If the photon's energy does not match any available energy transition, it is not absorbed and instead passes through the material, which is why many insulators are transparent to visible light.</p>
 
-<div class="canvas" id="scene_roughness"></div>
-<div class="slider-container" style="margin-bottom: 3em;">
-    <label>Roughness</label><input id="roughness-input" type="range" min="0" max="1" step="0.01" data-color="#888">
-</div>
 
 <h2>Metals</h2>
 
@@ -273,13 +323,7 @@ For example, microwaves are used for Wi-Fi and cooking, X-rays are used in medic
 </div>
 <br>
 
-<div class="canvas" id="scene_fresnel"></div>
-<div class="slider-container">
-    <label style="font-weight: bold;">Angle</label><br><input id="fresnel-angle-input" type="range" min="-90" max="90" step="0.01" data-color="#888">
-    <label style="font-weight: bold;">IOR 2</label><br><input id="fresnel-ior2-input" type="range" min="1" max="2.5" step="0.01" data-color="#888">
-    <label style="font-weight: bold;">IOR 1</label><br><input id="fresnel-ior1-input" type="range" min="1" max="2.5" step="0.01" data-color="#888">
-</div>
-<br>
+
 
 <div class="canvas" id="scene_total_internal_reflection"></div>
 <div class="slider-container">

@@ -83,6 +83,11 @@ input[type="range"]::-moz-range-thumb {
     margin-left: auto;
     margin-right: auto;
 }
+.slider-container > label{
+    display: inline-block;
+    margin-bottom: 0.2em;
+    margin-top: 0.7em;
+}
 .slider-container input{
     width: 100%;
 }
@@ -152,7 +157,7 @@ h2{
     color: #666;
     border: none;
     padding: 1em 2em;
-    font-size: 1.5rem;
+    font-size: 1.2rem;
     border-radius: 12px;
     cursor: pointer;
     font-weight: 600;
@@ -399,6 +404,26 @@ h2{
 .highlighted {
     font-weight: bold;
     transition: background 0.3s ease;
+}
+#fresnel-parent{
+    display: flex;
+    align-items: center;
+    flex-direction: row;
+}
+#scene_fresnel{
+    position: initial;
+    transform: translateX(0);
+    flex-shrink: 0;
+}
+#fresnel-parent > .slider-container{
+    width: 50% !important;
+    margin-left: auto;
+    margin-right: auto;
+}
+@media only screen and (max-width: 700px){
+    #fresnel-parent{
+        flex-direction: column;
+    }
 }
 @media only screen and (max-width: 600px){
     .circle-thing{
