@@ -1,0 +1,317 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <link rel="icon" type="image/x-icon" href="/favicon.ico">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>imadr</title>
+    <link rel="stylesheet" href="/css/style.css">
+    <style>
+        .projects{
+            display: grid;
+            gap: 0.9rem;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+        }
+        @media(max-width:900px){
+            .projects{
+                grid-template-columns: repeat(1, minmax(0, 1fr));
+            }
+        }
+        .project{
+            cursor: pointer;
+            padding: 1.5rem;
+            border: 1px solid #20283a;
+            border-radius: 0.5rem;
+            position: relative;
+            background-color: rgb(17, 24, 39);
+            transform: translateY(0px);
+            transition-property: transform;
+            transition-duration: 200ms;
+            min-height: 100%;
+        }
+        .project-title{
+            font-weight: bold;
+            font-size: 1.3rem;
+            padding-bottom: 1rem;
+            color: white;
+            z-index: 1;
+            text-shadow: 1px 1px 2px black;
+        }
+        .project-description{
+            color: white;
+            padding-bottom: 1rem;
+            z-index: 1;
+            text-shadow: 1px 1px 2px black;
+        }
+        .project-tags{
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+        }
+        .project:hover .project-background{
+            opacity: 0.5;
+            transition-property: opacity;
+            transition-duration: 200ms;
+        }
+        .project:hover .brighter-background{
+            opacity: 0.8;
+            transition-property: opacity;
+            transition-duration: 200ms;
+        }
+        .project:hover{
+            transform: translateY(-3px);
+            transition-property: transform;
+            transition-duration: 200ms;
+        }
+        .project-tag{
+            font-size: 0.875rem;
+            background-color: rgb(17, 24, 39);
+            color: white;
+            border-radius: 9999px;
+            padding-top: 0.25rem;
+            padding-bottom: 0.25rem;
+            padding-left: 0.75rem;
+            padding-right: 0.75rem;
+        }
+        .project-foreground{
+            z-index: 1;
+            position: relative;
+            height: 100%;
+        }
+        .project-background{
+            position: absolute;
+            background-size: 100% auto;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            border-radius: 0.5rem;
+            z-index: 0;
+            opacity: 0.2;
+            transition-property: opacity;
+            transition-duration: 200ms;
+        }
+        .brighter-background{
+            opacity: 0.5;
+            transition-property: opacity;
+            transition-duration: 200ms;
+        }
+        a:not(.a-no-icon)[href^="http://"]:after, a:not(.a-no-icon)[href^="https://"]:after{
+            content: "";
+        }
+        .btn-container, .kofi-button{
+            width: 100%;
+        }
+        .kofi-button span.kofitext{
+            line-height: 50px !important;
+        }
+        a{
+            text-decoration: none;
+        }
+    </style>
+</head>
+<body>
+    <nav>
+        <a href="/" style="font-size: 2em;">imad's website</a>
+        <span id="navbar-right" style="float: right;">
+        </span>
+    </nav>
+
+    <p style="font-size: 1.5em;margin-bottom: 2em;margin-top: 2em;">Hi! My name is Imad, I'm a software developer with an interest in graphics programming, game dev and making interactive articles on my website.<br>You can contact me at <a href="mailto:hi@imadr.me">hi@imadr.me</a> or on my <a href="https://twitter.com/imadr_">twitter</a>.</p>
+
+<div class="projects">
+
+
+<a href="pbr/">
+<div class="project">
+    <div class="project-background" style="background-image: url(pbr.png);"></div>
+    <div class="project-foreground">
+        <div class="project-title">Physically based rendering from first principles</div>
+        <div class="project-description">Article explaining the physics and math of PBR</div>
+        <div class="project-tags">
+            <div class="project-tag">Rendering</div>
+            <div class="project-tag">Graphics</div>
+        </div>
+    </div>
+</div>
+</a>
+
+
+<a href="liquid-glass/">
+<div class="project">
+    <div class="project-background" style="background-image: url(liquid_glass.png);"></div>
+    <div class="project-foreground">
+        <div class="project-title">How Apple's Liquid Glass (probably) works</div>
+        <div class="project-description">Article explaining how to recreate Apple's Liquid Glass effect</div>
+        <div class="project-tags">
+            <div class="project-tag">Rendering</div>
+            <div class="project-tag">Shader</div>
+        </div>
+    </div>
+</div>
+</a>
+
+<a href="raymarching-explained-interactively/">
+<div class="project">
+    <div class="project-background" style="background-image: url(raymarching_explained_interactively.png);"></div>
+    <div class="project-foreground">
+        <div class="project-title">Raymarching explained interactively</div>
+        <div class="project-description">Interactive tutorial on how to implement a raymarcher in a fragment shader</div>
+        <div class="project-tags">
+            <div class="project-tag">Rendering</div>
+            <div class="project-tag">Tutorial</div>
+            <div class="project-tag">Interactive</div>
+        </div>
+    </div>
+</div>
+</a>
+
+<a href="rotations-with-quaternions/">
+<div class="project">
+    <div class="project-background" style="background-image: url(rotations_with_quaternions.png);"></div>
+    <div class="project-foreground">
+        <div class="project-title">Rotations with quaternions</div>
+        <div class="project-description">Explaining rotations with quaternions, with code example</div>
+        <div class="project-tags">
+            <div class="project-tag">Mathematics</div>
+            <div class="project-tag">Tutorial</div>
+            <div class="project-tag">C</div>
+        </div>
+    </div>
+</div>
+</a>
+
+<a href="https://github.com/imadr/blaz">
+<div class="project">
+    <div class="project-background" style="background-image: url(3d_game_engine.png);"></div>
+    <div class="project-foreground">
+        <div class="project-title">🔥 blaz</div>
+        <div class="project-description">3D engine with no dependencies, written entirely from scratch </div>
+        <div class="project-tags">
+            <div class="project-tag">C++</div>
+            <div class="project-tag">Engine</div>
+            <div class="project-tag">Rendering</div>
+        </div>
+    </div>
+</div>
+</a>
+
+<a href="terrain-generation/">
+<div class="project">
+    <div class="project-background" style="background-image: url(procedural_terrain_generation.png);"></div>
+    <div class="project-foreground">
+        <div class="project-title">Procedural terrain generation</div>
+        <div class="project-description">Terrain generation using perlin noise and other stuff</div>
+        <div class="project-tags">
+            <div class="project-tag">Procgen</div>
+            <div class="project-tag">Rendering</div>
+        </div>
+    </div>
+</div>
+</a>
+
+<a href="cross-platform-window-in-c/">
+<div class="project">
+    <div class="project-background" style="background-image: url(crossplatform_windows_in_c.png);"></div>
+    <div class="project-foreground">
+        <div class="project-title">Cross-platform window in C</div>
+        <div class="project-description"></div>
+        <div class="project-tags">
+            <div class="project-tag">Platform</div>
+            <div class="project-tag">Tutorial</div>
+        </div>
+    </div>
+</div>
+</a>
+
+
+<a href="color-picker/">
+<div class="project">
+    <div class="project-background brighter-background" style="background-image: url(color_picker.png);"></div>
+    <div class="project-foreground">
+        <div class="project-title">Color picker</div>
+        <div class="project-description">Color picker useful for graphics programming</div>
+        <div class="project-tags">
+            <div class="project-tag">Tool</div>
+        </div>
+    </div>
+</div>
+</a>
+
+<a href="habit/">
+<div class="project">
+    <div class="project-background brighter-background" style="background-image: url(habit.png);"></div>
+    <div class="project-foreground">
+        <div class="project-title">Habit Tracker</div>
+        <div class="project-description">Minimalist habit tracker</div>
+        <div class="project-tags">
+            <div class="project-tag">Tool</div>
+        </div>
+    </div>
+</div>
+</a>
+
+
+<a href="japanese-learning/">
+<div class="project">
+    <div class="project-background brighter-background" style="background-image: url(japanese.png);"></div>
+    <div class="project-foreground">
+        <div class="project-title">Japanese learning tool</div>
+        <div class="project-description">Learn hiragana and katakana</div>
+        <div class="project-tags">
+            <div class="project-tag">Tool</div>
+        </div>
+    </div>
+</div>
+</a>
+
+<div class="project" style="padding: 0rem;border: none;background-color: transparent;">
+    <li style="list-style: none;width: 100% ;"><script type='text/javascript' src='https://storage.ko-fi.com/cdn/widget/Widget_2.js'></script><script type='text/javascript'>kofiwidget2.init('Support Me on Ko-fi', '#29abe0', 'Y8Y8ZIOBH');kofiwidget2.draw();</script></li>
+</div>
+
+
+</div>
+
+<div style="display: none;">
+<table>
+
+<tr>
+
+<td>
+    <h2>Articles</h2>
+    <ul>
+        <!-- <li><a href="bullshit-ai-argument/">Bullshit arguments about AI (not) replacing jobs</a></li> -->
+    </ul>
+</td>
+
+<td>
+    <h2>Contact</h2>
+    <ul>
+        <li><a href="mailto:hi@imadr.me">Email</a></li>
+        <li><a href="https://github.com/imadr">Github</a></li>
+        <li><a href="https://www.shadertoy.com/user/imadr">Shadertoy</a></li>
+        <li><a href="https://twitter.com/imadr_">Twitter</a></li>
+    </ul>
+</td>
+
+</tr>
+<tr>
+
+
+<td>
+    <h2>Random stuff</h2>
+    <ul>
+        <li><a href="quiz/">Geography quiz</a></li>
+        <li><a href="color-picker/">Color picker</a></li>
+        <li><a href="japanese-learning/">Japanese learning</a></li>
+        <li><a href="websites/">Cool websites</a></li>
+
+    </ul>
+</td>
+</tr>
+</table>
+</div>
+
+<script src="js/light.js"></script>
+</body>
+</html>
