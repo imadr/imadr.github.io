@@ -5,17 +5,21 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Physically based rendering from first principles</title>
     <link rel="icon" type="image/x-icon" href="/favicon.ico">
+
+    <meta name="description" content="Physically based rendering from first principles">
+    <meta name="author" content="imad">
+
     <meta name="twitter:card" content="summary_large_image">
     <meta name="twitter:site" content="@imadr_">
     <meta name="twitter:title" content="Physically based rendering from first principles">
-    <meta name="twitter:description" content="Physically based rendering from first principles">
     <meta name="twitter:image" content="https://imadr.me/pbr/img.png">
     <meta name="twitter:image:alt" content="Physically based rendering from first principles">
+
     <meta property="og:title" content="Physically based rendering from first principles">
     <meta property="og:description" content="Physically based rendering from first principles">
     <meta property="og:image" content="https://imadr.me/pbr/img.png">
-    <meta property="og:type" content="website">
-    <meta property="og:url" content="https://imadr.me/pbr/">
+    <meta property="og:type" content="article">
+
     <link rel="stylesheet" href="style.css">
     <link rel="stylesheet" href="mathdisp.css">
 </head>
@@ -295,7 +299,7 @@ For example, microwaves are used for Wi-Fi and cooking, X-rays are used in medic
     <tr>
         <td>Macrogeometry</td>
         <td>BRDF</td>
-        <td>Statistical average over a pixel, wider cone -> more roughness</td>
+        <td>Statistical average over a pixel, a larger roughness generates a wider cone</td>
     </tr>
 </table>
 <br>
@@ -316,7 +320,7 @@ For example, microwaves are used for Wi-Fi and cooking, X-rays are used in medic
 <h2>Metals</h2>
 
 <p>Metals have a sea of free electrons that absorb light very easily when the photons enter a few nanometers deep inside the surface. The light that isn't absorbed is reflected equally across the visible light spectrum, this is why metals have that distinct "silvery" gray color.</p>
-<p>Notable exceptions are <strong class="gold">gold</strong>, <strong class="copper">copper</strong>, <strong class="osmium">osmium</strong> and <strong class="caesium">caesium</strong>.</p>
+<p>Notable exceptions are <strong class="gold">gold</strong>, <strong class="copper">copper</strong>, <strong class="osmium">osmium</strong> and <strong class="caesium">caesium</strong>. Those metals absorb specific wavelengths which gives them their distinctive colors.</p>
 
 <div class="canvas" id="scene_metals"></div>
 
@@ -328,7 +332,7 @@ For example, microwaves are used for Wi-Fi and cooking, X-rays are used in medic
 
 <h2>Non-metals</h2>
 
-<p>Also called <strong>dielectrics</strong>, these are materials that do not conduct electricity (insulators). They include <strong>plastic, wood, glass, water, diamond, air...</strong></p>
+<p>The second type of non-metallic materials we consider in our microfacet model are called <strong>dielectrics</strong>, these are materials that do not conduct electricity (insulators). They include <strong>plastic, wood, glass, water, diamond, air...</strong></p>
 
 <div class="canvas" id="scene_non_metals"></div>
 
