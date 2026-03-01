@@ -535,3 +535,28 @@ function distance(a, b){
 function clamp(v, min, max){
     return Math.min(Math.max(v, min), max);
 };
+
+function reflect_ray(incident, normal) {
+    let dot = vec2_dot(incident, normal);
+    return vec2_sub(incident, vec2_scale(normal, 2 * dot));
+}
+
+function refract_ray(incident, normal, eta){
+    let cosi = clamp(vec2_dot(incident, normal), -1, 1);
+    let k = 1 - eta * eta * (1 - cosi * cosi);
+    if(k < 0) return null;
+    return vec2_sub(
+        vec2_scale(incident, eta),
+        vec2_scale(normal, eta * cosi + Math.sqrt(k))
+    );
+}
+
+function rotate_vec2(v, a){
+    let c = Math.cos(a);
+    let s = Math.sin(a);
+    return [v[0]*c - v[1]*s, v[0]*s + v[1]*c];
+}
+
+function random_between(min, max){
+    return Math.random() * (max - min) + min;
+}

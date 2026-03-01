@@ -42,6 +42,10 @@ const special_stuff = {
     '\\implies': '⇒',
     '\\approx': '≈',
     '\\dot': '⋅',
+    '\\forall': '∀',
+    '\\exists': '∃',
+    '\\leq': '≤',
+    '\\geq': '≥',
 };
 
 function parse_math_notation(math_str, nested_level = 0) {
