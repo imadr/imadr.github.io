@@ -5,17 +5,21 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Physically based rendering from first principles</title>
     <link rel="icon" type="image/x-icon" href="/favicon.ico">
+
+    <meta name="description" content="Physically based rendering from first principles">
+    <meta name="author" content="imad">
+
     <meta name="twitter:card" content="summary_large_image">
     <meta name="twitter:site" content="@imadr_">
     <meta name="twitter:title" content="Physically based rendering from first principles">
-    <meta name="twitter:description" content="Physically based rendering from first principles">
-    <meta name="twitter:image" content="https://imadr.me/pbr/img.png">
+    <meta name="twitter:image" content="https://imadrahmoune.com/pbr/img.png">
     <meta name="twitter:image:alt" content="Physically based rendering from first principles">
+
     <meta property="og:title" content="Physically based rendering from first principles">
     <meta property="og:description" content="Physically based rendering from first principles">
-    <meta property="og:image" content="https://imadr.me/pbr/img.png">
-    <meta property="og:type" content="website">
-    <meta property="og:url" content="https://imadr.me/pbr/">
+    <meta property="og:image" content="https://imadrahmoune.com/pbr/img.png">
+    <meta property="og:type" content="article">
+
     <link rel="stylesheet" href="style.css">
     <link rel="stylesheet" href="mathdisp.css">
 </head>
@@ -266,9 +270,11 @@ For example, microwaves are used for Wi-Fi and cooking, X-rays are used in medic
 
 <br>
 <p>This is what it looks underwater:</p>
-<img style="width: 100%;" src="snells_window.png">
+<div class="canvas" id="scene_snells_window"></div>
+<div class="slider-container">
+    <label style="font-weight: bold;">Water IOR</label><br><input id="water-ior-input" type="range" min="1.1" max="2.5" step="0.001" data-color="#888">
+</div>
 
-<br>
 
 <h2>The Microfacet Model</h2>
 
@@ -295,7 +301,7 @@ For example, microwaves are used for Wi-Fi and cooking, X-rays are used in medic
     <tr>
         <td>Macrogeometry</td>
         <td>BRDF</td>
-        <td>Statistical average over a pixel, wider cone -> more roughness</td>
+        <td>Statistical average over a pixel, a larger roughness generates a wider lobe</td>
     </tr>
 </table>
 <br>
@@ -305,18 +311,33 @@ For example, microwaves are used for Wi-Fi and cooking, X-rays are used in medic
     <label>Roughness</label><input id="roughness-input-micro" type="range" min="0" max="1" step="0.01" data-color="#888">
 </div>
 
-<p>At the macrogeometry level, a bigger roughness value means light rays have a wider cone where they can spread out. The function that describes this cone is called <strong>bidirectional reflectance distribution function</strong>, we will discuss it in the next chapter.</p>
+<p>At the macrogeometry level, a larger roughness value means light rays have a wider angle where they can spread out. The function that describes this angle is called <strong>bidirectional reflectance distribution function</strong>, we will discuss it in the next chapter.</p>
 <div class="canvas" id="scene_roughness_macro"></div>
 <div class="slider-container" style="margin-bottom: 3em;">
     <label>Roughness</label><input id="roughness-input-macro" type="range" min="0" max="1" step="0.01" data-color="#888">
 </div>
 
-<p>In our microfacet model, we distinguish two types of materials by the nature of their interaction with light: <strong>metals</strong> and <strong>non-metals</strong>.</p>
+<p>When light hits the surface, it can get reflected in two ways: <strong>diffuse</strong> reflections and <strong>specular</strong> reflections.</p>
+<p>The specular reflection obeys the law of reflection we saw before: the angle of reflection is equal to the angle of incidence.</p>
+<p>When the surface is rough and the microfacets are misaligned, the specular reflections are spread in many directions, all the possible directions where they can spread make up a shape called a <strong>lobe</strong>:</p>
+
+<div class="canvas" id="scene_specular"></div>
+<div class="slider-container" style="margin-bottom: 3em;">
+    <label>Roughness</label><input id="roughness-input-specular" type="range" min="1" max="55" step="0.01" data-color="#888">
+</div>
+
+<p>Diffuse reflections on the other hand are spread in many different angles. When the light is spread evenly over every reflection angle, we call that surface <strong>Lambertian</strong>, and the lobe of reflection looks like this:</p>
+
+<div class="canvas" id="scene_diffuse"></div>
+<br>
+<p>It is important to note that diffuse reflections are not caused by surface roughness. Their main cause is something called <strong>subsurface scattering</strong>: the light rays penetrate inside the material and bump into small particles, some light rays get absorbed by these particles while others get reflected back to the surface, which causes the light rays to exit in many different directions.</p>
+
+<p>Some materials exhibit purely specular reflections, while others have a mix of specular and diffuse. In our model we distinguish these in two types <strong>metals</strong> and <strong>non-metals</strong>.</p>
 
 <h2>Metals</h2>
 
-<p>Metals have a sea of free electrons that absorb light very easily when the photons enter a few nanometers deep inside the surface. The light that isn't absorbed is reflected equally across the visible light spectrum, this is why metals have that distinct "silvery" gray color.</p>
-<p>Notable exceptions are <strong class="gold">gold</strong>, <strong class="copper">copper</strong>, <strong class="osmium">osmium</strong> and <strong class="caesium">caesium</strong>.</p>
+<p>Metals have a sea of free electrons that absorb light very easily when the photons enter a few nanometers deep inside the surface, so no subsurface scattering can occur. The light that isn't absorbed is reflected equally across the visible light spectrum, this is why metals have that distinct "silvery" gray color.</p>
+<p>Notable exceptions are <strong class="gold">gold</strong>, <strong class="copper">copper</strong>, <strong class="osmium">osmium</strong> and <strong class="caesium">caesium</strong>. Those metals absorb specific wavelengths which gives them their distinctive colors.</p>
 
 <div class="canvas" id="scene_metals"></div>
 
@@ -328,12 +349,12 @@ For example, microwaves are used for Wi-Fi and cooking, X-rays are used in medic
 
 <h2>Non-metals</h2>
 
-<p>Also called <strong>dielectrics</strong>, these are materials that do not conduct electricity (insulators). They include <strong>plastic, wood, glass, water, diamond, air...</strong></p>
+<p>The second type of non-metallic materials we consider in our microfacet model are called <strong>dielectrics</strong>, these are materials that do not conduct electricity (insulators). They include <strong>plastic, wood, glass, water, diamond, air...</strong></p>
 
 <div class="canvas" id="scene_non_metals"></div>
 
 <p>When a photon hits a dielectric material, it only gets absorbed if its energy matches the electron's energy in the material. So light either gets reflected, and the specular reflection depends on the roughness of the surface.</p>
-<p>The light can also get refracted inside the dielectric material, it bounces around and interacts with the pigments inside the material until it exits the surface, this is called <strong>diffuse reflection</strong>.</p>
+<p>The light can also penetrate the surface and bounces around and interacts with particles inside the material until it exits the surface, causing diffuse reflections.</p>
 
 <div class="canvas" id="scene_roughness_non_metal"></div>
 <div class="slider-container" style="margin-bottom: 3em;">
@@ -406,7 +427,7 @@ For example, microwaves are used for Wi-Fi and cooking, X-rays are used in medic
 <ul>
 <li><span class="math" data="L_{o}(p, \omega_{o})"></span> is the outgoing light at point <span class="math" data="p"></span> to the direction <span class="math" data="\omega_{o}"></span></li>
 <li><span class="math" data="L_{i}(p, \omega_{i})"></span> is the incoming light at point <span class="math" data="p"></span> from the direction <span class="math" data="\omega_{i}"></span></li>
-<li>The <strong>BRDF</strong> (Bidirectional reflectance distribution function) is a function that tells use how much of the incoming light <span class="math" data="\omega_{i}"></span> is reflected to the outgoing direction <span class="math" data="\omega_{o}"></span> at point <span class="math" data="p"></span>, this function characterizes the surface of our material.</li>
+<li>The <strong>BRDF</strong> (Bidirectional reflectance distribution function) is a function that tells us how much of the incoming light <span class="math" data="\omega_{i}"></span> is reflected to the outgoing direction <span class="math" data="\omega_{o}"></span> at point <span class="math" data="p"></span>.</li>
 <li>The dot product is called the <strong>cosine term</strong>.</li>
 </ul>
 
@@ -428,14 +449,47 @@ For example, microwaves are used for Wi-Fi and cooking, X-rays are used in medic
 
 <h2>The BRDF</h2>
 
-<p>The BRDF is arguably the most important part of the rendering equation, it characterizes the surface of our material and its appearance. This is where the we can apply the <strong>microfacet theory</strong> and energy conservation to make our rendering model <strong>physically based</strong>.</p>
+<p>The BRDF is the most important part of the rendering equation, it characterizes the surface of our material and its appearance. Like we saw in the rendering equation, it's a function of how much of the incoming light <span class="math" data="\omega_{i}"></span> is reflected to the outgoing direction <span class="math" data="\omega_{o}"></span> at point <span class="math" data="p"></span>.</p>
+
+<p>To be considered <strong>physically based</strong>, a BRDF must obey these rules:</p>
+
+<p><strong>Positivity:</strong></p>
+
+<div class="math math-centred" data="BRDF(\omega_{i}, \omega_{o}) \geq 0"></div>
+
+
+<p>The surface cannot reflect a negative amount of light.</p>
+
+<p><strong>Energy conservation:</strong></p>
+
+<div class="math math-centred" data="\forall \omega_{o}, \integral_{\Omega} BRDF(\omega_{i}, \omega_{o}) (n\dot\omega_{i}) d\omega_{i} \leq 1"></div>
+
+<p>This means that the reflected light towards any outgoing direction <span class="math" data="\omega_{o}"></span> cannot exceed the total incoming light from all directions <span class="math" data="\omega_{i}"></span>.</p>
+<p>Or in other words, the sum of all the weights we apply to incoming lights (the BRDF and the cosine term) cannot exceed one.</p>
+
+<p><strong>Helmholtz reciprocity:</strong></p>
+
+<div class="math math-centred" data="BRDF(\omega_{i}, \omega_{o}) = BRDF(\omega_{o}, \omega_{i})"></div>
+
+<p>Our BRDF must give the same value if we swap the incoming direction <span class="math" data="\omega_{i}"></span> and the outgoing direction <span class="math" data="\omega_{o}"></span>.</p>
+
+<p>There are many ways to model a BRDF that obeys these rules. One way is decompose the reflect light into a diffuse and a specular term:</p>
+
 <div class="math math-centred brdf_equation" data="BRDF(\omega_{i}, \omega_{o}, \alpha) = k_{d} diffuse + k_{s} specular"></div>
-<p>It takes as input the incoming <span class="math" data="\omega_{i}"></span> and outgoing <span class="math" data="\omega_{o}"></span> light direction, and the roughness of the surface <span class="math" data="\alpha"></span>. It equals the diffuse and the specular components weighted by their respective coefficients <span class="math" data="k_{d}"></span> and <span class="math" data="k_{s}"></span>.</p>
-<p>There are many different BRDFs, the most common in realtime rendering is <strong>the Cook-Torrance</strong> specular microfacet model combined with <strong>Lambertian diffuse</strong> model.</p>
+<p>with:</p>
+<div class="math math-centred brdf_equation" data="k_{d} + k_{s} \leq 1"></div>
+<p>Here our BRDF is the sum of the diffuse and the specular components weighted by their respective coefficients <span class="math" data="k_{d}"></span> and <span class="math" data="k_{s}"></span>, with the surface roughness <span class="math" data="\alpha"></span> as a parameter.</p>
+<p>Now it's a question of choosing the right equations for the diffuse and specular components.</p>
 
-<div class="math math-centred brdf_equation" data="f_{lambert} = \frac{c}{\pi} (n\dot\omega_{i})"></div>
+<h2>Diffuse Component</h2>
 
-<p>The lambertian diffuse component is the diffuse color, called <strong>albedo</strong>, multiplied by the cosine factor. But since we already have the cosine factor in the rendering equation, the diffuse equation becomes: <span class="math" data="\frac{c}{\pi}"></span></p>
+<p>The simplest diffuse model is the <strong>Lambertian</strong> model. It assumes that light entering the material has scattered enough that when it exits, it reflects uniformly in all directions.</p>
+
+<div class="math math-centred brdf_equation" data="f_{lambert} = \frac{c}{\pi}"></div>
+
+<p>The lambertian diffuse component is constant and depends on the diffuse color <span class="math" data="c"></span>, called <strong>albedo</strong>.</p>
+
+<h2>Specular Component</h2>
 
 <div class="math math-centred brdf_equation" data="f_{cook-torrance} = \frac{D F G}{4 (n\dot\omega_{i}) (n\dot\omega_{o})}"></div>
 
@@ -527,6 +581,134 @@ For example, microwaves are used for Wi-Fi and cooking, X-rays are used in medic
 <p>Other resources include <a href="https://learnopengl.com/PBR/Theory">LearnOpenGL</a>, the <a href="https://www.youtube.com/watch?v=XoVW7CRR5JY">ScienceClic</a> youtube channel, and <a href="https://www.youtube.com/watch?v=aXRTczANuIs">3Blue1Brown</a> of course.</p>
 <p>I can't recommend enough the famous book <a href="https://en.wikipedia.org/wiki/QED:_The_Strange_Theory_of_Light_and_Matter">QED: The Strange Theory of Light and Matter</a> by Richard Feynman.</p>
 
+<div id="comments" data-page="pbr"></div>
+<script type="text/javascript">
+(function() {
+    const commentsDiv = document.getElementById("comments");
+    const postSlug = commentsDiv.getAttribute("data-page");
+
+    commentsDiv.outerHTML = `
+        <h1>Comments</h1>
+        <style type="text/css">
+            #form *{
+                font-family: "inter";
+            }
+            #form{
+                margin-top: 2em;
+                display: flex;
+                flex-direction: column;
+                gap: 9px;
+            }
+            #form input, #form textarea, #form button{
+                font-size: 1em;
+                border: 1px solid #333333;
+                background-color: white;
+                color: #333333;
+                line-height: 1.5;
+                padding: 6px 8px;
+            }
+            #form textarea{
+                height: 6em;
+            }
+            #form button{
+                width: 9em;
+                padding: 3px 6px;
+            }
+            #comments-area{
+                margin-top: 2em;
+            }
+            .comment{
+                border-left: 1px solid #333333;
+                padding-left: 1em;
+                margin-top: 1.5em;
+            }
+            .comment-name{
+                font-weight: bold;
+            }
+            .comment-info{
+                display: flex;
+                gap: 1em;
+                padding-bottom: 0.5em;
+            }
+            .comment-datetime{
+                color: #333333;
+            }
+            .comment.pending {
+                opacity: 0.5;
+            }
+        </style>
+        <div id="comments-area"></div>
+        <form id="form">
+            <input id="name" placeholder="Name" required />
+            <textarea id="comment" placeholder="Comment" required></textarea>
+            <button>Post</button>
+        </form>
+    `;
+
+    const script = document.createElement("script");
+    script.src = "https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2";
+    script.onload = function() {
+        const clientId = localStorage.getItem("comment_client_id") || crypto.randomUUID();
+        localStorage.setItem("comment_client_id", clientId);
+        const sb = window.supabase.createClient(
+            "https://ncuqrrhckzsxiparjbcc.supabase.co",
+            "sb_publishable_C_ebFmG7_UsFlHoO-cHWQQ_iqrfzntQ",
+            { global: { headers: { "client_id": clientId } } }
+        );
+        const form = document.getElementById("form");
+        const commentsArea = document.getElementById("comments-area");
+        form.onsubmit = async (e) => {
+            e.preventDefault();
+            await sb.from("comments").insert([{
+                post_slug: postSlug,
+                name: form.querySelector("#name").value,
+                comment: form.querySelector("#comment").value,
+                client_id: clientId
+            }]);
+            form.reset();
+            await load();
+        };
+        function escapeHtml(text) {
+            const div = document.createElement("div");
+            div.innerText = text;
+            return div.innerHTML;
+        }
+        async function load() {
+            const { data } = await sb
+            .from("comments")
+            .select("*")
+            .eq("post_slug", postSlug)
+            .order("created_at", { ascending: false });
+            commentsArea.innerHTML = data.map(c => {
+                const date = new Date(c.created_at);
+                const formatted =
+                    date.getFullYear() + "-" +
+                    String(date.getMonth() + 1).padStart(2, "0") + "-" +
+                    String(date.getDate()).padStart(2, "0") + " " +
+                    String(date.getHours()).padStart(2, "0") + ":" +
+                    String(date.getMinutes()).padStart(2, "0") + ":" +
+                    String(date.getSeconds()).padStart(2, "0");
+                const pending = !c.approved;
+                return `
+                    <div class="comment ${pending ? 'pending' : ''}">
+                        <div class="comment-info">
+                            <div class="comment-name">
+                            ${escapeHtml(c.name)}
+                            ${pending ? '<span class="pending-label"> (awaiting approval)</span>' : ''}
+                            </div>
+                            <div class="comment-datetime">${formatted}</div>
+                        </div>
+                        <div class="comment-text">${escapeHtml(c.comment)}</div>
+                    </div>
+                `;
+            }).join("");
+        }
+        load();
+    };
+    document.head.appendChild(script);
+})();
+</script>
+
 <br>
 <br>
 <br>
@@ -534,7 +716,6 @@ For example, microwaves are used for Wi-Fi and cooking, X-rays are used in medic
 <br>
 <br>
 
-<script type="text/javascript" src="tga.js"></script>
 <script type="text/javascript" src="jszip.min.js"></script>
 <script type="text/javascript" src="../js/math.js"></script>
 <script type="text/javascript" src="mathdisp.js"></script>
